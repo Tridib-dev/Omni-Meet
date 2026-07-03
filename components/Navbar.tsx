@@ -27,10 +27,10 @@ const Navbar = () => {
 
     const [scrolled, setScrolled] = useState(false);
     const [indicator, setIndicator] = useState({ left: 0, width: 0, ready: false });
+    const [mobileOpen, setMobileOpen] = useState(false);
 
     const containerRef = useRef<HTMLUListElement>(null);
     const linkRefs = useRef<Map<string, HTMLAnchorElement>>(new Map());
-    const [mobileOpen, setMobileOpen] = useState(false);
 
     const activeHref =
         NAV_LINKS.find((link) => link.href === pathname)?.href ??
@@ -41,10 +41,6 @@ const Navbar = () => {
         const activeEl = linkRefs.current.get(activeHref);
         const container = containerRef.current;
 
-        // Guard: if the desktop link list is hidden (display:none below
-        // the md breakpoint, or not mounted yet), bail out instead of
-        // measuring a stale/zero rect. offsetParent is null whenever the
-        // element (or an ancestor) is display:none.
         if (!activeEl || !container || container.offsetParent === null) {
             setIndicator((prev) => (prev.ready ? { ...prev, ready: false } : prev));
             return;
@@ -53,9 +49,6 @@ const Navbar = () => {
         const containerRect = container.getBoundingClientRect();
         const activeRect = activeEl.getBoundingClientRect();
 
-        // A collapsed/zero-width container means layout hasn't settled
-        // (or we're mid-breakpoint-flip) — skip this frame rather than
-        // committing a bad value.
         if (containerRect.width === 0 || activeRect.width === 0) {
             setIndicator((prev) => (prev.ready ? { ...prev, ready: false } : prev));
             return;
@@ -70,34 +63,23 @@ const Navbar = () => {
 
     useLayoutEffect(() => {
         measureIndicator();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeHref]);
 
     useEffect(() => {
         const container = containerRef.current;
         if (!container) return;
 
-        const observer = new ResizeObserver(() => {
-            measureIndicator();
-        });
-
+        const observer = new ResizeObserver(() => measureIndicator());
         observer.observe(container);
         linkRefs.current.forEach((el) => observer.observe(el));
 
         return () => observer.disconnect();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeHref]);
 
-    // Re-measure on viewport resize. This is the key fix for the mobile
-    // overlap: ResizeObserver watches the desktop <ul>'s own box, but
-    // that box sits at display:none below `md`, so crossing the
-    // breakpoint (rotating a phone, resizing a window) doesn't always
-    // trigger a fresh measurement from the observer alone.
     useEffect(() => {
         const handleResize = () => measureIndicator();
         window.addEventListener("resize", handleResize);
         return () => window.removeEventListener("resize", handleResize);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeHref]);
 
     useEffect(() => {
@@ -110,11 +92,13 @@ const Navbar = () => {
     return (
         <header className="navbar-wrapper">
             <nav className={`navbar-floating ${scrolled ? "navbar-scrolled" : ""}`} aria-label="Primary">
+                {/* Logo - Left */}
                 <Link href="/" className="logo">
                     <Image src="/icons/logo.png" alt="DevEvent" width={24} height={24} />
                     <p>DevEvent</p>
                 </Link>
 
+                {/* Desktop Navigation - Center */}
                 <ul className="navbar-links-desktop hidden md:flex relative" ref={containerRef}>
                     {indicator.ready && (
                         <span
@@ -142,51 +126,77 @@ const Navbar = () => {
                     })}
                 </ul>
 
-                <div className="hidden items-center gap-3 md:flex">
-                    {isLoaded && (
-                        <>
-                            {!isSignedIn ? (
-                                <div className="flex items-center gap-2">
-                                    <SignInButton mode="redirect" fallbackRedirectUrl="/">
-                                        <button type="button" className={signInButtonClass}>
-                                            Sign in
-                                        </button>
-                                    </SignInButton>
-                                    <SignUpButton mode="redirect" fallbackRedirectUrl="/">
+                {/* Right Side - Auth + Hamburger */}
+                <div className="flex items-center gap-3">
+                    {/* Desktop Auth */}
+                    <div className="hidden md:flex items-center gap-3">
+                        {isLoaded && (
+                            <>
+                                {!isSignedIn ? (
+                                    <div className="flex items-center gap-2">
+                                        <SignInButton mode="redirect" fallbackRedirectUrl="/">
+                                            <button type="button" className={signInButtonClass}>
+                                                Sign in
+                                            </button>
+                                        </SignInButton>
+                                        <SignUpButton mode="redirect" fallbackRedirectUrl="/sign-up">
+                                            <FlowButtonV1 />
+                                        </SignUpButton>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center rounded-full border border-white/10 bg-white/10 px-2 py-1 backdrop-blur-sm">
+                                        <UserButton />
+                                    </div>
+                                )}
+                            </>
+                        )}
+                    </div>
+
+                    {/* Mobile Get Started / User Button - Always visible on mobile */}
+                    <div className="md:hidden">
+                        {isLoaded && (
+                            <>
+                                {!isSignedIn ? (
+                                    <SignUpButton mode="redirect" fallbackRedirectUrl="/sign-up">
                                         <FlowButtonV1 />
                                     </SignUpButton>
-                                </div>
-                            ) : (
-                                <div className="flex items-center rounded-full border border-white/10 bg-white/10 px-2 py-1 backdrop-blur-sm">
-                                    <UserButton />
-                                </div>
-                            )}
-                        </>
-                    )}
-                </div>
+                                ) : (
+                                    <div className="flex items-center rounded-full border border-white/10 bg-white/10 px-2 py-1 backdrop-blur-sm">
+                                        <UserButton />
+                                    </div>
+                                )}
+                            </>
+                        )}
+                    </div>
 
-                <button
-                    type="button"
-                    className="navbar-mobile-toggle"
-                    onClick={() => setMobileOpen((prev) => !prev)}
-                    aria-label="Toggle navigation menu"
-                    aria-expanded={mobileOpen}
-                >
-                    {mobileOpen ? (
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                            <path d="M6 6L18 18M6 18L18 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                        </svg>
-                    ) : (
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                            <path d="M4 7H20M4 12H20M4 17H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                        </svg>
-                    )}
-                </button>
+                    {/* Hamburger Menu Button */}
+                    <button
+                        type="button"
+                        className="navbar-mobile-toggle"
+                        onClick={() => setMobileOpen((prev) => !prev)}
+                        aria-label="Toggle navigation menu"
+                        aria-expanded={mobileOpen}
+                    >
+                        {mobileOpen ? (
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <path d="M6 6L18 18M6 18L18 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                            </svg>
+                        ) : (
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <path d="M4 7H20M4 12H20M4 17H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                            </svg>
+                        )}
+                    </button>
+                </div>
             </nav>
 
+            {/* Mobile Menu - Contains Nav Links + Auth */}
             {mobileOpen && (
                 <>
-                    <div className="fixed inset-0 bg-black/60 z-40 md:hidden" onClick={() => setMobileOpen(false)} />
+                    <div 
+                        className="fixed inset-0 bg-black/60 z-40 md:hidden" 
+                        onClick={() => setMobileOpen(false)} 
+                    />
 
                     <nav className="navbar-mobile-menu z-50" aria-label="Mobile">
                         <ul>
@@ -217,7 +227,7 @@ const Navbar = () => {
                                                     Sign in
                                                 </button>
                                             </SignInButton>
-                                            <SignUpButton mode="redirect" fallbackRedirectUrl="/">
+                                            <SignUpButton mode="redirect" fallbackRedirectUrl="/sign-up">
                                                 <FlowButtonV1 />
                                             </SignUpButton>
                                         </div>

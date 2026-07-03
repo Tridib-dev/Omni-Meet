@@ -15,7 +15,7 @@ const Footer = () => {
 
                 <div className="footer-content">
                     {/* Top Links (without Company) */}
-                    <div className="footer-links-section">
+                    <div className="footer-links-section pt-10">
                         <FooterLinks />
                     </div>
 

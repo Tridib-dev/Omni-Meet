@@ -1,18 +1,20 @@
 'use client';
 import { ArrowRight } from 'lucide-react';
 
-// FlowButton — dark theme variant
-//  - fill layer covers full button at any width (fixes mobile gap)
-//  - idle "breathing" glow ring pulses even with no hover/click, to draw the eye
-//    (animation defined in flow-btn.css, imported once globally — see bottom of file)
-export default function FlowButtonV1({ text = "Get Started" }: { text?: string }) {
+export default function FlowButtonV1({
+  text = "Get Started",
+  ...rest
+}: {
+  text?: string
+} & React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button
-      className="flow-btn-glow group relative flex items-center gap-1 overflow-hidden
+      {...rest}
+      className={`flow-btn-glow group relative flex items-center gap-1 overflow-hidden
                  rounded-[100px] border-[1.5px] border-white/30 bg-transparent px-8 py-3
                  text-sm font-semibold text-white cursor-pointer transition-all duration-[600ms]
                  ease-[cubic-bezier(0.23,1,0.32,1)] hover:border-transparent hover:text-black
-                 hover:rounded-[12px] active:scale-[0.95]"
+                 hover:rounded-[12px] active:scale-[0.95] ${rest.className ?? ''}`}
     >
       <ArrowRight
         className="absolute w-4 h-4 left-[-25%] stroke-white fill-none z-[9]

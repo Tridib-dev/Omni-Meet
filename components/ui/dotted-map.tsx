@@ -75,7 +75,7 @@ export function DottedMap<M extends Marker = Marker>({
             cy={point.y}
             r={dotRadius}
             fill={dotColor}
-            opacity={0.85 + Math.random() * 0.15}
+            opacity={0.85 + (index % 3) * 0.05}
             key={index}
           />
         );
