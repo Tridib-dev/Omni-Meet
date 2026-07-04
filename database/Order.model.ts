@@ -1,0 +1,48 @@
+import { Schema, model, models, Model, Types } from "mongoose";
+
+export interface IOrder {
+    clerkId: string;
+    eventId: Types.ObjectId;
+    eventTitle: string;
+    eventSlug: string;
+    amount: number;                  // in paise (INR × 100)
+    currency: string;
+    razorpayOrderId: string;         // from Razorpay create-order
+    razorpayPaymentId?: string;      // filled after successful payment
+    razorpaySignature?: string;      // filled after verification
+    status: "pending" | "paid" | "failed";
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+type OrderModel = Model<IOrder>;
+
+const orderSchema = new Schema<IOrder>(
+    {
+        clerkId: { type: String, required: true },
+        eventId: { type: Schema.Types.ObjectId, ref: "Event", required: true },
+        eventTitle: { type: String, required: true },
+        eventSlug: { type: String, required: true },
+        amount: { type: Number, required: true },
+        currency: { type: String, default: "INR" },
+        razorpayOrderId: { type: String, required: true, unique: true },
+        razorpayPaymentId: { type: String },
+        razorpaySignature: { type: String },
+        status: {
+            type: String,
+            enum: ["pending", "paid", "failed"],
+            default: "pending",
+        },
+    },
+    { timestamps: true }
+);
+
+orderSchema.index({ clerkId: 1, eventId: 1 });
+orderSchema.index({ razorpayOrderId: 1 });
+
+const Order =
+    (models.Order as OrderModel | undefined) ??
+    model<IOrder>("Order", orderSchema);
+
+export { Order };
+export default Order;

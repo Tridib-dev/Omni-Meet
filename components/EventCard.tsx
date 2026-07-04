@@ -10,7 +10,7 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@/components/ui/avatar";
-import { CreateBooking, getAttendeesCount } from "@/lib/actions/booking.actions";
+import { getAttendeesCount } from "@/lib/actions/booking.actions";
 
 export interface EventProps {
   eventId: string;           // ← Required for real count

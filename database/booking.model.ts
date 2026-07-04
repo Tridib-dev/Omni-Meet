@@ -3,71 +3,75 @@ import Event from "./event.model";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// TODO : the email field will later be replaced by session.user.email once you add authentication
 export interface IBooking {
-  eventId: Types.ObjectId;
-  email: string;
-  createdAt: Date;
-  updatedAt: Date;
-  slug?: string;
+    clerkId: string;           // links booking to the authenticated Clerk user
+    eventId: Types.ObjectId;
+    email: string;
+    slug: string;
+    createdAt: Date;
+    updatedAt: Date;
 }
 
 type BookingDocument = HydratedDocument<IBooking>;
 type BookingModel = Model<IBooking>;
 
 const bookingSchema = new Schema<IBooking>(
-  {
-    eventId: {
-      type: Schema.Types.ObjectId,
-      ref: "Event",
-      required: true,
+    {
+        clerkId: {
+            type: String,
+            required: true,
+            trim: true,
+        },
+        eventId: {
+            type: Schema.Types.ObjectId,
+            ref: "Event",
+            required: true,
+        },
+        email: {
+            type: String,
+            required: true,
+            trim: true,
+            lowercase: true,
+            validate: {
+                validator: (value: string) => EMAIL_REGEX.test(value),
+                message: "Invalid email format.",
+            },
+        },
+        slug: {
+            type: String,
+            required: true,
+            trim: true,
+            lowercase: true,
+        },
     },
-    email: {
-      type: String,
-      required: true,
-      trim: true,
-      lowercase: true,
-      validate: {
-        validator: (value: string) => EMAIL_REGEX.test(value),
-        message: "Invalid email format.",
-      },
-    },
-    // ✅ Fixed — slug is now a real top-level field, not nested inside email's options
-    slug: {
-      type: String,
-      required: true,
-      trim: true,
-      lowercase: true,
-    },
-  },
-  {
-    timestamps: true,
-  }
+    { timestamps: true }
 );
 
-bookingSchema.index({ eventId: 1, email: 1 }, { unique: true });
+// One booking per user per event — prevents duplicate bookings
+bookingSchema.index({ clerkId: 1, eventId: 1 }, { unique: true });
 
 bookingSchema.pre("save", async function validateBooking(this: BookingDocument) {
-  this.email = this.email.trim().toLowerCase();
+    this.email = this.email.trim().toLowerCase();
 
-  if (!EMAIL_REGEX.test(this.email)) {
-    throw new Error("Invalid email format.");
-  }
-
-  // Ensure each booking references a real event document.
-  if (this.isModified("eventId")) {
-    const session = this.$session();
-    const eventExists = session
-      ? await Event.exists({ _id: this.eventId }).session(session)
-      : await Event.exists({ _id: this.eventId });
-
-    if (!eventExists) {
-      throw new Error("Cannot create booking: referenced event does not exist.");
+    if (!EMAIL_REGEX.test(this.email)) {
+        throw new Error("Invalid email format.");
     }
-  }
+
+    if (this.isModified("eventId")) {
+        const session = this.$session();
+        const eventExists = session
+            ? await Event.exists({ _id: this.eventId }).session(session)
+            : await Event.exists({ _id: this.eventId });
+
+        if (!eventExists) {
+            throw new Error("Cannot create booking: referenced event does not exist.");
+        }
+    }
 });
 
-const Booking = (models.Booking as BookingModel | undefined) ?? model<IBooking>("Booking", bookingSchema);
+const Booking =
+    (models.Booking as BookingModel | undefined) ??
+    model<IBooking>("Booking", bookingSchema);
 
 export { Booking };
 export default Booking;
