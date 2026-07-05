@@ -7,6 +7,8 @@ const isPublicRoute = createRouteMatcher([
   "/events/(.*)",      // This must be exact
   "/sign-in(.*)",
   "/sign-up(.*)",
+  "/forgot-password(.*)",
+  "/sso-callback(.*)",  
   "/api/events(.*)",
   "/api/webhooks(.*)",
   "/ingest(.*)",

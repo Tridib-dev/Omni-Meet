@@ -1,11 +1,13 @@
-// app/(auth)/sign-in/[[...sign-in]]/page.tsx
-import { SignIn } from "@clerk/nextjs";
+"use client";
+
+import SignInForm from "@/components/auth/SignInForm";
 import { Suspense } from "react";
+
 
 export default function SignInPage() {
   return (
-    <Suspense fallback={null}>
-      <SignIn routing="path" path="/sign-in" />
+    <Suspense fallback={<div className="text-white">Loading...</div>}>
+      <SignInForm />
     </Suspense>
   );
 }

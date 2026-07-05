@@ -1,11 +1,14 @@
 // app/(auth)/sign-up/[[...sign-up]]/page.tsx
-import { SignUp } from "@clerk/nextjs";
+"use client";
+
+
+import SignUpForm from "@/components/auth/SignUpForm";
 import { Suspense } from "react";
 
 export default function SignUpPage() {
   return (
-    <Suspense fallback={null}>
-      <SignUp routing="path" path="/sign-up" />
+    <Suspense fallback={<div className="text-white">Loading...</div>}>
+      <SignUpForm/>
     </Suspense>
   );
 }
