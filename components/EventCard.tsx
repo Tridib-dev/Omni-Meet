@@ -14,6 +14,7 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@/components/ui/avatar";
+import SaveButtonIcon from "@/components/ui/SaveButtonIcon";
 import { getAttendeesCount } from "@/lib/actions/booking.actions";
 
 export interface EventProps {
@@ -72,8 +73,7 @@ const EventCard = ({
   }, [eventId, isSignedIn]);
 
   
-  const handleSave = async (e: React.MouseEvent) => {
-      e.preventDefault();
+  const handleSave = async () => {
       if (!isSignedIn) {
           window.location.href = `/sign-in`;
           return;
@@ -81,12 +81,6 @@ const EventCard = ({
       const result = await toggleWatchlist(eventId);
       setIsSaved(result.saved);
       posthog.capture('event_saved', { slug, saved: result.saved });
-  };
-
-
-
-  const handleClick = () => {
-    posthog.capture('event_card_clicked', { slug, title, location });
   };
 
 
@@ -123,15 +117,12 @@ const EventCard = ({
           </div>
         </div>
 
-        <button
-          onClick={handleSave}
-          className="absolute top-3 left-3 p-2 backdrop-blur rounded-full opacity-0 group-hover:opacity-100 transition-all"
-          style={{
-              background: isSaved ? 'rgba(236,72,153,0.85)' : 'rgba(0,0,0,0.70)'
-          }}
-        >
-          <Image src="/icons/pin.svg" alt="Save" width={22} height={22} />
-        </button>
+        <SaveButtonIcon
+          saved={isSaved}
+          onToggle={handleSave}
+          ariaLabel={isSaved ? 'Remove saved event' : 'Save event'}
+          className="absolute top-3 left-3 z-10 opacity-100"
+        />
       </div>
 
       {/* Content */}
@@ -211,3 +202,5 @@ export default EventCard;
 
 
 // HAve to fix the evnt cards hotsname and organization section 
+// also the skeleton 
+//  also the loading period for saving an Event i gootta do soething about the,

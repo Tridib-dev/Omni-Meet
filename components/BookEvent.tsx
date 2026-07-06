@@ -5,10 +5,11 @@ import { useUser } from '@clerk/nextjs';
 import { CreateBooking, hasUserBookedEvent } from '@/lib/actions/booking.actions';
 import { hasUserPaidForEvent } from '@/lib/actions/order.actions';
 import { toast } from 'sonner';
-import Image from 'next/image';
+// Image import removed (not used here)
 import { Button } from "@/components/ui/button";
 import PaymentSuccessModal from './PaymentSuccessModal';
 import { toggleWatchlist, isEventSaved } from '@/lib/actions/watchlist.actions';
+import SaveButtonIcon from '@/components/ui/SaveButtonIcon';
 
 // Extend window to include Razorpay
 declare global {
@@ -77,6 +78,7 @@ const StickyBookingBar = ({
 }: StickyBookingBarProps) => {
     const { isSignedIn, user } = useUser();
     const [isSaved, setIsSaved] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
     const [isBooking, setIsBooking] = useState(false);
     const [hasBooked, setHasBooked] = useState(false);
 
@@ -113,10 +115,17 @@ const StickyBookingBar = ({
             window.location.href = `/sign-in?redirect_url=${encodeURIComponent(window.location.pathname)}`;
             return;
         }
-        const result = await toggleWatchlist(eventId);
-        setIsSaved(result.saved);
-        toast.success(result.saved ? "Saved to watchlist" : "Removed from watchlist");
-}   ;
+        setIsSaving(true);
+        try {
+            const result = await toggleWatchlist(eventId);
+            setIsSaved(result.saved);
+            toast.success(result.saved ? "Saved to watchlist" : "Removed from watchlist");
+        } catch {
+            toast.error("Could not update watchlist. Try again.");
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     // ── Free event booking ────────────────────────────────────────────────
     const handleFreeBook = async () => {
@@ -248,20 +257,13 @@ const StickyBookingBar = ({
 
                         {/* Actions */}
                         <div className="flex items-center gap-3">
-                            <Button
-                                variant="outline"
-                                onClick={handleSave}
-                                className="border-white/10 hover:bg-white/5 hover:border-white/30 transition-all active:scale-95 group"
+                            <SaveButtonIcon
+                                saved={isSaved}
+                                loading={isSaving}
+                                onToggle={() => handleSave()}
                             >
-                                <Image
-                                    src="/icons/pin.svg"
-                                    alt="Save"
-                                    width={18}
-                                    height={18}
-                                    className={`mr-2 transition-all group-hover:scale-110 ${isSaved ? "text-pink-400" : ""}`}
-                                />
-                                {isSaved ? "Saved" : "Save"}
-                            </Button>
+                                {isSaved ? 'Saved' : 'Save'}
+                            </SaveButtonIcon>
 
                             <Button
                                 onClick={handleBook}

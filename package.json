@@ -10,6 +10,9 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^7.5.9",
+    "@fontsource/instrument-serif": "^5.2.8",
+    "@fontsource/inter": "^5.2.8",
+    "@fontsource/jetbrains-mono": "^5.2.8",
     "@imagekit/next": "^2.1.5",
     "@stripe/stripe-js": "^9.9.0",
     "canvas-confetti": "^1.9.4",
