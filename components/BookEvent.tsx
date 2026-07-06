@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import Image from 'next/image';
 import { Button } from "@/components/ui/button";
 import PaymentSuccessModal from './PaymentSuccessModal';
-
+import { toggleWatchlist, isEventSaved } from '@/lib/actions/watchlist.actions';
 
 // Extend window to include Razorpay
 declare global {
@@ -80,6 +80,7 @@ const StickyBookingBar = ({
     const [isBooking, setIsBooking] = useState(false);
     const [hasBooked, setHasBooked] = useState(false);
 
+    
     // Payment success modal state
     const [successModal, setSuccessModal] = useState<{
         open: boolean;
@@ -101,14 +102,21 @@ const StickyBookingBar = ({
                 const booked = await hasUserBookedEvent(eventId);
                 setHasBooked(booked);
             }
+            const saved = await isEventSaved(eventId);
+            setIsSaved(saved);
         };
         check();
     }, [eventId, isSignedIn, isPaid]);
 
-    const handleSave = () => {
-        setIsSaved(!isSaved);
-        toast.success(isSaved ? "Removed from watchlist" : "Added to watchlist");
-    };
+    const handleSave = async () => {
+        if (!isSignedIn) {
+            window.location.href = `/sign-in?redirect_url=${encodeURIComponent(window.location.pathname)}`;
+            return;
+        }
+        const result = await toggleWatchlist(eventId);
+        setIsSaved(result.saved);
+        toast.success(result.saved ? "Saved to watchlist" : "Removed from watchlist");
+}   ;
 
     // ── Free event booking ────────────────────────────────────────────────
     const handleFreeBook = async () => {

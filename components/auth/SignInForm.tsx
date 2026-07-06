@@ -20,29 +20,28 @@ import Divider from "@/components/auth/Divider";
 import AuthInput from "@/components/auth/AuthInput";
 import AuthButton from "@/components/auth/AuthButton";
 
-
 export default function SignInForm() {
   const { signIn, errors, fetchStatus } = useSignIn();
   const router = useRouter();
- 
+
   // Local form state
   const [emailAddress, setEmailAddress] = useState("");
   const [password, setPassword] = useState("");
   // A generic, user-facing error for things that aren't tied to a specific field
   const [formError, setFormError] = useState<string | null>(null);
- 
+
   const isLoading = fetchStatus === "fetching";
- 
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setFormError(null);
- 
+
     // Step 1: attempt to sign in with email + password
     const { error } = await signIn.password({
       emailAddress,
       password,
     });
- 
+
     if (error) {
       // Field-specific errors (bad email format, etc.) are already surfaced
       // via `errors.fields.*` below the relevant input.
@@ -53,7 +52,7 @@ export default function SignInForm() {
       );
       return;
     }
- 
+
     // Step 2: react to the resulting status
     if (signIn.status === "complete") {
       // Finalize creates the session and hands us a `navigate` callback
@@ -83,23 +82,23 @@ export default function SignInForm() {
       setFormError("Unable to sign in right now. Please try again.");
     }
   }
- 
+
   return (
     <div className="flex flex-col gap-6">
       <Logo />
- 
+
       {/* Heading copy specific to sign-in */}
-      <div>
+      <div className="flex flex-col items-center text-center">
         <h1 className="text-2xl font-semibold text-white">Welcome back</h1>
         <p className="text-sm text-zinc-400 mt-1">
           Pick up where you left off.
         </p>
       </div>
- 
+
       <SocialButtons />
- 
+
       <Divider />
- 
+
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <AuthInput
           id="emailAddress"
@@ -112,7 +111,7 @@ export default function SignInForm() {
           error={errors?.fields?.identifier?.message}
           required
         />
- 
+
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center justify-between">
             <label htmlFor="password" className="text-sm font-medium text-zinc-300">
@@ -139,16 +138,21 @@ export default function SignInForm() {
             className="mt-0"
           />
         </div>
- 
+
         {formError && (
           <p className="text-sm text-red-400 text-center">{formError}</p>
         )}
- 
+
+        {/* Required DOM mount point for Clerk's bot sign-up protection.
+            Safe to leave in even while you have it turned off in the
+            Dashboard — it just renders nothing until re-enabled. */}
+        <div id="clerk-captcha" data-cl-theme="dark" data-cl-size="normal" />
+
         <AuthButton type="submit" loading={isLoading}>
           Sign in
         </AuthButton>
       </form>
- 
+
       <p className="text-center text-sm text-zinc-400">
         Don&apos;t have an account?{" "}
         <Link href="/sign-up" className="text-white font-medium hover:underline">
@@ -158,4 +162,3 @@ export default function SignInForm() {
     </div>
   );
 }
- 

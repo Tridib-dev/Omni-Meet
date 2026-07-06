@@ -30,6 +30,7 @@ export interface IEvent {
   audience: string;
   agenda: IAgendaItem[];
   organizer: string;
+  creatorClerkId: string;   
   organizerEmails: string[];
   tags: string[];
   tagSlugs?: string[];
@@ -191,6 +192,13 @@ const eventSchema = new Schema<IEvent>(
 
     organizer: { type: String, required: true, trim: true },
 
+    creatorClerkId: {
+      type: String,
+      required: true,
+      trim: true,
+      index: true,             // we'll query "events by this user" frequently
+    },
+
     organizerEmails: {
       type: [{ type: String, trim: true, lowercase: true }],
       required: true,
@@ -345,7 +353,7 @@ eventSchema.index({ countrySlug: 1, stateSlug: 1, citySlug: 1 });
 eventSchema.index({ mode: 1 });
 eventSchema.index({ date: 1 });
 eventSchema.index({ title: "text", description: "text", overview: "text", venue: "text" });
-
+eventSchema.index({ creatorClerkId: 1 });
 
 const Event = (models.Event as EventModel | undefined) ?? model<IEvent>("Event", eventSchema);
 

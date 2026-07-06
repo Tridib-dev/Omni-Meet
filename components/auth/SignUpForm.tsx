@@ -13,6 +13,14 @@
 // password step succeeds — the user never sees a code screen for a bad signup.
 // Docs: https://clerk.com/docs/guides/development/custom-flows/authentication/email-password
 //
+// NOTE: There used to be an `oauth_missing=1` query-param workaround here,
+// tied to the old <AuthenticateWithRedirectCallback /> sso-callback page.
+// That's been removed — the new /sso-callback/[[...sso-callback]] page
+// (built on useClerk/useSignIn/useSignUp) now correctly detects and routes
+// "OAuth sign-in with no matching account" itself, sending the user to
+// /sign-up/continue if extra info is needed, instead of bouncing back here
+// with a query param. See that file's comments for the full explanation.
+//
 // CLERK DASHBOARD REQUIREMENT:
 // User & authentication -> Email, phone, username:
 //   - Enable "Email address" as an identifier
@@ -31,13 +39,13 @@ import Divider from "@/components/auth/Divider";
 import AuthInput from "@/components/auth/AuthInput";
 import AuthButton from "@/components/auth/AuthButton";
 
-
 export default function SignUpForm() {
   const { signUp, errors, fetchStatus } = useSignUp();
   const router = useRouter();
 
   // Step 1 fields
   const [emailAddress, setEmailAddress] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
   // Step 2 field
@@ -59,6 +67,7 @@ export default function SignUpForm() {
 
     const { error } = await signUp.password({
       emailAddress,
+      username,
       password,
     });
 
@@ -205,6 +214,18 @@ export default function SignUpForm() {
         />
 
         <AuthInput
+          id="username"
+          type="text"
+          label="Username"
+          placeholder="yourname"
+          autoComplete="username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          error={errors?.fields?.username?.message}
+          required
+        />
+
+        <AuthInput
           id="password"
           type="password"
           label="Password"
@@ -219,6 +240,11 @@ export default function SignUpForm() {
         {formError && (
           <p className="text-sm text-red-400 text-center">{formError}</p>
         )}
+
+        {/* Required DOM mount point for Clerk's bot sign-up protection.
+            Safe to leave in even while you have it turned off in the
+            Dashboard — it just renders nothing until re-enabled. */}
+        <div id="clerk-captcha" data-cl-theme="dark" data-cl-size="normal" />
 
         <AuthButton type="submit" loading={isLoading}>
           Create account

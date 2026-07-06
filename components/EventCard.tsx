@@ -4,6 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import posthog from "posthog-js";
+import { useUser } from '@clerk/nextjs';
+import { toggleWatchlist, isEventSaved } from '@/lib/actions/watchlist.actions';
+
+
 
 import {
   Avatar,
@@ -53,25 +57,38 @@ const EventCard = ({
 }: EventProps) => {
   const [isSaved, setIsSaved] = useState(false);
   const [attendees, setAttendees] = useState(0);
+  const { isSignedIn } = useUser();
 
-  // Fetch real attendees count
   useEffect(() => {
-    const fetchCount = async () => {
-      const count = await getAttendeesCount(eventId);
-      setAttendees(count);
+    const init = async () => {
+        const [count, saved] = await Promise.all([
+            getAttendeesCount(eventId),
+            isSignedIn ? isEventSaved(eventId) : Promise.resolve(false),
+        ]);
+        setAttendees(count);
+        setIsSaved(saved);
     };
-    fetchCount();
-  }, [eventId]);
+    init();
+  }, [eventId, isSignedIn]);
+
+  
+  const handleSave = async (e: React.MouseEvent) => {
+      e.preventDefault();
+      if (!isSignedIn) {
+          window.location.href = `/sign-in`;
+          return;
+      }
+      const result = await toggleWatchlist(eventId);
+      setIsSaved(result.saved);
+      posthog.capture('event_saved', { slug, saved: result.saved });
+  };
+
+
 
   const handleClick = () => {
     posthog.capture('event_card_clicked', { slug, title, location });
   };
 
-  const handleSave = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsSaved(!isSaved);
-    posthog.capture('event_saved', { slug });
-  };
 
   return (
     <Link
@@ -108,11 +125,12 @@ const EventCard = ({
 
         <button
           onClick={handleSave}
-          className="absolute top-3 left-3 p-2 bg-black/70 hover:bg-black/90 backdrop-blur rounded-full opacity-0 group-hover:opacity-100 transition-all"
+          className="absolute top-3 left-3 p-2 backdrop-blur rounded-full opacity-0 group-hover:opacity-100 transition-all"
+          style={{
+              background: isSaved ? 'rgba(236,72,153,0.85)' : 'rgba(0,0,0,0.70)'
+          }}
         >
-          <span className="icon-white">
-            <Image src="/icons/pin.svg" alt="Save" width={22} height={22} />
-          </span>
+          <Image src="/icons/pin.svg" alt="Save" width={22} height={22} />
         </button>
       </div>
 

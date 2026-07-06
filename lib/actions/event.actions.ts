@@ -2,8 +2,10 @@
 
 'use server'
 
-import { Event } from "@/database/event.model";
+import { Event , IEvent} from "@/database/event.model";
 import connectToDatabase from "../mongodb"
+import { auth } from "@clerk/nextjs/server";
+import { User } from "@/database/User.model";
 
 
 export const getSimilarEventsBySlug = async (slug: string, limit = 6) => {
@@ -83,5 +85,71 @@ export const getSimilarEventsBySlug = async (slug: string, limit = 6) => {
     } catch (e) {
         console.error("Failed to fetch similar events by slug:", e);
         return [];
+    }
+};
+
+
+export const createEvent = async (data: Omit<IEvent, '_id' | 'slug' | 'createdAt' | 'updatedAt' | 'tagSlugs' | 'countrySlug' | 'stateSlug' | 'citySlug' | 'categorySlug'>) => {
+    try {
+        const { userId } = await auth();
+        if (!userId) throw new Error("Unauthorized");
+
+        await connectToDatabase();
+
+        // Track how many events this user has hosted (for billing)
+        const user = await User.findOneAndUpdate(
+            { clerkId: userId },
+            { $inc: { eventsHostedCount: 1 } },
+            { new: true }
+        );
+
+        const isFirstEvent = (user?.eventsHostedCount ?? 1) === 1;
+
+        // Future: if !isFirstEvent → charge platform fee before proceeding
+
+        const event = await Event.create({
+            ...data,
+            creatorClerkId: userId,
+        });
+
+        return { 
+            success: true, 
+            event: JSON.parse(JSON.stringify(event)),
+            isFirstEvent,
+        };
+    } catch (error) {
+        console.error("[createEvent]", error);
+        return { success: false, error: "Failed to create event." };
+    }
+};
+
+export const getEventsByCreator = async () => {
+    try {
+        const { userId } = await auth();
+        if (!userId) return [];
+
+        await connectToDatabase();
+
+        const events = await Event.find({ creatorClerkId: userId })
+            .sort({ createdAt: -1 });
+
+        return JSON.parse(JSON.stringify(events));
+    } catch (error) {
+        console.error("[getEventsByCreator]", error);
+        return [];
+    }
+};
+
+export const isEventCreator = async (eventId: string): Promise<boolean> => {
+    try {
+        const { userId } = await auth();
+        if (!userId) return false;
+
+        await connectToDatabase();
+
+        const event = await Event.findById(eventId).select("creatorClerkId");
+        return event?.creatorClerkId === userId;
+    } catch {
+        return false;
     }
 };

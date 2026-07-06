@@ -126,7 +126,7 @@ export default function SocialButtons() {
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-center justify-center gap-20">
+      <div className="flex items-center justify-center gap-25">
         {PROVIDERS.map((provider) => (
           <button
             key={provider.strategy}

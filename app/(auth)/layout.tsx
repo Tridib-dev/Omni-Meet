@@ -18,6 +18,14 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
   // and sso-callback all use the "sign-in" orientation.
   const isSignUp = pathname?.includes("/sign-up");
 
+  if (pathname?.includes("/sso-callback")) {
+    return (
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+        {children}
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-zinc-950 overflow-hidden">
       {/* VIDEO SIDE */}
