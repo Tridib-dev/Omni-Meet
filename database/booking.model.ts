@@ -8,6 +8,8 @@ export interface IBooking {
     eventId: Types.ObjectId;
     email: string;
     slug: string;
+    checkedIn: boolean;
+    checkedInAt?: Date;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -42,6 +44,13 @@ const bookingSchema = new Schema<IBooking>(
             required: true,
             trim: true,
             lowercase: true,
+        },
+        checkedIn: { 
+            type: Boolean, 
+            default: false,
+        },
+        checkedInAt: { 
+            type: Date ,
         },
     },
     { timestamps: true }

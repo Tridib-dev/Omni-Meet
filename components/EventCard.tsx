@@ -163,6 +163,11 @@ const EventCard = ({
             {tags.length > 4 && <span className="text-xs text-zinc-500 self-center pl-2">+{tags.length - 4}</span>}
           </div>
         )}
+        
+        {/* 
+            Need to use the pill calss from globals.css 
+            inspiration : [slug]/page.tsx  
+        */}
 
         <div className="border-t border-dark-300 pt-4 mt-auto" />
 

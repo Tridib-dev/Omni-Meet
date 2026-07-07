@@ -16,6 +16,7 @@ const NAV_LINKS: NavLink[] = [
     { label: "Home", href: "/" },
     { label: "Discover", href: "/events/discover" },
     { label: "Create Event", href: "/create_event" },
+    { label: "Dashboard", href: "/dashboard" },
 ];
 
 const signInButtonClass =
