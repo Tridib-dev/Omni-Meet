@@ -79,9 +79,9 @@ async function EventContent({ slug }: { slug: string }) {
       description, 
       image, 
       overview, 
-      date, 
-      time, 
-      location, 
+      date,
+      time,
+      location,
       address,
       mode, 
       audience, 
@@ -91,7 +91,7 @@ async function EventContent({ slug }: { slug: string }) {
       city,
       state,
       country,
-      price   // ← Make sure this is included
+      price
     } = event;
 
     const similarEvents = (await getSimilarEventsBySlug(slug)) as SimilarEvent[];
@@ -196,8 +196,13 @@ async function EventContent({ slug }: { slug: string }) {
               slug={event.slug}
               title={event.title}
               description={event.description}
-              price={event.price ?? 0}     // ← This should be 90
+              image={image}
+              location={location}
+              category={category}
+              price={price ?? 0}
               mode={event.mode}
+              eventDate={date}
+              eventTime={time}
             />
         </>
     );

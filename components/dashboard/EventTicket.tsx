@@ -9,6 +9,7 @@ import { toPng } from "html-to-image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, Clock, MapPin, Tag } from "lucide-react";
 import SafeImage from "./savedPage";
+import CopyIcon from "../CopyIcon";
 
 
 export interface EventTicketProps {
@@ -118,6 +119,7 @@ export default function EventTicket({
                 quality: 1,
                 pixelRatio: 3,
                 backgroundColor: "#0d1117",
+                skipFonts: true,
             });
             const a = document.createElement("a");
             a.download = `devevent-ticket-${barcodeValue}.png`;
@@ -131,37 +133,48 @@ export default function EventTicket({
     }, [barcodeValue, downloading]);
 
     return (
-        <div className="flex flex-col items-center gap-4">
+        <>
+            <style>{`
+                .ticket-scroll {
+                    scrollbar-width: none;
+                    -ms-overflow-style: none;
+                }
+                .ticket-scroll::-webkit-scrollbar {
+                    display: none;
+                }
+            `}</style>
 
-            {/* ── Ticket card ── */}
-            <div
-                ref={ticketRef}
-                className="relative w-[320px] rounded-2xl overflow-visible"
-                style={{
-                    background: "#0d1117",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                    boxShadow: isExpired
-                        ? "none"
-                        : "0 24px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04)",
-                    filter: isExpired ? "grayscale(0.5) opacity(0.7)" : "none",
-                }}
-            >
-                {/* ── Image ── */}
-                <div className="relative h-[168px] w-full overflow-hidden rounded-t-2xl">
-                    <SafeImage
-                        src={eventImage}
-                        alt={eventTitle}
-                        fill
-                        fallback="https://placehold.co/320x168/0b0f13/333?text=Event"
-                        className="object-cover"
-                    />
-                    <div
-                        className="absolute inset-0"
-                        style={{
-                            background:
-                                "linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(13,17,23,0.9) 100%)",
-                        }}
-                    />
+            <div className="flex flex-col items-center gap-4 w-full max-h-[calc(100dvh-6rem)] overflow-y-auto overscroll-contain pr-1 pb-2 ticket-scroll">
+
+                {/* ── Ticket card ── */}
+                <div
+                    ref={ticketRef}
+                    className="relative w-[min(320px,calc(100vw-2rem))] sm:w-[320px] rounded-2xl overflow-visible"
+                    style={{
+                        background: "#0d1117",
+                        border: "1px solid rgba(255,255,255,0.1)",
+                        boxShadow: isExpired
+                            ? "none"
+                            : "0 24px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04)",
+                        filter: isExpired ? "grayscale(0.5) opacity(0.7)" : "none",
+                    }}
+                >
+                    {/* ── Image ── */}
+                    <div className="relative h-[168px] w-full overflow-hidden rounded-t-2xl">
+                        <SafeImage
+                            src={eventImage}
+                            alt={eventTitle}
+                            fill
+                            fallback="https://placehold.co/320x168/0b0f13/333?text=Event"
+                            className="object-cover"
+                        />
+                        <div
+                            className="absolute inset-0"
+                            style={{
+                                background:
+                                    "linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(13,17,23,0.9) 100%)",
+                            }}
+                        />
 
                     {/* Category */}
                     {eventCategory && (
@@ -200,6 +213,9 @@ export default function EventTicket({
                     >
                         {eventTitle}
                     </h3>
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-white/25 mt-1">
+                        {type === "paid" ? "Paid Ticket" : "Free Ticket"}
+                    </p>
                     {attendeeName && (
                         <p className="text-[11px] text-white/35 mt-1">{attendeeName}</p>
                     )}
@@ -296,9 +312,12 @@ export default function EventTicket({
                                     <div className="min-w-0 pt-1">
                                         <div className="space-y-4">
                                             <div>
-                                                <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-white/25">
+                                                <div className="flex items-center gap-1.5">
+                                                  <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-white/25">
                                                     Ticket ID
-                                                </p>
+                                                  </p>
+                                                  <CopyIcon text={barcodeValue} size={12} className="text-white/40 hover:text-white/70" />
+                                                </div>
                                                 <p className="mt-1.5 text-[12px] font-mono text-white/80 truncate">
                                                     {barcodeValue}
                                                 </p>
@@ -363,24 +382,27 @@ export default function EventTicket({
                 </AnimatePresence>
             </div>
 
-            {/* ── Download ── */}
-            <button
-                onClick={handleDownload}
-                disabled={downloading}
-                className="flex items-center gap-2 px-5 py-2 rounded-xl text-[12px] font-medium transition-all active:scale-95 disabled:opacity-50"
-                style={{
-                    background: "rgba(255,255,255,0.05)",
-                    border: "1px solid rgba(255,255,255,0.09)",
-                    color: "rgba(255,255,255,0.6)",
-                }}
-            >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                    <polyline points="7 10 12 15 17 10"/>
-                    <line x1="12" x2="12" y1="15" y2="3"/>
-                </svg>
-                {downloading ? "Saving…" : "Download ticket"}
-            </button>
-        </div>
+                {/* ── Download ── */}
+                <div className="sticky bottom-3 z-20 flex justify-center pt-4 pb-1 pointer-events-none">
+                    <button
+                        onClick={handleDownload}
+                        disabled={downloading}
+                        className="pointer-events-auto flex items-center gap-2 px-5 py-2 rounded-xl text-[12px] font-medium transition-all active:scale-95 disabled:opacity-50 shadow-lg backdrop-blur-md"
+                        style={{
+                            background: "rgba(255,255,255,0.06)",
+                            border: "1px solid rgba(255,255,255,0.1)",
+                            color: "rgba(255,255,255,0.7)",
+                        }}
+                    >
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/>
+                            <line x1="12" x2="12" y1="15" y2="3"/>
+                        </svg>
+                        {downloading ? "Saving…" : "Download ticket"}
+                    </button>
+                </div>
+            </div>
+        </>
     );
 }

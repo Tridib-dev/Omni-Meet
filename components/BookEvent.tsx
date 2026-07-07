@@ -1,15 +1,17 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { useUser } from '@clerk/nextjs';
 import { CreateBooking, hasUserBookedEvent } from '@/lib/actions/booking.actions';
 import { hasUserPaidForEvent } from '@/lib/actions/order.actions';
 import { toast } from 'sonner';
 // Image import removed (not used here)
 import { Button } from "@/components/ui/button";
-import PaymentSuccessModal from './PaymentSuccessModal';
 import { toggleWatchlist, isEventSaved } from '@/lib/actions/watchlist.actions';
 import SaveButtonIcon from '@/components/ui/SaveButtonIcon';
+import TicketModal from '@/components/dashboard/ticket-modal';
+import type { TicketItem } from '@/lib/actions/dashboard.actions';
 
 // Extend window to include Razorpay
 declare global {
@@ -60,6 +62,9 @@ interface StickyBookingBarProps {
     slug: string;
     title: string;
     description?: string;
+    image: string;
+    location: string;
+    category?: string;
     price: number;
     mode: string;
     eventDate?: string;
@@ -71,6 +76,9 @@ const StickyBookingBar = ({
     slug,
     title,
     description = "",
+    image,
+    location,
+    category,
     price,
     mode,
     eventDate = "",
@@ -81,17 +89,35 @@ const StickyBookingBar = ({
     const [isSaving, setIsSaving] = useState(false);
     const [isBooking, setIsBooking] = useState(false);
     const [hasBooked, setHasBooked] = useState(false);
-
-    
-    // Payment success modal state
-    const [successModal, setSuccessModal] = useState<{
-        open: boolean;
-        paymentId: string;
-    }>({ open: false, paymentId: "" });
+    const [ticketModalOpen, setTicketModalOpen] = useState(false);
 
     const isPaid = price > 0;
     const shortDesc =
         description.length > 85 ? description.substring(0, 85) + "..." : description;
+    const bookedAt = new Date().toISOString();
+    const normalizedDate = eventDate || new Date().toISOString();
+    const ticketStatus: TicketItem["status"] = "upcoming";
+    const ticketType: TicketItem["type"] = isPaid ? "paid" : "free";
+    const ticket = ticketModalOpen && hasBooked
+        ? {
+            id: `${eventId}-${slug}`,
+            type: ticketType,
+            eventId,
+            eventTitle: title,
+            username: user?.fullName ?? user?.username ?? "Guest",
+            eventCategory: category,
+            eventSlug: slug,
+            eventImage: image,
+            eventDate: normalizedDate,
+            eventTime,
+            eventLocation: location,
+            eventMode: mode,
+            price,
+            bookedAt,
+            checkedIn: false,
+            status: ticketStatus,
+        }
+        : null;
 
     // Check existing booking/order status
     useEffect(() => {
@@ -137,6 +163,7 @@ const StickyBookingBar = ({
         const result = await CreateBooking({ eventId, slug });
         if (result.success) {
             setHasBooked(true);
+            setTicketModalOpen(true);
             toast.success("🎉 You're signed up!");
         } else {
             toast.error(result.error || "Booking failed.");
@@ -211,10 +238,8 @@ const StickyBookingBar = ({
 
                 if (verifyRes.ok) {
                     setHasBooked(true);
-                    setSuccessModal({
-                        open: true,
-                        paymentId: response.razorpay_payment_id,
-                    });
+                    setTicketModalOpen(true);
+                    toast.success("Your ticket is ready.");
                 } else {
                     toast.error("Payment verification failed. Contact support.");
                 }
@@ -227,6 +252,9 @@ const StickyBookingBar = ({
     };
 
     const handleBook = isPaid ? handlePaidBook : handleFreeBook;
+    const handleViewTicket = () => {
+        setTicketModalOpen(true);
+    };
 
     return (
         <>
@@ -265,38 +293,48 @@ const StickyBookingBar = ({
                                 {isSaved ? 'Saved' : 'Save'}
                             </SaveButtonIcon>
 
-                            <Button
-                                onClick={handleBook}
-                                disabled={isBooking || hasBooked}
-                                className="bg-white text-black hover:bg-white/90 font-semibold px-8 active:scale-[0.985] transition-all disabled:opacity-70 group relative overflow-hidden"
-                            >
-                                <span className="relative z-10 flex items-center gap-2">
-                                    {hasBooked ? (
-                                        "✓ Booked"
-                                    ) : isBooking ? (
-                                        isPaid ? "Opening payment…" : "Booking…"
-                                    ) : isPaid ? (
-                                        `Book • ₹${price.toLocaleString("en-IN")}`
-                                    ) : (
-                                        "Attend Free"
-                                    )}
-                                </span>
-                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -skew-x-12 transition-transform duration-700 group-hover:translate-x-[200%]" />
-                            </Button>
+                            {hasBooked ? (
+                                <Button
+                                    type="button"
+                                    onClick={handleViewTicket}
+                                    className="group inline-flex h-auto min-h-0 items-center justify-center gap-2 rounded-xl border px-3 py-2 leading-none shadow-sm backdrop-blur-md transform transition-all duration-200 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 border-white/80 bg-white/90 text-zinc-900 hover:-translate-y-0.5 hover:shadow-md hover:bg-white"
+                                >
+                                    <span className="flex items-center justify-center w-5 h-5 shrink-0 transition-transform duration-300 group-hover:scale-110 group-active:scale-95">
+                                        <Image
+                                            src="/icons/coupon-2-svgrepo-com.svg"
+                                            alt=""
+                                            width={20}
+                                            height={20}
+                                            className="w-5 h-5 select-none"
+                                        />
+                                    </span>
+                                    <span className="text-sm font-medium leading-none">View Ticket</span>
+                                </Button>
+                            ) : (
+                                <Button
+                                    onClick={handleBook}
+                                    disabled={isBooking}
+                                    className="group inline-flex h-auto min-h-0 items-center justify-center gap-2 rounded-xl border px-3 py-2 leading-none shadow-sm backdrop-blur-md transform transition-all duration-200 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 border-white/80 bg-white/90 text-zinc-900 hover:-translate-y-0.5 hover:shadow-md hover:bg-white disabled:translate-y-0 disabled:hover:bg-white disabled:hover:shadow-sm disabled:opacity-70"
+                                >
+                                    <span className="relative z-10 flex items-center gap-2">
+                                        {isBooking ? (
+                                            isPaid ? "Opening payment…" : "Booking…"
+                                        ) : isPaid ? (
+                                            `Book • ₹${price.toLocaleString("en-IN")}`
+                                        ) : (
+                                            "Attend Free"
+                                        )}
+                                    </span>
+                                </Button>
+                            )}
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Payment success modal */}
-            <PaymentSuccessModal
-                isOpen={successModal.open}
-                onClose={() => setSuccessModal({ open: false, paymentId: "" })}
-                eventTitle={title}
-                amount={price}
-                paymentId={successModal.paymentId}
-                eventDate={eventDate}
-                eventTime={eventTime}
+            <TicketModal
+                ticket={ticket}
+                onClose={() => setTicketModalOpen(false)}
             />
         </>
     );
