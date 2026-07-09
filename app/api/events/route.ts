@@ -121,7 +121,7 @@ export async function POST(req: NextRequest) {
             const creator = await User.findOneAndUpdate(
                 { clerkId: userId },
                 { $inc: { eventsHostedCount: 1 } },
-                { new: true }
+                { returnDocument: "after" }
             ).select("username firstName lastName photo");
 
             if (!creator) {

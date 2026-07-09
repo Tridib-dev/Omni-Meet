@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { updateUserProfile, updateUserSettings } from "@/lib/actions/dashboard.actions";
+import Switch from "@/components/ui/toggle";
+
 
 type NotificationKey = "eventReminders" | "nearbyEvents" | "organizerUpdates" | "productUpdates";
 
@@ -383,22 +385,11 @@ function PreferenceRow({
                 <p className="mt-1 text-[11px] leading-5 text-white/25">{description}</p>
             </div>
 
-            <button
-                type="button"
-                onClick={onToggle}
+            <Switch
+                checked={checked}
+                onChange={onToggle}
                 disabled={loading}
-                aria-pressed={checked}
-                className="relative h-6 w-11 shrink-0 rounded-full border transition-all disabled:cursor-not-allowed disabled:opacity-60"
-                style={{
-                    background: checked ? "rgba(6,182,212,0.32)" : "rgba(255,255,255,0.06)",
-                    borderColor: checked ? "rgba(6,182,212,0.42)" : "rgba(255,255,255,0.08)",
-                }}
-            >
-                <span
-                    className="absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform"
-                    style={{ transform: checked ? "translateX(22px)" : "translateX(2px)" }}
-                />
-            </button>
+            />
         </div>
     );
 }

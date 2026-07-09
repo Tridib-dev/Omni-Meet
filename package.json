@@ -45,7 +45,8 @@
     "svg-dotted-map": "^2.0.1",
     "svix": "^1.96.1",
     "tailwind-merge": "^3.6.0",
-    "validator": "^13.15.35"
+    "validator": "^13.15.35",
+    "vaul": "^1.1.2"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

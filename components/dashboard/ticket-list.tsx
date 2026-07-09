@@ -2,11 +2,12 @@
 
 // components/dashboard/ticket-list.tsx
 import { useState } from "react";
-import { motion, LayoutGroup } from "framer-motion";
+import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
 import type { TicketItem } from "@/lib/actions/dashboard.actions";
 import TicketModal from "@/components/dashboard/ticket-modal";
+import { NativeTabs } from "../uitripled/native-tabs-shadcnui";
 
 
 const STATUS_COLORS = {
@@ -138,7 +139,6 @@ function EmptyState({ tab }: { tab: string }) {
         </div>
     );
 }
-
 // ─── Tab bar + list ───────────────────────────────────────────────────────────
 const TABS = [
     { key: "upcoming", label: "Upcoming" },
@@ -156,66 +156,62 @@ export default function TicketList({
     expired: TicketItem[];
 }) {
     const [selectedTicket, setSelectedTicket] = useState<TicketItem | null>(null);
-
     const [active, setActive] = useState<TabKey>("upcoming");
 
     const lists: Record<TabKey, TicketItem[]> = { upcoming, past, expired };
-    const current = lists[active];
 
-    return (
-        <div>
-            {/* Tab bar */}
-            <LayoutGroup id="ticket-tabs">
-                <div className="flex items-center gap-1 mb-6 border-b" style={{ borderColor: "rgba(255,255,255,0.07)" }}>
-                    {TABS.map((tab) => {
-                        const count = lists[tab.key].length;
-                        const isActive = active === tab.key;
-                        return (
-                            <button
-                                key={tab.key}
-                                onClick={() => setActive(tab.key)}
-                                className="relative flex items-center gap-1.5 px-3 pb-3 text-[13px] transition-colors"
-                                style={{ color: isActive ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.35)" }}
-                            >
-                                {tab.label}
-                                {count > 0 && (
-                                    <span
-                                        className="text-[10px] font-mono px-1.5 py-0.5 rounded-full"
-                                        style={{
-                                            background: isActive ? "rgba(6,182,212,0.15)" : "rgba(255,255,255,0.06)",
-                                            color: isActive ? "#67e8f9" : "rgba(255,255,255,0.3)",
-                                        }}
-                                    >
-                                        {count}
-                                    </span>
-                                )}
-                                {isActive && (
-                                    <motion.span
-                                        layoutId="ticket-tab-underline"
-                                        className="absolute bottom-0 left-0 right-0 h-px"
-                                        style={{ background: "#06b6d4" }}
-                                        transition={{ type: "spring", stiffness: 420, damping: 34 }}
-                                    />
-                                )}
-                            </button>
-                        );
-                    })}
-                </div>
-            </LayoutGroup>
-
-            {/* Ticket list */}
+    // Prepare items for NativeTabs
+    const tabItems = TABS.map((tab) => ({
+        id: tab.key,
+        label: (
+            <span className="inline-flex items-center gap-1.5">
+                {tab.label}
+                {lists[tab.key].length > 0 && (
+                    <span
+                        className="text-[10px] font-mono px-1.5 py-0.5 rounded-full"
+                        style={{
+                            background: "rgba(255,255,255,0.06)",
+                            color: "rgba(255,255,255,0.3)",
+                        }}
+                    >
+                        {lists[tab.key].length}
+                    </span>
+                )}
+            </span>
+        ),
+        content: (
             <div className="space-y-3">
-                {current.length === 0 ? (
-                    <EmptyState tab={active} />
+                {lists[tab.key].length === 0 ? (
+                    <EmptyState tab={tab.key} />
                 ) : (
-                    current.map((ticket, i) => (
-                        <TicketCard key={ticket.id} ticket={ticket} index={i} onView={setSelectedTicket} />
+                    lists[tab.key].map((ticket, i) => (
+                        <TicketCard
+                            key={ticket.id}
+                            ticket={ticket}
+                            index={i}
+                            onView={setSelectedTicket}
+                        />
                     ))
                 )}
             </div>
-            <TicketModal ticket={selectedTicket} onClose={() => setSelectedTicket(null)} />
+        ),
+    }));
+
+    return (
+        <div>
+            <NativeTabs
+                items={tabItems}
+                defaultValue={active}
+                className="w-full"
+                listClassName="w-full max-w-fit"
+                triggerClassName="min-w-[92px]"
+                contentClassName="mt-5"
+            />
+
+            <TicketModal
+                ticket={selectedTicket}
+                onClose={() => setSelectedTicket(null)}
+            />
         </div>
-        
     );
-    
 }

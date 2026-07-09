@@ -40,7 +40,7 @@ export const createOrder = async ({
                 razorpaySignature,
                 status: "paid",
             },
-            { upsert: true, new: true }
+            { upsert: true, returnDocument: "after" }
         );
 
         return { success: true, order: JSON.parse(JSON.stringify(order)) };

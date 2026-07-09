@@ -8,6 +8,41 @@ import { motion, LayoutGroup } from "framer-motion";
 import { useUser } from "@clerk/nextjs";
 import Image from "next/image";
 
+// ─── Theme tokens ─────────────────────────────────────────────────────────────
+// Notion-style neutral palette. Everything below is grayscale on purpose —
+// no accent color — so the sidebar reads as calm, high-contrast UI chrome.
+//
+// To wire this up to `next-themes` later: replace the `mode` useState below
+// with `const { resolvedTheme } = useTheme()` and use `resolvedTheme` in its
+// place. Nothing else needs to change since every color reference here
+// flows through the single `theme` object.
+type Mode = "light" | "dark";
+
+const THEME: Record<Mode, Record<string, string>> = {
+    dark: {
+        bg: "#1f1f1f",
+        border: "rgba(255,255,255,0.09)",
+        textPrimary: "rgba(255,255,255,0.92)",
+        textSecondary: "rgba(255,255,255,0.58)",
+        textTertiary: "rgba(255,255,255,0.38)",
+        hoverBg: "rgba(255,255,255,0.06)",
+        activeBg: "rgba(255,255,255,0.10)",
+        avatarBg: "#3a3a3a",
+        avatarText: "rgba(255,255,255,0.85)",
+    },
+    light: {
+        bg: "#fbfbfa",
+        border: "rgba(0,0,0,0.09)",
+        textPrimary: "rgba(0,0,0,0.88)",
+        textSecondary: "rgba(0,0,0,0.55)",
+        textTertiary: "rgba(0,0,0,0.36)",
+        hoverBg: "rgba(0,0,0,0.055)",
+        activeBg: "rgba(0,0,0,0.07)",
+        avatarBg: "#e0e0de",
+        avatarText: "rgba(0,0,0,0.7)",
+    },
+};
+
 // ─── Icons (inline SVG — no extra deps) ──────────────────────────────────────
 const Icon = {
     ticket: (
@@ -63,6 +98,17 @@ const Icon = {
             <polyline points="9 22 9 12 15 12 15 22"/>
         </svg>
     ),
+    sun: (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>
+        </svg>
+    ),
+    moon: (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+    ),
 };
 
 // ─── Nav config ───────────────────────────────────────────────────────────────
@@ -103,10 +149,27 @@ function isNavItemActive(pathname: string | null, href: string) {
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
 export default function DashboardSidebar() {
     const [collapsed, setCollapsed] = useState(false);
+    const [mode, setMode] = useState<Mode>("dark");
     const pathname = usePathname();
     const { user } = useUser();
 
     const W = collapsed ? 56 : 220;
+    const t = THEME[mode];
+
+    // CSS custom properties scoped to the sidebar. Tailwind's arbitrary-value
+    // syntax (e.g. `hover:bg-[var(--hover-bg)]`) reads these directly, which is
+    // what lets hover states react to the theme without duplicating classes
+    // per-mode. Swap `t` for values from a theme provider later and everything
+    // downstream keeps working unchanged.
+    const themeVars = {
+        "--sidebar-bg": t.bg,
+        "--sidebar-border": t.border,
+        "--text-primary": t.textPrimary,
+        "--text-secondary": t.textSecondary,
+        "--text-tertiary": t.textTertiary,
+        "--hover-bg": t.hoverBg,
+        "--active-bg": t.activeBg,
+    } as React.CSSProperties;
 
     return (
         <LayoutGroup id="sidebar">
@@ -115,13 +178,16 @@ export default function DashboardSidebar() {
                 transition={{ type: "spring", stiffness: 340, damping: 30, mass: 0.8 }}
                 className="relative flex flex-col flex-shrink-0 h-screen z-20"
                 style={{
-                    background: "#0b0f13",
-                    borderRight: "1px solid rgba(255,255,255,0.06)",
+                    background: "var(--sidebar-bg)",
+                    borderRight: "1px solid var(--sidebar-border)",
+                    ...themeVars,
                 }}
             >
                 {/* Logo */}
-                <div className="flex items-center h-[52px] px-3 flex-shrink-0 overflow-hidden"
-                    style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                <div
+                    className="flex items-center h-[52px] px-3 flex-shrink-0 overflow-hidden"
+                    style={{ borderBottom: "1px solid var(--sidebar-border)" }}
+                >
                     <Link href="/" className="flex items-center gap-2.5 min-w-0">
                         <Image
                             src="/icons/logo.png"
@@ -133,7 +199,7 @@ export default function DashboardSidebar() {
                         <motion.span
                             animate={{ opacity: collapsed ? 0 : 1 }}
                             transition={{ duration: 0.15 }}
-                            className="text-[13.5px] font-semibold text-white/90 whitespace-nowrap overflow-hidden"
+                            className="text-[13.5px] font-semibold text-[var(--text-primary)] whitespace-nowrap overflow-hidden"
                         >
                             DevEvent
                         </motion.span>
@@ -145,7 +211,7 @@ export default function DashboardSidebar() {
                     {/* Back to site */}
                     <Link
                         href="/"
-                        className="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-white/35 hover:text-white/60 hover:bg-white/[0.04] transition-all"
+                        className="group flex items-center gap-2.5 px-2 py-1.5 rounded-md text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--hover-bg)] transition-colors duration-150"
                     >
                         <span className="flex-shrink-0">{Icon.home}</span>
                         <motion.span
@@ -158,7 +224,7 @@ export default function DashboardSidebar() {
                     </Link>
 
                     {/* Divider */}
-                    <div style={{ height: 1, background: "rgba(255,255,255,0.05)", margin: "4px 8px" }} />
+                    <div style={{ height: 1, background: "var(--sidebar-border)", margin: "4px 8px" }} />
 
                     {NAV_SECTIONS.map((section) => (
                         <div key={section.label}>
@@ -166,7 +232,7 @@ export default function DashboardSidebar() {
                             <motion.p
                                 animate={{ opacity: collapsed ? 0 : 1, height: collapsed ? 0 : "auto" }}
                                 transition={{ duration: 0.12 }}
-                                className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/25 px-2 mb-1 overflow-hidden whitespace-nowrap"
+                                className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)] px-2 mb-1 overflow-hidden whitespace-nowrap"
                             >
                                 {section.label}
                             </motion.p>
@@ -180,8 +246,7 @@ export default function DashboardSidebar() {
                                             {isActive && (
                                                 <motion.span
                                                     layoutId="sidebar-active-pill"
-                                                    className="absolute inset-0 rounded-md"
-                                                    style={{ background: "rgba(255,255,255,0.07)" }}
+                                                    className="absolute inset-0 rounded-md bg-[var(--active-bg)]"
                                                     transition={{
                                                         type: "spring",
                                                         stiffness: 420,
@@ -192,21 +257,13 @@ export default function DashboardSidebar() {
 
                                             <Link
                                                 href={item.href}
-                                                className="relative flex items-center gap-2.5 px-2 py-1.5 rounded-md transition-colors"
-                                                style={{
-                                                    color: isActive
-                                                        ? "rgba(255,255,255,0.92)"
-                                                        : "rgba(255,255,255,0.4)",
-                                                }}
+                                                className={`group relative flex items-center gap-2.5 px-2 py-1.5 rounded-md transition-colors duration-150 ${
+                                                    isActive
+                                                        ? "text-[var(--text-primary)]"
+                                                        : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--hover-bg)]"
+                                                }`}
                                             >
-                                                <motion.span
-                                                    animate={{
-                                                        color: isActive ? "#67e8f9" : "rgba(255,255,255,0.35)",
-                                                    }}
-                                                    className="flex-shrink-0"
-                                                >
-                                                    {item.icon}
-                                                </motion.span>
+                                                <span className="flex-shrink-0">{item.icon}</span>
 
                                                 <motion.span
                                                     animate={{
@@ -231,14 +288,17 @@ export default function DashboardSidebar() {
                 {/* Footer */}
                 <div
                     className="flex-shrink-0 px-2 py-2 space-y-0.5 overflow-hidden"
-                    style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}
+                    style={{ borderTop: "1px solid var(--sidebar-border)" }}
                 >
                     {/* User row */}
                     <Link
                         href="/dashboard/profile"
-                        className="flex items-center gap-2.5 px-2 py-2 rounded-md hover:bg-white/[0.04] transition-colors min-w-0"
+                        className="flex items-center gap-2.5 px-2 py-2 rounded-md hover:bg-[var(--hover-bg)] transition-colors duration-150 min-w-0"
                     >
-                        <div className="w-6 h-6 rounded-full flex-shrink-0 overflow-hidden bg-gradient-to-br from-cyan-500 to-violet-600 flex items-center justify-center text-[9px] font-bold text-white">
+                        <div
+                            className="w-6 h-6 rounded-full flex-shrink-0 overflow-hidden flex items-center justify-center text-[9px] font-bold"
+                            style={{ background: t.avatarBg, color: t.avatarText }}
+                        >
                             {user?.imageUrl ? (
                                 <Image
                                     src={user.imageUrl}
@@ -256,16 +316,31 @@ export default function DashboardSidebar() {
                             transition={{ duration: 0.12 }}
                             className="overflow-hidden min-w-0"
                         >
-                            <p className="text-[12.5px] font-medium text-white/75 truncate leading-tight">
+                            <p className="text-[12.5px] font-medium text-[var(--text-primary)] truncate leading-tight">
                                 {user?.fullName ?? user?.firstName ?? "You"}
                             </p>
                         </motion.div>
                     </Link>
 
+                    {/* Theme toggle */}
+                    <button
+                        onClick={() => setMode((m) => (m === "dark" ? "light" : "dark"))}
+                        className="flex items-center gap-2.5 px-2 py-1.5 w-full rounded-md hover:bg-[var(--hover-bg)] transition-colors duration-150 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
+                    >
+                        <span className="flex-shrink-0">{mode === "dark" ? Icon.sun : Icon.moon}</span>
+                        <motion.span
+                            animate={{ opacity: collapsed ? 0 : 1, width: collapsed ? 0 : "auto" }}
+                            transition={{ duration: 0.12 }}
+                            className="text-[12px] overflow-hidden whitespace-nowrap"
+                        >
+                            {mode === "dark" ? "Light mode" : "Dark mode"}
+                        </motion.span>
+                    </button>
+
                     {/* Collapse toggle */}
                     <button
                         onClick={() => setCollapsed((p) => !p)}
-                        className="flex items-center gap-2.5 px-2 py-1.5 w-full rounded-md hover:bg-white/[0.04] transition-colors text-white/25 hover:text-white/50"
+                        className="flex items-center gap-2.5 px-2 py-1.5 w-full rounded-md hover:bg-[var(--hover-bg)] transition-colors duration-150 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
                     >
                         <motion.span
                             animate={{ rotate: collapsed ? 180 : 0 }}
@@ -289,7 +364,7 @@ export default function DashboardSidebar() {
                                 <path d="M15 10l-2 2l2 2" />
                             </svg>
                         </motion.span>
-                                            
+
                         <motion.span
                             animate={{ opacity: collapsed ? 0 : 1, width: collapsed ? 0 : "auto" }}
                             transition={{ duration: 0.12 }}

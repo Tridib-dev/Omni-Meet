@@ -102,7 +102,7 @@ export const createEvent = async (data: Omit<IEvent, '_id' | 'slug' | 'createdAt
         const user = await User.findOneAndUpdate(
             { clerkId: userId },
             { $inc: { eventsHostedCount: 1 } },
-            { new: true }
+            { returnDocument: "after" }
         ).select("eventsHostedCount username");
 
         const isFirstEvent = (user?.eventsHostedCount ?? 1) === 1;

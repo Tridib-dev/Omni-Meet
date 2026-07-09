@@ -71,7 +71,7 @@ export const upsertUserFromClerk = async (clerkUser: ClerkUserSnapshot) => {
                     photo: clerkUser.imageUrl ?? "",
                 },
             },
-            { upsert: true, new: true, setDefaultsOnInsert: true }
+            { upsert: true, returnDocument: "after" , setDefaultsOnInsert: true }
         );
 
         return JSON.parse(JSON.stringify(user));
@@ -95,7 +95,7 @@ export const updateUser = async (
         const updatedUser = await User.findOneAndUpdate(
             { clerkId },
             { $set: params },
-            { new: true }          // returns the updated document
+            { returnDocument: "after" }
         );
 
         if (!updatedUser) throw new Error(`User not found: ${clerkId}`);
