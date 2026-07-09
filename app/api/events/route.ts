@@ -1,13 +1,16 @@
 // app/api/events/route.ts
 
 import { Event } from "@/database/event.model";
+import { User } from "@/database/User.model";
 import connectToDatabase from "@/lib/mongodb";
 import imagekit from "@/lib/imagekit";
 import { type EventCategory } from "@/lib/constants/event-categories";
-import { revalidateTag } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { validateEmails } from "@/lib/validateemail";
 import { slugifySegment } from "@/lib/seo-events";
+import { auth } from "@clerk/nextjs/server";
+import { notifyFollowersOfNewEvent } from "@/lib/notifications";
 
 type AgendaItem = {
     startTime: string;
@@ -32,6 +35,11 @@ const isDuplicateKeyError = (error: unknown): boolean =>
 
 export async function POST(req: NextRequest) {
     try {
+        const { userId } = await auth();
+        if (!userId) {
+            return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+        }
+
         await connectToDatabase();
 
         const formData = await req.formData();
@@ -110,6 +118,16 @@ export async function POST(req: NextRequest) {
         const imageFileId = uploadResult.fileId || uploadResult.file_id || uploadResult.fileID;
 
         try {
+            const creator = await User.findOneAndUpdate(
+                { clerkId: userId },
+                { $inc: { eventsHostedCount: 1 } },
+                { new: true }
+            ).select("username firstName lastName photo");
+
+            if (!creator) {
+                return NextResponse.json({ message: "Creator profile not found" }, { status: 404 });
+            }
+
             const create_event = await Event.create({
                 title: String(eventFields.title ?? ""),
                 slug,
@@ -133,9 +151,20 @@ export async function POST(req: NextRequest) {
                 tags,
                 agenda,
                 organizerEmails, 
+                creatorClerkId: userId,
+            });
+
+            await notifyFollowersOfNewEvent({
+                creatorClerkId: userId,
+                eventId: create_event._id.toString(),
+                eventSlug: create_event.slug,
+                eventTitle: create_event.title,
             });
 
             revalidateTag("events", "default");
+            if (creator.username) {
+                revalidatePath(`/profile/${creator.username}`);
+            }
             return NextResponse.json({ 
                 message: 'Event Created Successfully', 
                 event: create_event 

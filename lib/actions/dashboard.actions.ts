@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 import { cache } from "react";
 import connectToDatabase from "@/lib/mongodb";
 import { Booking } from "@/database/booking.model";
@@ -243,12 +243,40 @@ export const updateUserProfile = async (data: {
         if (!userId) return { success: false, error: "Unauthorized" };
 
         await connectToDatabase();
+        const client = await clerkClient();
 
-        await User.findOneAndUpdate({ clerkId: userId }, { $set: data });
+        await Promise.all([
+            client.users.updateUser(userId, {
+                firstName: data.firstName,
+                lastName: data.lastName,
+            }),
+            User.findOneAndUpdate({ clerkId: userId }, { $set: data }),
+        ]);
 
         return { success: true };
     } catch (error) {
         console.error("[updateUserProfile]", error);
         return { success: false, error: "Failed to update profile." };
+    }
+};
+
+// ─── updateUserSettings ───────────────────────────────────────────────────────
+
+export const updateUserSettings = async (data: {
+    publicMetadata: Record<string, unknown>;
+}) => {
+    try {
+        const { userId } = await auth();
+        if (!userId) return { success: false, error: "Unauthorized" };
+
+        const client = await clerkClient();
+        await client.users.updateUserMetadata(userId, {
+            publicMetadata: data.publicMetadata,
+        });
+
+        return { success: true };
+    } catch (error) {
+        console.error("[updateUserSettings]", error);
+        return { success: false, error: "Failed to save settings." };
     }
 };

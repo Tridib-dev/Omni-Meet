@@ -6,6 +6,8 @@ import { Event , IEvent} from "@/database/event.model";
 import connectToDatabase from "../mongodb"
 import { auth } from "@clerk/nextjs/server";
 import { User } from "@/database/User.model";
+import { notifyFollowersOfNewEvent } from "@/lib/notifications";
+import { revalidatePath } from "next/cache";
 
 
 export const getSimilarEventsBySlug = async (slug: string, limit = 6) => {
@@ -101,7 +103,7 @@ export const createEvent = async (data: Omit<IEvent, '_id' | 'slug' | 'createdAt
             { clerkId: userId },
             { $inc: { eventsHostedCount: 1 } },
             { new: true }
-        );
+        ).select("eventsHostedCount username");
 
         const isFirstEvent = (user?.eventsHostedCount ?? 1) === 1;
 
@@ -111,6 +113,17 @@ export const createEvent = async (data: Omit<IEvent, '_id' | 'slug' | 'createdAt
             ...data,
             creatorClerkId: userId,
         });
+
+        await notifyFollowersOfNewEvent({
+            creatorClerkId: userId,
+            eventId: event._id.toString(),
+            eventSlug: event.slug,
+            eventTitle: event.title,
+        });
+
+        if (user?.username) {
+            revalidatePath(`/profile/${user.username}`);
+        }
 
         return { 
             success: true, 

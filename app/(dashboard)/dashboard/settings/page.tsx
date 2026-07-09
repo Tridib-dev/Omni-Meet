@@ -1,8 +1,3 @@
-// app/(dashboard)/dashboard/settings/page.tsx
-// "use client" is NOT here — this is a server component that renders a client form
-
-// Actually this needs to be split: server page + client form
-// Let's make it a server page that passes data to a client Settings form
 import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/dashboard/shell";
@@ -10,23 +5,38 @@ import SettingsForm from "@/components/dashboard/settings-form";
 
 export const metadata = { title: "Settings — DevEvent" };
 
+type SettingsMetadata = {
+    devEventSettings?: {
+        notifications?: {
+            eventReminders?: boolean;
+            nearbyEvents?: boolean;
+            organizerUpdates?: boolean;
+            productUpdates?: boolean;
+        };
+    };
+};
+
 export default async function SettingsPage() {
     const user = await currentUser();
     if (!user) redirect("/sign-in");
+
+    const publicMetadata = (user.publicMetadata ?? {}) as SettingsMetadata;
 
     return (
         <div>
             <PageHeader
                 kicker="Preferences"
                 title="Settings"
-                description="Manage your account, notifications, and privacy."
+                description="Manage your Clerk account, app preferences, and future dashboard settings from one place."
             />
             <SettingsForm
                 initialData={{
                     firstName: user.firstName ?? "",
                     lastName: user.lastName ?? "",
+                    username: user.username ?? "",
                     email: user.emailAddresses[0]?.emailAddress ?? "",
                     imageUrl: user.imageUrl ?? "",
+                    publicMetadata,
                 }}
             />
         </div>

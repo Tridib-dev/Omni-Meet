@@ -7,6 +7,7 @@ export interface IUser {
     firstName: string;
     lastName: string;
     photo: string;
+    bio?: string;
     eventsHostedCount: number;
     createdAt: Date;
     updatedAt: Date;
@@ -49,6 +50,7 @@ const userSchema = new Schema<IUser>(
             type: String,
             default: "",
         },
+        bio: { type: String, default: "", trim: true },
         eventsHostedCount: {
             type: Number,
             default: 0,

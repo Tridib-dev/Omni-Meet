@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
 import { useState, useEffect, useCallback } from "react";
+import NotificationsBell from "./notifications-bell";
 
 const CRUMB_MAP: Record<string, string> = {
     dashboard: "Dashboard",
@@ -91,14 +92,7 @@ export default function DashboardTopbar() {
                         <kbd className="hidden sm:block text-[10px] font-mono text-white/20 ml-1">⌘K</kbd>
                     </button>
 
-                    {/* Bell */}
-                    <button className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-white/[0.05] text-white/30 hover:text-white/60 transition-colors relative">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                        </svg>
-                        <span className="absolute top-1 right-1 w-1 h-1 rounded-full bg-cyan-400" />
-                    </button>
+                    <NotificationsBell />
 
                     {/* Clerk avatar */}
                     <div className="scale-[0.85] origin-center">

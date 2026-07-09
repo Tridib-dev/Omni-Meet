@@ -21,6 +21,15 @@ export interface UpdateUserParams {
     photo: string;
 }
 
+export interface ClerkUserSnapshot {
+    id: string;
+    emailAddresses: { emailAddress: string }[];
+    username: string | null;
+    firstName: string | null;
+    lastName: string | null;
+    imageUrl: string | null;
+}
+
 // ─── Actions ──────────────────────────────────────────────────────────────────
 
 /**
@@ -36,6 +45,39 @@ export const createUser = async (params: CreateUserParams) => {
     } catch (error) {
         console.error("[createUser]", error);
         throw new Error("Failed to create user in database.");
+    }
+};
+
+/**
+ * Ensures a MongoDB user exists for the current Clerk user.
+ * Used as a fallback for accounts created before webhook sync was available.
+ */
+export const upsertUserFromClerk = async (clerkUser: ClerkUserSnapshot) => {
+    try {
+        const email = clerkUser.emailAddresses[0]?.emailAddress;
+        if (!email) return null;
+
+        await connectToDatabase();
+
+        const user = await User.findOneAndUpdate(
+            { clerkId: clerkUser.id },
+            {
+                $set: {
+                    clerkId: clerkUser.id,
+                    email,
+                    username: clerkUser.username ?? email.split("@")[0],
+                    firstName: clerkUser.firstName ?? "",
+                    lastName: clerkUser.lastName ?? "",
+                    photo: clerkUser.imageUrl ?? "",
+                },
+            },
+            { upsert: true, new: true, setDefaultsOnInsert: true }
+        );
+
+        return JSON.parse(JSON.stringify(user));
+    } catch (error) {
+        console.error("[upsertUserFromClerk]", error);
+        return null;
     }
 };
 

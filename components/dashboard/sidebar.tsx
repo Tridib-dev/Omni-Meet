@@ -255,8 +255,24 @@ export default function DashboardSidebar() {
                             transition={{ type: "spring", stiffness: 300, damping: 25 }}
                             className="flex-shrink-0 ml-0.5"
                         >
-                            {Icon.chevronLeft}
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            >
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M4 6a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2l0 -12" />
+                                <path d="M9 4v16" />
+                                <path d="M15 10l-2 2l2 2" />
+                            </svg>
                         </motion.span>
+                                            
                         <motion.span
                             animate={{ opacity: collapsed ? 0 : 1, width: collapsed ? 0 : "auto" }}
                             transition={{ duration: 0.12 }}
