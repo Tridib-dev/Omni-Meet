@@ -29,6 +29,17 @@ const Icon = {
             <line x1="3" x2="21" y1="10" y2="10"/>
         </svg>
     ),
+    analytics: (
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4 19V5"/>
+            <path d="M4 19h16"/>
+            <path d="M7 15l3-3 3 2 4-6"/>
+            <circle cx="7" cy="15" r="1"/>
+            <circle cx="10" cy="12" r="1"/>
+            <circle cx="13" cy="14" r="1"/>
+            <circle cx="17" cy="8" r="1"/>
+        </svg>
+    ),
     user: (
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="8" r="4"/>
@@ -67,6 +78,12 @@ const NAV_SECTIONS = [
         label: "Host",
         items: [
             { label: "My Events", href: "/dashboard/organized", icon: Icon.calendar },
+        ],
+    },
+    {
+        label: "Insights",
+        items: [
+            { label: "Analytics", href: "/dashboard/analytics", icon: Icon.analytics },
         ],
     },
     {

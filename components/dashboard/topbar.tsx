@@ -12,6 +12,7 @@ const CRUMB_MAP: Record<string, string> = {
     attended: "My Tickets",
     saved: "Saved",
     organized: "My Events",
+    analytics: "Analytics",
     profile: "Profile",
     settings: "Settings",
 };
@@ -19,11 +20,19 @@ const CRUMB_MAP: Record<string, string> = {
 function useBreadcrumbs() {
     const pathname = usePathname() ?? "";
     const segments = pathname.split("/").filter(Boolean);
-    return segments.map((seg, i) => ({
-        label: CRUMB_MAP[seg] ?? seg,
-        href: "/" + segments.slice(0, i + 1).join("/"),
-        isLast: i === segments.length - 1,
-    }));
+    return segments.map((seg, i) => {
+        const isEventAnalyticsRoute =
+            segments[0] === "dashboard" &&
+            segments[1] === "organized" &&
+            segments.length === 3 &&
+            i === 2;
+
+        return {
+            label: isEventAnalyticsRoute ? "Event Analytics" : (CRUMB_MAP[seg] ?? seg),
+            href: "/" + segments.slice(0, i + 1).join("/"),
+            isLast: i === segments.length - 1,
+        };
+    });
 }
 
 export default function DashboardTopbar() {
@@ -142,6 +151,7 @@ export default function DashboardTopbar() {
                                 { label: "My Tickets", href: "/dashboard/attended", icon: "🎟️" },
                                 { label: "Saved Events", href: "/dashboard/saved", icon: "🔖" },
                                 { label: "My Events", href: "/dashboard/organized", icon: "📅" },
+                                { label: "Analytics", href: "/dashboard/analytics", icon: "📈" },
                                 { label: "Profile", href: "/dashboard/profile", icon: "👤" },
                                 { label: "Settings", href: "/dashboard/settings", icon: "⚙️" },
                             ]

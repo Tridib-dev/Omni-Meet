@@ -1,0 +1,240 @@
+"use client";
+
+import Link from "next/link";
+import { motion } from "framer-motion";
+
+import MetricCard from "./MetricCard";
+import { ActivityHeatmap, CategoryRadar } from "./Charts";
+import type { AttendedAnalyticsData } from "@/lib/actions/overall-analytics";
+
+function MoneyLine({
+    label,
+    value,
+}: {
+    label: string;
+    value: string;
+}) {
+    return (
+        <div className="flex items-center justify-between rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3">
+            <p className="text-[12px] text-white/40">{label}</p>
+            <p className="text-[13px] font-semibold text-white/85">{value}</p>
+        </div>
+    );
+}
+
+export default function AttendedAnalytics({ data }: { data: AttendedAnalyticsData }) {
+    const nextDate = data.nextEvent
+        ? new Date(data.nextEvent.date).toLocaleDateString("en-IN", {
+              day: "numeric",
+              month: "short",
+          })
+        : null;
+
+    return (
+        <div className="space-y-5">
+            <div className="grid gap-3 md:grid-cols-4">
+                <MetricCard
+                    label="Lifetime attended"
+                    value={data.lifetime}
+                    color="#67e8f9"
+                    sub="All ticket entries on your profile"
+                    index={0}
+                />
+                <MetricCard
+                    label="This year"
+                    value={data.thisYear}
+                    color="#a78bfa"
+                    sub="Events attended since January"
+                    index={1}
+                />
+                <MetricCard
+                    label="Upcoming"
+                    value={data.upcomingCount}
+                    color="#22c55e"
+                    sub={data.nextEventCountdown ? `Next: ${data.nextEventCountdown}` : "No upcoming events"}
+                    index={2}
+                />
+                <MetricCard
+                    label="Streak"
+                    value={data.streak}
+                    suffix=" mo"
+                    color="#f59e0b"
+                    sub="Consecutive months with at least one event"
+                    index={3}
+                />
+            </div>
+
+            <div className="grid gap-4 xl:grid-cols-[1.2fr_.8fr]">
+                <motion.section
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="rounded-[28px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] p-5"
+                >
+                    <div className="flex items-center justify-between gap-4 mb-4">
+                        <div>
+                            <p className="text-[11px] uppercase tracking-[0.16em] text-white/25">Taste profile</p>
+                            <h2 className="mt-1 text-[16px] font-semibold text-white/90">Where your attention clusters</h2>
+                        </div>
+                        <span className="text-[11px] text-white/30">
+                            {data.lifetime ? "Live mix" : "No activity yet"}
+                        </span>
+                    </div>
+
+                    <CategoryRadar data={data.categoryBreakdown} />
+                </motion.section>
+
+                <motion.section
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="rounded-[28px] border border-white/8 bg-[radial-gradient(circle_at_top_left,rgba(103,232,249,0.14),transparent_45%),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] p-5"
+                >
+                    <div className="flex items-center justify-between mb-4">
+                        <div>
+                            <p className="text-[11px] uppercase tracking-[0.16em] text-white/25">Next pulse</p>
+                            <h2 className="mt-1 text-[16px] font-semibold text-white/90">Upcoming event snapshot</h2>
+                        </div>
+                        <span className="text-[11px] text-cyan-300/80">{data.nextEventCountdown ?? "No countdown"}</span>
+                    </div>
+
+                    {data.nextEvent ? (
+                        <div className="space-y-4">
+                            <div className="rounded-2xl border border-white/8 bg-black/20 p-4">
+                                <p className="text-[12px] text-white/35">{nextDate}</p>
+                                <Link href={`/events/${data.nextEvent.slug}`} className="mt-1 block text-[20px] font-semibold tracking-[-0.02em] text-white/95 hover:text-cyan-300 transition-colors">
+                                    {data.nextEvent.title}
+                                </Link>
+                                <p className="mt-2 text-[12px] text-white/35">Starts {data.nextEventCountdown}</p>
+                            </div>
+
+                            <div className="grid gap-3">
+                                <MoneyLine label="Total spent" value={`₹${data.totalSpent.toLocaleString("en-IN")}`} />
+                                <MoneyLine label="Average ticket" value={data.avgTicketPrice ? `₹${data.avgTicketPrice.toLocaleString("en-IN")}` : "Free events"} />
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.03] p-5 text-center">
+                            <p className="text-[13px] text-white/45">No upcoming events on the books yet.</p>
+                        </div>
+                    )}
+                </motion.section>
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-[1.15fr_.85fr]">
+                <motion.section
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="rounded-[28px] border border-white/8 bg-white/[0.03] p-5"
+                >
+                    <div className="flex items-center justify-between mb-4">
+                        <div>
+                            <p className="text-[11px] uppercase tracking-[0.16em] text-white/25">Momentum</p>
+                            <h2 className="mt-1 text-[16px] font-semibold text-white/90">Your monthly attendance rhythm</h2>
+                        </div>
+                        <span className="text-[11px] text-white/30">{data.monthlyActivity.length} months</span>
+                    </div>
+
+                    <div className="grid gap-4 lg:grid-cols-[1fr_.75fr]">
+                        <TrendCard data={data.monthlyActivity} />
+                        <div className="rounded-2xl border border-white/8 bg-black/20 p-4">
+                            <p className="text-[12px] text-white/35 mb-3">Attendance heat</p>
+                            <ActivityHeatmap data={data.monthlyActivity} />
+                            <div className="mt-4 space-y-2">
+                                {data.favoriteOrganizers.slice(0, 3).map((organizer) => (
+                                    <div key={organizer.name} className="flex items-center justify-between gap-3">
+                                        <span className="truncate text-[12px] text-white/45">{organizer.name}</span>
+                                        <span className="text-[12px] font-semibold text-white/85">{organizer.count}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </motion.section>
+
+                <motion.section
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="rounded-[28px] border border-white/8 bg-[linear-gradient(180deg,rgba(245,158,11,0.07),rgba(255,255,255,0.03))] p-5"
+                >
+                    <div className="flex items-center justify-between mb-4">
+                        <div>
+                            <p className="text-[11px] uppercase tracking-[0.16em] text-white/25">Value</p>
+                            <h2 className="mt-1 text-[16px] font-semibold text-white/90">What you spend and save</h2>
+                        </div>
+                        <span className="text-[11px] text-amber-300/80">Spent</span>
+                    </div>
+
+                    <div className="space-y-3">
+                        <div className="rounded-3xl border border-white/8 bg-black/20 p-5">
+                            <p className="text-[12px] text-white/35">Total spend</p>
+                            <p className="mt-2 text-[30px] font-semibold tracking-[-0.03em] text-amber-300">
+                                ₹{data.totalSpent.toLocaleString("en-IN")}
+                            </p>
+                            <p className="mt-2 text-[12px] text-white/35">
+                                Average ticket price: {data.avgTicketPrice > 0 ? `₹${data.avgTicketPrice.toLocaleString("en-IN")}` : "Free events"}
+                            </p>
+                        </div>
+
+                        <div className="rounded-3xl border border-white/8 bg-white/[0.03] p-4">
+                            <p className="text-[12px] text-white/35 mb-3">Top organizers</p>
+                            <div className="space-y-3">
+                                {data.favoriteOrganizers.length > 0 ? (
+                                    data.favoriteOrganizers.map((organizer, index) => (
+                                        <div key={organizer.name} className="space-y-1.5">
+                                            <div className="flex items-center justify-between text-[12px]">
+                                                <span className="text-white/70">{organizer.name}</span>
+                                                <span className="text-white/35">{organizer.count} events</span>
+                                            </div>
+                                            <div className="h-2 rounded-full bg-white/[0.05] overflow-hidden">
+                                                <div
+                                                    className="h-full rounded-full"
+                                                    style={{
+                                                        width: `${Math.max(18, (organizer.count / (data.favoriteOrganizers[0]?.count || 1)) * 100)}%`,
+                                                        background: index === 0
+                                                            ? "linear-gradient(90deg, #67e8f9, #22c55e)"
+                                                            : "linear-gradient(90deg, #f59e0b, #fb7185)",
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p className="text-[12px] text-white/30">No repeated organizers yet.</p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </motion.section>
+            </div>
+        </div>
+    );
+}
+
+function TrendCard({ data }: { data: AttendedAnalyticsData["monthlyActivity"] }) {
+    const max = Math.max(...data.map((item) => item.count), 1);
+
+    return (
+        <div className="rounded-2xl border border-white/8 bg-black/20 p-4">
+            <div className="flex items-center justify-between mb-3">
+                <p className="text-[12px] text-white/35">12 month trend</p>
+                <p className="text-[12px] text-white/30">Peak {max}</p>
+            </div>
+
+            <div className="flex items-end gap-1.5 h-[180px]">
+                {data.map((item) => (
+                    <div key={item.month} className="flex-1 h-full flex flex-col justify-end gap-2">
+                        <div
+                            className="rounded-t-lg"
+                            style={{
+                                height: `${Math.max(8, (item.count / max) * 100)}%`,
+                                background: item.count === 0
+                                    ? "rgba(255,255,255,0.06)"
+                                    : "linear-gradient(180deg, rgba(103,232,249,0.95), rgba(103,232,249,0.18))",
+                            }}
+                        />
+                        <span className="text-[9px] text-white/25 text-center">{item.month.split(" ")[0]}</span>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
