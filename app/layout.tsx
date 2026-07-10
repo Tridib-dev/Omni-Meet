@@ -19,7 +19,10 @@ export default function RootLayout({
   return (
     <html lang="en" className="font-sans">
       <body className="min-h-screen h-full antialiased">
-        <ClerkProvider>
+        <ClerkProvider
+          signInFallbackRedirectUrl="/dashboard"
+          signUpFallbackRedirectUrl="/dashboard"
+        >
           <Toaster richColors position="top-center" />
           {children}
         </ClerkProvider>

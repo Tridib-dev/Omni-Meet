@@ -12,6 +12,8 @@ export interface CreateUserParams {
     firstName: string;
     lastName: string;
     photo: string;
+    onboarded?: boolean;
+    onboardingStep?: number;
 }
 
 export interface UpdateUserParams {
@@ -40,7 +42,11 @@ export const createUser = async (params: CreateUserParams) => {
     try {
         await connectToDatabase();
 
-        const user = await User.create(params);
+        const user = await User.create({
+            ...params,
+            onboarded: params.onboarded ?? false,
+            onboardingStep: params.onboardingStep ?? 0,
+        });
         return JSON.parse(JSON.stringify(user));
     } catch (error) {
         console.error("[createUser]", error);
@@ -69,6 +75,8 @@ export const upsertUserFromClerk = async (clerkUser: ClerkUserSnapshot) => {
                     firstName: clerkUser.firstName ?? "",
                     lastName: clerkUser.lastName ?? "",
                     photo: clerkUser.imageUrl ?? "",
+                    onboarded: false,
+                    onboardingStep: 0,
                 },
             },
             { upsert: true, returnDocument: "after" , setDefaultsOnInsert: true }

@@ -1,5 +1,6 @@
 // app/api/webhooks/clerk/route.ts
 import { verifyWebhook } from '@clerk/nextjs/webhooks'
+import { clerkClient } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from 'next/server'
 import { createUser, updateUser, deleteUser } from '@/lib/actions/user.actions'
 
@@ -12,7 +13,7 @@ export async function POST(req: NextRequest) {
 
         // ── user.created ────────────────────────────────────────────────────
         if (evt.type === 'user.created') {
-            const { id, email_addresses, image_url, first_name, last_name, username } = evt.data
+            const { id, email_addresses, image_url, first_name, last_name, username, public_metadata } = evt.data
 
             const email = email_addresses?.[0]?.email_address
 
@@ -29,7 +30,17 @@ export async function POST(req: NextRequest) {
                 firstName: first_name ?? '',
                 lastName:  last_name  ?? '',
                 photo:     image_url  ?? '',
+                onboarded: false,
+                onboardingStep: 0,
             })
+
+            const clerk = await clerkClient()
+            await clerk.users.updateUserMetadata(id, {
+                publicMetadata: {
+                    ...(public_metadata ?? {}),
+                    onboarded: false,
+                },
+            });
 
             console.log(`[Webhook] user saved to DB: ${id}`)
             return NextResponse.json({ message: 'User created' }, { status: 201 })

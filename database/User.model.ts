@@ -1,4 +1,4 @@
-import { Schema, model, models, Model, HydratedDocument } from "mongoose";
+import { Schema, model, models, Model } from "mongoose";
 
 export interface IUser {
     clerkId: string;         // Clerk's user ID — primary link between Clerk and DB
@@ -8,12 +8,16 @@ export interface IUser {
     lastName: string;
     photo: string;
     bio?: string;
+    role?: string;
+    interests?: string[];
+    hearAboutUs?: string;
+    onboarded: boolean;
+    onboardingStep: number;
     eventsHostedCount: number;
     createdAt: Date;
     updatedAt: Date;
 }
 
-type UserDocument = HydratedDocument<IUser>;
 type UserModel = Model<IUser>;
 
 const userSchema = new Schema<IUser>(
@@ -51,6 +55,30 @@ const userSchema = new Schema<IUser>(
             default: "",
         },
         bio: { type: String, default: "", trim: true },
+        role: {
+            type: String,
+            default: "",
+            trim: true,
+        },
+        interests: {
+            type: [String],
+            default: [],
+        },
+        hearAboutUs: {
+            type: String,
+            default: "",
+            trim: true,
+        },
+        onboarded: {
+            type: Boolean,
+            default: false,
+            index: true,
+        },
+        onboardingStep: {
+            type: Number,
+            default: 0,
+            min: 0,
+        },
         eventsHostedCount: {
             type: Number,
             default: 0,

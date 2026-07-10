@@ -64,7 +64,7 @@ export default function SignInForm() {
             console.log(session.currentTask);
             return;
           }
-          const url = decorateUrl("/");
+          const url = decorateUrl("/dashboard");
           if (url.startsWith("http")) {
             window.location.href = url;
           } else {

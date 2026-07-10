@@ -4,9 +4,8 @@
 // and sign-up pages.
 //
 // NOTE: For OAuth/SSO, Clerk treats sign-in and sign-up as the same flow —
-// if the account doesn't exist yet, it's created automatically. So this
-// component only ever needs `useSignIn()` + `signIn.sso()`, regardless of
-// whether it's rendered on /sign-in or /sign-up.
+// if the account doesn't exist yet, Clerk can transfer into sign-up
+// automatically. This component uses Clerk's supported SSO helper.
 // Docs: https://clerk.com/docs/guides/development/custom-flows/authentication/oauth-connections
 
 "use client";
@@ -53,6 +52,9 @@ const PROVIDERS: { strategy: OAuthStrategy; label: string; icon: ReactElement }[
 ];
 
 // -----------------------------------------------------------------------
+// Clerk's OAuth helpers can still throw runtime errors (for example, if a
+// session already exists). We check for that shape safely instead of
+// relying on a specific Clerk error type.
 // Clerk's `.password()`/`.sso()` methods type their `error` return as
 // `ClerkError`, which only guarantees `{ message, code, longMessage?,
 // cause? }`. At runtime, some errors (like this "already signed in" case)
@@ -91,32 +93,21 @@ export default function SocialButtons() {
     setSocialError(null);
     setLoadingStrategy(strategy);
     try {
-      // Kicks off the redirect-based OAuth flow.
-      // - redirectCallbackUrl: where the provider sends the user back to
-      //   (this route finishes the sign-in — see /sso-callback/page.tsx).
-      // - redirectUrl: where the user lands after a fully completed sign-in.
       const { error } = await signIn.sso({
         strategy,
+        redirectUrl: "/dashboard",
         redirectCallbackUrl: "/sso-callback",
-        redirectUrl: "/",
       });
-
       if (error) {
-        // "session_exists" isn't really a failure — it means the user is
-        // already signed in (e.g. they had a session from earlier testing
-        // and clicked a social button on /sign-in or /sign-up again).
-        // Just send them home instead of showing a scary error.
         if (isSessionExistsError(error)) {
-          router.push("/");
+          router.push("/dashboard");
           return;
         }
 
-        // See https://clerk.com/docs/guides/development/custom-flows/error-handling
         console.error(JSON.stringify(error, null, 2));
         setSocialError("Something went wrong. Please try again.");
         setLoadingStrategy(null);
       }
-      // On success the browser is redirected away, so no further action needed here.
     } catch (err) {
       console.error(err);
       setSocialError("Something went wrong. Please try again.");
