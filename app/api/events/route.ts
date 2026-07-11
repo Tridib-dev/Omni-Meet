@@ -9,7 +9,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { validateEmails } from "@/lib/validateemail";
 import { slugifySegment } from "@/lib/seo-events";
-import { auth } from "@clerk/nextjs/server";
+import { auth , clerkClient } from "@clerk/nextjs/server";
 import { notifyFollowersOfNewEvent } from "@/lib/notifications";
 
 type AgendaItem = {
@@ -32,6 +32,56 @@ const isDuplicateKeyError = (error: unknown): boolean =>
     (error as { code?: number }).code === 11000;
 
 
+const getOrCreateUser = async (userId: string) => {
+    let creator = await User.findOneAndUpdate(
+        { clerkId: userId },
+        { $inc: { eventsHostedCount: 1 } },
+        { returnDocument: "after" }
+    ).select("username firstName lastName photo eventsHostedCount");
+ 
+    if (creator) return creator;
+ 
+    const clerk = await clerkClient();
+    const clerkUser = await clerk.users.getUser(userId);
+ 
+    const email = clerkUser.emailAddresses?.[0]?.emailAddress;
+    if (!email) {
+        // Matches the same "no email yet" edge case the webhook already skips.
+        return null;
+    }
+ 
+    try {
+        creator = await User.create({
+            clerkId: userId,
+            email,
+            username: clerkUser.username ?? email.split("@")[0],
+            firstName: clerkUser.firstName || email.split("@")[0],
+            lastName: clerkUser.lastName ?? "",
+            photo: clerkUser.imageUrl ?? "",
+            onboarded: false,
+            onboardingStep: 0,
+            eventsHostedCount: 1,
+        });
+    } catch (err) {
+        // The webhook may have inserted the row in the split-second between
+        // our findOneAndUpdate above and this create — re-fetch instead of failing.
+        if (isDuplicateKeyError(err)) {
+            creator = await User.findOneAndUpdate(
+                { clerkId: userId },
+                { $inc: { eventsHostedCount: 1 } },
+                { returnDocument: "after" }
+            ).select("username firstName lastName photo eventsHostedCount");
+        } else {
+            throw err;
+        }
+    }
+ 
+    return creator;
+};
+ 
+
+
+
 
 export async function POST(req: NextRequest) {
     try {
@@ -41,6 +91,16 @@ export async function POST(req: NextRequest) {
         }
 
         await connectToDatabase();
+
+        const creator = await getOrCreateUser(userId);
+        if (!creator) {
+            return NextResponse.json(
+                { message: "We couldn't find an email on your account yet. Please finish signing up and try again." },
+                { status: 404 }
+            );
+        }
+        const isFirstEvent = (creator.eventsHostedCount ?? 1) === 1;
+
 
         const formData = await req.formData();
 
