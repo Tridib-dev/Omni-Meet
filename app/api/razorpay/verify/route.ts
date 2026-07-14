@@ -3,6 +3,11 @@ import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { createOrder } from "@/lib/actions/order.actions";
+import { sendBookingConfirmation } from "@/lib/email/send";
+import { Event } from "@/database/event.model";
+import connectToDatabase from "@/lib/mongodb";
+
+
 
 export async function POST(req: NextRequest) {
     try {
@@ -19,6 +24,7 @@ export async function POST(req: NextRequest) {
             eventTitle,
             eventSlug,
             amount,
+            userEmail,
         } = await req.json();
 
         // Verify HMAC signature — this is the critical security step
@@ -49,6 +55,27 @@ export async function POST(req: NextRequest) {
         if (!result.success) {
             return NextResponse.json({ error: result.error }, { status: 500 });
         }
+
+        // Send confirmation email — fire and forget
+        if (userEmail) {
+            await connectToDatabase();
+            const eventDoc = await Event.findById(eventId)
+                .select("date time location slug")
+                .lean() as any;
+        
+            sendBookingConfirmation({
+                to: userEmail,
+                eventTitle,
+                eventDate: eventDoc?.date ?? "",
+                eventTime: eventDoc?.time ?? "",
+                eventLocation: eventDoc?.location ?? "",
+                ticketId: razorpay_payment_id,
+                price: amount,
+                eventSlug: eventDoc?.slug ?? eventSlug,
+            });
+        }
+        
+        return NextResponse.json({ success: true, order: result.order });
 
         return NextResponse.json({ success: true, order: result.order });
     } catch (error) {

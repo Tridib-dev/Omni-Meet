@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from "react";
+import React from "react";
+import OptionCard from "./OptionCard";
 
 export interface FreePaidToggleProps {
   isFree: boolean;
@@ -8,74 +9,45 @@ export interface FreePaidToggleProps {
   onChange: (value: { isFree: boolean; price: number }) => void;
 }
 
-type CardState = "normal" | "hover" | "active";
-
 /** Placeholder mark for the Free card — swap for your indie doodle SVG. */
 const FreeCardArt = () => (
-  <svg width="64" height="64" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+  <svg
+    width="64"
+    height="64"
+    viewBox="0 0 512 221.63"
+    fill="none"
+    aria-hidden="true"
+    xmlns="http://www.w3.org/2000/svg"
+  >
     <path
-      d="M14 40c4-14 32-14 36 0"
-      stroke="#008AF7"
-      strokeWidth="3"
-      strokeLinecap="round"
-      opacity="0.5"
+      fill="#000000"
+      fillRule="nonzero"
+      d="M100.37 14.13L12.6 116.38l87.77 90.41 375.84 2.22c11.69.07 21.51-8.89 21.43-20.76l1.77-152.96c.22-11.85-8.91-21.27-20.76-21.44l-378.28.28zm116.86 108.75h-23.3v31.79h-27.4V69.03h56.18l-3.43 21.93h-25.35v11.51h23.3v20.41zm88.37 31.79h-30.14l-11.24-25.49h-5.89v25.49h-27.4V69.03h43.16c19.64 0 29.46 10 29.46 30.01 0 13.7-4.25 22.75-12.75 27.13l14.8 28.5zm-47.27-63.71v17.12h6.3c3.29 0 5.69-.34 7.2-1.03 1.51-.68 2.26-2.25 2.26-4.72v-5.62c0-2.47-.75-4.04-2.26-4.73-1.51-.68-3.91-1.02-7.2-1.02h-6.3zM370 122.33h-27.4v10.42h33.56v21.92h-60.97V69.03h60.29l-3.42 21.93H342.6v11.51H370v19.86zm72.62 0h-27.41v10.42h33.57v21.92h-60.97V69.03h60.29l-3.43 21.93h-29.46v11.51h27.41v19.86zM67.16 95.03c4.51-4.66 10.02-7.06 16.48-7.22 6.49-.19 12.2 1.96 17.11 6.46 4.63 4.48 7 10.02 7.14 16.58.07 6.56-2.12 12.17-6.6 16.8-4.36 4.76-9.86 7.22-16.48 7.41-6.58.17-12.23-1.99-16.89-6.5-4.76-4.6-7.23-10.16-7.33-16.75-.1-6.53 2.09-12.14 6.57-16.78zM3.03 108.19L90.79 5.94c2.32-2.68 5.75-4.39 9.58-4.39 125.12-.09 254.03-3.25 378.68-.28 9.34.2 17.61 4.02 23.54 10.14 5.91 6.09 9.47 14.42 9.41 23.66-.3 50.7-1.17 101.49-1.76 152.2.03.83 0 1.43-.03 2.26-.3 9.05-4.16 16.98-10.17 22.7-5.78 5.5-13.56 8.93-22.07 9.33-1.16.14-1.84.04-2.94.03l-374.18-2.21a12.57 12.57 0 01-9.51-3.8L3.76 125.36c-4.68-4.6-5.06-12.11-.73-17.17z"
     />
-    <circle cx="32" cy="24" r="6" stroke="#008AF7" strokeWidth="3" opacity="0.5" />
   </svg>
 );
 
 /** Placeholder coin mark for the Paid card — swap for your indie doodle SVG. */
 const PaidCardArt = () => (
-  <svg width="64" height="64" viewBox="0 0 64 64" fill="none" aria-hidden="true">
-    <circle cx="34" cy="30" r="16" stroke="#008AF7" strokeWidth="3" opacity="0.55" />
-    <path d="M34 24v12M29 27h9M29 33h9" stroke="#008AF7" strokeWidth="2.5" strokeLinecap="round" opacity="0.55" />
+  <svg
+    width="64"
+    height="64"
+    viewBox="0 0 122.88 111.09"
+    fill="none"
+    aria-hidden="true"
+    xmlns="http://www.w3.org/2000/svg"
+    xmlnsXlink="http://www.w3.org/1999/xlink"
+  >
+    <style type="text/css">{`.st0{fill-rule:evenodd;clip-rule:evenodd;}`}</style>
+    <g>
+      <path
+        className="st0"
+        fill="#000000"
+        d="M36.25,39.13c-1.13,0.05-1.99,0.28-2.57,0.67c-0.33,0.22-0.58,0.51-0.74,0.85c-0.17,0.38-0.26,0.84-0.24,1.37 c0.05,1.55,0.85,3.58,2.43,5.92l0.02,0.04l0,0l5.11,8.1c2.05,3.25,4.19,6.57,6.86,9.01c2.56,2.34,5.67,3.92,9.78,3.94 c4.45,0.01,7.71-1.64,10.35-4.11c2.75-2.57,4.92-6.1,7.06-9.62l5.74-9.47c1.08-2.44,1.46-4.08,1.21-5.04 c-0.15-0.57-0.77-0.86-1.85-0.9c-0.23-0.01-0.46-0.02-0.7-0.01c-0.26,0.01-0.52,0.03-0.8,0.05c-0.16,0.02-0.3,0-0.44-0.03 c-0.51,0.03-1.04-0.01-1.57-0.08l1.97-8.71c-14.61,2.3-25.53-8.55-40.97-2.17l1.11,10.27C37.38,39.23,36.79,39.21,36.25,39.13 L36.25,39.13L36.25,39.13L36.25,39.13z M122.09,90.14c0.51,0.85,0.79,1.76,0.79,2.71c0,5-7.74,9.06-17.28,9.06 c-9.54,0-17.28-4.06-17.28-9.06c0-0.94,0.28-1.85,0.79-2.71c2.2,3.68,8.75,6.35,16.49,6.35C113.35,96.49,119.9,93.82,122.09,90.14 L122.09,90.14L122.09,90.14z M111.84,71.42l-0.2,2.25l-8.48-0.74c0.7,0.89,1.18,1.91,1.45,3.05l-2.04-0.18 c-0.14-0.6-0.45-1.27-0.92-2c-0.48-0.74-1.06-1.26-1.76-1.58l0.16-1.82L111.84,71.42L111.84,71.42L111.84,71.42L111.84,71.42z M105.6,67.9c7.84,0,14.2,2.5,14.2,5.57c0,3.08-6.36,5.57-14.2,5.57c-7.84,0-14.2-2.5-14.2-5.57C91.4,70.39,97.76,67.9,105.6,67.9 L105.6,67.9L105.6,67.9z M105.6,66.05c9.54,0,17.28,4.06,17.28,9.06c0,5-7.74,9.06-17.28,9.06c-9.54,0-17.28-4.06-17.28-9.06 S96.06,66.05,105.6,66.05L105.6,66.05L105.6,66.05z M122.15,81.15c0.47,0.82,0.73,1.7,0.73,2.6c0,5-7.74,9.06-17.28,9.06 c-9.54,0-17.28-4.06-17.28-9.06c0-0.91,0.25-1.78,0.73-2.6c2.13,3.73,8.73,6.46,16.55,6.46C113.42,87.61,120.02,84.88,122.15,81.15 L122.15,81.15L122.15,81.15L122.15,81.15z M122.07,99.28c0.53,0.87,0.81,1.79,0.81,2.75c0,5-7.74,9.06-17.28,9.06 c-9.54,0-17.28-4.06-17.28-9.06c0-0.96,0.29-1.88,0.81-2.75c2.22,3.66,8.75,6.31,16.47,6.31 C113.32,105.59,119.84,102.94,122.07,99.28L122.07,99.28L122.07,99.28L122.07,99.28z M60.04,83.04l4.5,15.63 c3.48-7.32,7.11-14.59,7.93-22.9c-1.38-1.62-2.84-3.76-4.11-5.62c-0.38-0.55-0.73-1.07-1.07-1.55c-2.79,2.04-6.13,3.32-10.41,3.3 c-4.61-0.01-8.15-1.65-11.09-4.14c-0.02,0.03-0.04,0.06-0.06,0.09c-0.48,0.66-1.01,1.44-1.59,2.29c-1.08,1.59-2.3,3.37-3.49,4.87 c1.54,9.63,5.24,16.41,8.59,23.64l4.5-15.63C48.08,73.64,65.2,73.1,60.04,83.04L60.04,83.04z M69.08,67.14 c0.36,0.51,0.76,1.1,1.19,1.72c0.79,1.16,1.66,2.44,2.53,3.6c1.68,1.45,4.25,2.58,7.22,3.53C78.08,80.39,77,85.24,77,90.35 c0,7.4,2.26,14.28,6.13,19.98H56.9H6.19c-3.88-0.29-5.85-2.3-6.19-5.78l1.34-6c0.38-4.92,1.76-8.79,4-11.76 c1.48-1.96,3.32-3.4,5.36-4.53c6.07-3.38,21.77-4.51,28.47-9.04c1.05-1.35,2.12-2.94,3.1-4.36c0.6-0.88,1.16-1.7,1.63-2.34 c0.08-0.11,0.17-0.2,0.29-0.28c-2.47-2.54-4.46-5.61-6.35-8.62l-5.1-8.12c-1.87-2.79-2.83-5.32-2.9-7.41 c-0.03-0.98,0.14-1.87,0.5-2.66c0.38-0.82,0.96-1.51,1.76-2.04c0.37-0.25,0.78-0.46,1.24-0.63c-0.33-4.4-0.45-9.95-0.24-14.59 c0.11-1.1,0.32-2.21,0.63-3.3c1.31-4.66,4.58-8.41,8.62-10.98c1.42-0.91,2.99-1.66,4.64-2.26C49.9,4.56,48.48,0.08,51.73,0 c7.62-0.17,20.1,6.27,24.97,11.54c2.83,3.07,4.61,7.12,4.99,12.5l-0.32,13.24l0,0c1.42,0.43,2.32,1.32,2.69,2.78 c0.41,1.61-0.04,3.88-1.4,6.97l0,0c-0.03,0.05-0.05,0.11-0.08,0.17l-5.82,9.58c-2.24,3.69-4.51,7.39-7.56,10.23L69.08,67.14 L69.08,67.14L69.08,67.14z"
+      />
+    </g>
   </svg>
 );
-
-const ToggleCard = ({
-  selected,
-  title,
-  description,
-  art,
-  onSelect,
-}: {
-  selected: boolean;
-  title: string;
-  description: string;
-  art: React.ReactNode;
-  onSelect: () => void;
-}) => {
-  const [isHovering, setIsHovering] = useState(false);
-  const [isPressed, setIsPressed] = useState(false);
-
-  const state: CardState = isPressed ? "active" : isHovering ? "hover" : "normal";
-
-  return (
-    <button
-      type="button"
-      className="cew-toggle-card"
-      data-state={state}
-      data-selected={selected}
-      onClick={onSelect}
-      onMouseEnter={() => setIsHovering(true)}
-      onMouseLeave={() => {
-        setIsHovering(false);
-        setIsPressed(false);
-      }}
-      onPointerDown={() => setIsPressed(true)}
-      onPointerUp={() => setIsPressed(false)}
-      onPointerCancel={() => setIsPressed(false)}
-      aria-pressed={selected}
-    >
-      <div className="cew-halo" aria-hidden="true" />
-      <span className="cew-toggle-card-label">{title}</span>
-      <span className="cew-toggle-card-desc">{description}</span>
-      <span className="cew-toggle-card-art" aria-hidden="true">
-        {art}
-      </span>
-    </button>
-  );
-};
 
 const FreePaidToggle = ({ isFree, price, onChange }: FreePaidToggleProps) => {
   return (
@@ -83,17 +55,19 @@ const FreePaidToggle = ({ isFree, price, onChange }: FreePaidToggleProps) => {
       <label>Is this event free or paid?</label>
 
       <div className="cew-toggle-grid">
-        <ToggleCard
+        <OptionCard
+          variant="ticket"
           selected={isFree}
           title="Free"
-          description="No ticket price — anyone can register."
+          description="No ticket price."
           art={<FreeCardArt />}
           onSelect={() => onChange({ isFree: true, price: 0 })}
         />
-        <ToggleCard
+        <OptionCard
+          variant="ticket"
           selected={!isFree}
           title="Paid"
-          description="Set a ticket price for attendees."
+          description="paid Event."
           art={<PaidCardArt />}
           onSelect={() => onChange({ isFree: false, price: price || 0 })}
         />

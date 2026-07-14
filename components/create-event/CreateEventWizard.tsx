@@ -9,6 +9,7 @@ import "./styles/create-event-wizard.css";
 import WizardShell from "./WizardShell";
 import WizardSkeleton from "./WizardSkeleton";
 import StepNav from "./StepNav";
+import { StepStatus } from "./WizardTopBar";
 import { useEventDraft } from "./useEventDraft";
 import { WIZARD_STEPS, WizardStepKey, validateStep } from "./types";
 
@@ -78,6 +79,25 @@ const CreateEventWizard = () => {
   const isLastStep = currentStep === "review";
   const isFirstStep = currentStep === "spark";
   const canAdvance = validateStep(draft, currentStep);
+
+  const stepStatuses = WIZARD_STEPS.reduce((acc, s, i) => {
+    acc[s.key] = s.key === currentStep ? "current" : i < currentIndex ? "completed" : "upcoming";
+    return acc;
+  }, {} as Record<WizardStepKey, StepStatus>);
+
+  const handleClose = () => {
+    if (window.confirm("Leave event creation? Your progress is saved, but you'll need to review any unfinished step.")) {
+      router.back();
+    }
+  };
+
+  const handleStepClick = (step: WizardStepKey) => {
+    const targetIndex = stepIndex(step);
+    // Only allow jumping to steps already reached — no skipping ahead via the bar.
+    if (targetIndex <= currentIndex) {
+      goTo(step);
+    }
+  };
 
   const goTo = (step: WizardStepKey) => {
     setCurrentStep(step);
@@ -159,7 +179,13 @@ const CreateEventWizard = () => {
   };
 
   return (
-    <WizardShell currentStep={currentStep} illustrationCaption={ILLUSTRATION_CAPTIONS[currentStep]}>
+    <WizardShell
+      currentStep={currentStep}
+      stepStatuses={stepStatuses}
+      illustrationCaption={ILLUSTRATION_CAPTIONS[currentStep]}
+      onClose={handleClose}
+      onStepClick={handleStepClick}
+    >
       {renderStep()}
       <StepNav
         onBack={handleBack}

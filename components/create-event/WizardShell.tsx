@@ -1,44 +1,57 @@
 'use client';
 
-import React from "react";
-import ProgressBar from "./ProgressBar";
-import { WIZARD_STEPS, WizardStepKey } from "./types";
+import React, { useState } from "react";
+import WizardTopBar, { StepStatus } from "./WizardTopBar";
+import { WizardStepKey } from "./types";
+import { STEP_ILLUSTRATIONS, STEP_CAPTIONS } from "./illustrations";
 
 interface WizardShellProps {
   currentStep: WizardStepKey;
-  illustrationCaption: string;
+  stepStatuses: Record<WizardStepKey, StepStatus>;
+  onClose?: () => void;
+  onStepClick?: (step: WizardStepKey) => void;
   children: React.ReactNode;
 }
 
-const currentIndexOf = (step: WizardStepKey) =>
-  WIZARD_STEPS.findIndex((s) => s.key === step);
-
-/**
- * Swap this for a real per-step SVG/illustration component later.
- * Kept as an explicit, labeled placeholder so it's obvious where
- * doodle art should go — one slot, generous size, halo behind it.
- */
-const IllustrationPlaceholder = ({ caption }: { caption: string }) => (
-  <div className="cew-doodle-slot">
-    <span>Illustration slot — {caption}</span>
-  </div>
-);
-
-const WizardShell = ({ currentStep, illustrationCaption, children }: WizardShellProps) => {
-  const currentIndex = currentIndexOf(currentStep);
+const WizardShell = ({
+  currentStep,
+  stepStatuses,
+  onClose,
+  onStepClick,
+  children,
+}: WizardShellProps) => {
+  const [topbarHeight, setTopbarHeight] = useState<number | null>(null);
+  const caption = STEP_CAPTIONS[currentStep];
 
   return (
-    <div className="cew-shell">
-      <div className="cew-form-pane">
-        <ProgressBar currentIndex={currentIndex} />
-        {children}
-      </div>
+    <>
+      <WizardTopBar
+        currentStep={currentStep}
+        stepStatuses={stepStatuses}
+        onClose={onClose}
+        onStepClick={onStepClick}
+        onHeightChange={setTopbarHeight}
+      />
 
-      <div className="cew-illustration-pane">
-        <div className="cew-halo cew-halo--breathing" aria-hidden="true" />
-        <IllustrationPlaceholder caption={illustrationCaption} />
+      <div
+        className="cew-page"
+        style={topbarHeight !== null ? { paddingTop: topbarHeight } : undefined}
+      >
+        <div className="cew-shell">
+          <div className="cew-form-pane">{children}</div>
+
+          <div className="cew-illustration-pane">
+            <div className="cew-doodle-slot cew-doodle-slot--filled">
+              {STEP_ILLUSTRATIONS[currentStep]}
+            </div>
+            <div className="cew-illustration-caption">
+              <p className="cew-illustration-caption-title">{caption.title}</p>
+              <p className="cew-illustration-caption-subtitle">{caption.subtitle}</p>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

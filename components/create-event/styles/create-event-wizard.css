@@ -11,6 +11,7 @@
   --cew-paper: #ffffff;
   --cew-surface: #f6f8fb;
   --cew-surface-raised: #ffffff;
+  --cew-backdrop: #f6f8fb; /* matches --cew-surface exactly, per request — same tone as the card's own background */
   --cew-line: #e5e9f0;
   --cew-line-strong: #d7deea;
 
@@ -18,6 +19,11 @@
   --cew-blue-deep: #0068c4;
   --cew-blue-tint: #e8f4ff;
   --cew-blue-tint-strong: #d3ebff;
+
+  --cew-red: #e5484d;
+  --cew-red-deep: #b71c1f;
+  --cew-red-tint: #ffe8e9;
+  --cew-red-tint-strong: #ffd6d8;
 
   --cew-danger: #e5484d;
   --cew-success: #12b76a;
@@ -85,7 +91,9 @@
   display: flex;
   flex-direction: column;
   padding: 40px 48px 28px;
-  /* keyboard-safe: never rely on 100vh for scroll containers on mobile */
+  background: var(--cew-paper); /* explicit — never inherits/transparent, patterns must stay outside the card */
+  position: relative;
+  z-index: 1;
   min-height: 0;
 }
 
@@ -98,14 +106,22 @@
 
 .cew-illustration-pane {
   position: relative;
-  background: linear-gradient(180deg, var(--cew-blue-tint) 0%, var(--cew-surface) 100%);
+  z-index: 1;
+  background: linear-gradient(180deg, var(--cew-blue-tint) 0%, var(--cew-surface) 100%); /* explicit — opaque, not the backdrop pattern */
   display: flex;
+  flex-direction: column ;
   align-items: center;
   justify-content: center;
+  gap : 20px ;
   padding: 40px;
   overflow: hidden;
   border-left: 1px solid var(--cew-line);
 }
+
+
+.cew-illustration-caption { text-align: center; max-width: 280px; }
+.cew-illustration-caption-title { font-size: 16px; font-weight: 700; color: var(--cew-ink); margin: 0 0 4px; }
+.cew-illustration-caption-subtitle { font-size: 13.5px; color: var(--cew-ink-soft); margin: 0; line-height: 1.5; }
 
 @media (max-width: 900px) {
   .cew-illustration-pane {
@@ -141,7 +157,223 @@
 }
 
 /* ---------------------------------------------------------------------- */
-/* Progress rail                                                          */
+/* Page backdrop — scattered doodle field (used by app/create-event/layout.tsx) */
+/* ---------------------------------------------------------------------- */
+
+.cew-backdrop {
+  position: relative;
+  min-height: 100dvh;
+  width: 100%;
+  background: var(--cew-backdrop);
+}
+
+/*
+ * Safety net: this stylesheet only loads on the create-event route, so
+ * this can't leak onto other pages. If any ancestor (body, a wrapper
+ * div, etc.) isn't truly full-width, this guarantees the gap reads as
+ * the same soft gray instead of whatever the site's default page
+ * background is (e.g. a dark landing-page theme showing through).
+ */
+html:has(.cew-backdrop),
+body:has(.cew-backdrop) {
+  background: var(--cew-backdrop);
+}
+
+.cew-doodle-field {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.cew-doodle {
+  position: absolute;
+  color: var(--cew-ink);
+  opacity: 0.45;
+}
+
+/* Roughly half the field hides on small screens so it doesn't compete with the card for attention */
+@media (max-width: 720px) {
+  .cew-doodle--desktop-only { display: none; }
+  .cew-doodle { opacity: 0.32; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cew-doodle { transition: none !important; }
+}
+
+:root {
+  --cew-topbar-height: 84px; /* fallback only — real height is measured by WizardShell via ResizeObserver and set inline, so this never has to be "correct" */
+}
+
+/*
+ * Dark-mode readiness: every color in this file is a --cew-* custom
+ * property, nothing is hardcoded downstream. To add dark mode later,
+ * add a sibling block here (e.g. [data-theme="dark"] { --cew-ink: #f5f7fa; --cew-paper: #14161a; ... })
+ * and the whole wizard repaints — no component-level changes needed.
+ */
+
+.cew-page {
+  padding-top: var(--cew-topbar-height);
+  min-height: 100dvh;
+  background: transparent; /* backdrop now owned by app/create-event/layout.tsx */
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  transition: padding-top 0.2s var(--cew-ease);
+}
+
+.cew-topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 16px 20px;
+  background: #fffdfd;;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--cew-line);
+  box-shadow: 0 1px 0 rgba(11, 13, 16, 0.03), 0 10px 24px -18px rgba(11, 13, 16, 0.15);
+}
+
+.cew-marble-step[data-clickable="true"] .cew-marble {
+  cursor: pointer;
+}
+.cew-marble-step[data-clickable="true"]:hover .cew-marble {
+  transform: translateY(-2px) scale(1.06);
+  box-shadow: 0 6px 14px -6px rgba(11, 13, 16, 0.25);
+}
+.cew-marble-step[data-status="upcoming"] .cew-marble {
+  cursor: not-allowed;
+}
+
+/* the "string with marbles" */
+.cew-marble-rail {
+  position: relative;
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0 8px;
+}
+
+.cew-marble-track {
+  position: absolute;
+  top: 15px;
+  left: 24px;
+  right: 24px;
+  height: 2px;
+  background: var(--cew-line);
+  border-radius: 2px;
+  z-index: 0;
+}
+
+.cew-marble-track-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: var(--cew-success);
+  border-radius: 2px;
+  transform-origin: left center;
+  transition: width 0.5s var(--cew-ease);
+}
+
+.cew-marble-step {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  min-width: 32px;
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+}
+
+.cew-marble {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--cew-paper);
+  border: 2px solid var(--cew-line-strong);
+  color: var(--cew-ink-soft);
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s var(--cew-ease);
+}
+
+.cew-marble-step[data-status="completed"] .cew-marble {
+  background: var(--cew-success);
+  border-color: var(--cew-success);
+  color: #fff;
+}
+
+.cew-marble-step[data-status="current"] {
+  position: relative;
+}
+.cew-marble-step[data-status="current"] .cew-marble {
+  border-color: var(--cew-blue);
+  color: var(--cew-blue);
+  background: var(--cew-paper);
+  box-shadow: 0 0 0 5px rgba(0, 138, 247, 0.14);
+}
+.cew-marble-step[data-status="current"] .cew-marble::after {
+  content: "";
+  position: absolute;
+  inset: -9px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(0, 138, 247, 0.3), rgba(0, 138, 247, 0));
+  animation: cew-halo-breathe 3s ease-in-out infinite;
+  z-index: -1;
+}
+
+.cew-marble-label {
+  display: none;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--cew-ink-soft);
+  white-space: nowrap;
+}
+.cew-marble-step[data-status="current"] .cew-marble-label { color: var(--cew-ink); }
+
+@media (min-width: 720px) {
+  .cew-marble-label { display: block; }
+}
+
+@media (max-width: 719px) {
+  .cew-marble-rail { justify-content: flex-start; gap: 18px; overflow-x: auto; scrollbar-width: none; }
+  .cew-marble-rail::-webkit-scrollbar { display: none; }
+  .cew-topbar-current-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--cew-ink-soft);
+    position: absolute;
+    left: 50%;
+    bottom: 6px;
+    transform: translateX(-50%);
+  }
+}
+@media (min-width: 720px) {
+  .cew-topbar-current-label { display: none; }
+}
+
+/* ---------------------------------------------------------------------- */
+/* Progress rail (legacy — kept for reference, unused by WizardShell)     */
 /* ---------------------------------------------------------------------- */
 
 .cew-progress {
@@ -389,9 +621,17 @@
   border: none;
   background: transparent;
   font-size: 14px;
+  color: var(--cew-ink);
   cursor: pointer;
 }
-.tag-suggestion-item:hover, .tag-suggestion-custom:hover { background: var(--cew-blue-tint); }
+.tag-suggestion-item:hover, .tag-suggestion-custom:hover {
+  background: var(--cew-blue-tint);
+  color: var(--cew-blue-deep);
+}
+.tag-suggestion-custom {
+  color: var(--cew-blue);
+  font-weight: 600;
+}
 .tag-suggestions-empty { padding: 8px; font-size: 13px; color: var(--cew-ink-soft); }
 
 /* Agenda rows */
@@ -491,13 +731,19 @@
 /* Mode cards (In-Person / Online / Hybrid)                               */
 /* ---------------------------------------------------------------------- */
 
+/* ---------------------------------------------------------------------- */
+/* Option cards — the one system every clickable card (mode, category,   */
+/* free/paid, and future ones) is built from. --cew-art-size controls    */
+/* the bottom-right doodle slot per instance.                             */
+/* ---------------------------------------------------------------------- */
+
 .cew-card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 12px;
 }
 
-.cew-mode-card {
+.cew-option-card {
   position: relative;
   text-align: left;
   padding: 16px;
@@ -505,101 +751,77 @@
   border: 1.5px solid var(--cew-line);
   background: var(--cew-paper);
   cursor: pointer;
-  transition: border-color 0.18s var(--cew-ease), box-shadow 0.18s var(--cew-ease), transform 0.15s var(--cew-ease);
+  overflow: hidden;
+  transition: border-color 0.18s var(--cew-ease), box-shadow 0.2s var(--cew-ease), transform 0.15s var(--cew-ease);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
+  --cew-art-size: 60px;
 }
 
-.cew-mode-card[data-state="hover"] { border-color: var(--cew-line-strong); transform: translateY(-1px); }
-.cew-mode-card[data-state="active"] { transform: scale(0.98); }
-.cew-mode-card[data-selected="true"] {
+.cew-option-card--compact {
+  padding: 12px 14px;
+  gap: 2px;
+  --cew-art-size: 40px;
+}
+
+.cew-option-card--ticket {
+  padding: 20px;
+  min-height: 132px;
+  border-radius: var(--cew-radius-lg);
+  justify-content: space-between;
+  --cew-art-size: 76px;
+}
+
+.cew-option-card[data-state="hover"] { border-color: var(--cew-line-strong); transform: translateY(-1px); }
+.cew-option-card[data-state="active"] { transform: scale(0.98); }
+.cew-option-card[data-selected="true"] {
   border-color: var(--cew-blue);
   background: var(--cew-blue-tint);
   box-shadow: 0 0 0 4px rgba(0, 138, 247, 0.12);
 }
+.cew-option-card--ticket[data-selected="true"] {
+  background: var(--cew-paper);
+  box-shadow: 0 0 0 4px rgba(0, 138, 247, 0.14), var(--cew-shadow-raised);
+}
 
-.cew-mode-card-icon { font-size: 20px; }
-.cew-mode-card-label { font-size: 14.5px; font-weight: 650; color: var(--cew-ink); }
-.cew-mode-card-desc { font-size: 12.5px; color: var(--cew-ink-soft); }
+.cew-option-card[data-selected="true"] .cew-halo { opacity: 0.5; }
+.cew-option-card:not([data-selected="true"]) .cew-halo { opacity: 0; }
 
-/* ---------------------------------------------------------------------- */
-/* Free / Paid toggle cards                                                */
-/* ---------------------------------------------------------------------- */
+.cew-option-card-icon { font-size: 20px; z-index: 1; }
+.cew-option-card-label { font-size: 14.5px; font-weight: 650; color: var(--cew-ink); z-index: 1; }
+.cew-option-card--ticket .cew-option-card-label { font-size: 16px; font-weight: 700; }
+.cew-option-card-desc { font-size: 12.5px; color: var(--cew-ink-soft); z-index: 1; max-width: 24ch; }
+
+/* the illustration slot pinned bottom-right of ANY option card */
+.cew-card-art {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  width: var(--cew-art-size);
+  height: var(--cew-art-size);
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  opacity: 0.9;
+  pointer-events: none;
+  z-index: 0;
+  transition: transform 0.3s var(--cew-ease);
+}
+.cew-option-card[data-selected="true"] .cew-card-art { transform: scale(1.08) rotate(-4deg); }
+
+.cew-price-reveal {
+  overflow: hidden;
+  transition: max-height 0.35s var(--cew-ease), opacity 0.3s var(--cew-ease), margin-top 0.35s var(--cew-ease);
+}
 
 .cew-toggle-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 14px;
 }
-
 @media (max-width: 480px) {
   .cew-toggle-grid { grid-template-columns: 1fr; }
-}
-
-.cew-toggle-card {
-  position: relative;
-  padding: 20px;
-  min-height: 132px;
-  border-radius: var(--cew-radius-lg);
-  border: 1.5px solid var(--cew-line);
-  background: var(--cew-paper);
-  cursor: pointer;
-  text-align: left;
-  overflow: hidden;
-  transition: border-color 0.2s var(--cew-ease), box-shadow 0.2s var(--cew-ease), transform 0.15s var(--cew-ease);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
-.cew-toggle-card[data-state="hover"] { transform: translateY(-2px); border-color: var(--cew-line-strong); }
-.cew-toggle-card[data-state="active"] { transform: scale(0.97); }
-
-.cew-toggle-card[data-selected="true"] {
-  border-color: var(--cew-blue);
-  box-shadow: 0 0 0 4px rgba(0, 138, 247, 0.14), var(--cew-shadow-raised);
-}
-
-.cew-toggle-card[data-selected="true"] .cew-halo {
-  opacity: 1;
-}
-.cew-toggle-card:not([data-selected="true"]) .cew-halo {
-  opacity: 0;
-}
-
-.cew-toggle-card-label {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--cew-ink);
-  z-index: 1;
-}
-.cew-toggle-card-desc {
-  font-size: 12.5px;
-  color: var(--cew-ink-soft);
-  z-index: 1;
-  max-width: 22ch;
-}
-
-/* the illustration slot pinned bottom-right of each toggle card */
-.cew-toggle-card-art {
-  position: absolute;
-  right: -6px;
-  bottom: -6px;
-  width: 76px;
-  height: 76px;
-  display: flex;
-  align-items: flex-end;
-  justify-content: flex-end;
-  opacity: 0.9;
-  z-index: 0;
-  transition: transform 0.3s var(--cew-ease);
-}
-.cew-toggle-card[data-selected="true"] .cew-toggle-card-art { transform: scale(1.08) rotate(-4deg); }
-
-.cew-price-reveal {
-  overflow: hidden;
-  transition: max-height 0.35s var(--cew-ease), opacity 0.3s var(--cew-ease), margin-top 0.35s var(--cew-ease);
 }
 
 /* ---------------------------------------------------------------------- */
