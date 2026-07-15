@@ -133,7 +133,6 @@
   }
 }
 
-/* Doodle placeholder — swap the inner content for real illustrations */
 .cew-doodle-slot {
   position: relative;
   width: 100%;
@@ -151,7 +150,12 @@
   gap: 6px;
   z-index: 1;
 }
-
+ 
+.cew-doodle-slot--filled {
+  border: none;
+  background: transparent;
+}
+ 
 .cew-doodle-slot span {
   max-width: 200px;
 }

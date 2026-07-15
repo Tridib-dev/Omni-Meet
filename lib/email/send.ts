@@ -7,7 +7,7 @@ import {
     bookingConfirmationHtml,
     bookingConfirmationSubject,
     type BookingConfirmationData,
-} from "./templates/BookingConfirmation";
+} from "./BookingConfirmation";
 
 // ─── Booking confirmation ─────────────────────────────────────────────────────
 
@@ -21,7 +21,7 @@ export async function sendBookingConfirmation(
         }
 
         const { error } = await resend.emails.send({
-            from: `DevEvent <${FROM_EMAIL}>`,
+            from: `Omni Meet <${FROM_EMAIL}>`,
             to:   [data.to],
             subject: bookingConfirmationSubject(data.eventTitle),
             html: bookingConfirmationHtml(data, BASE_URL),
@@ -33,7 +33,6 @@ export async function sendBookingConfirmation(
             console.log(`[Email] Confirmation sent to ${data.to} for "${data.eventTitle}"`);
         }
     } catch (err) {
-        // Never re-throw — email failure must not break the booking flow
         console.error("[Email] Unexpected error in sendBookingConfirmation:", err);
     }
 }
