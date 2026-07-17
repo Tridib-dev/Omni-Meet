@@ -6,6 +6,7 @@ import { createOrder } from "@/lib/actions/order.actions";
 import { sendBookingConfirmation } from "@/lib/email/send";
 import { Event } from "@/database/event.model";
 import connectToDatabase from "@/lib/mongodb";
+import { clerkClient } from "@clerk/nextjs/server";
 
 
 
@@ -16,6 +17,11 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
+        const clerk = await clerkClient();
+        const clerkUser = await clerk.users.getUser(userId);
+        const userEmail = clerkUser.emailAddresses[0]?.emailAddress ?? "";
+
+
         const {
             razorpay_order_id,
             razorpay_payment_id,
@@ -24,7 +30,6 @@ export async function POST(req: NextRequest) {
             eventTitle,
             eventSlug,
             amount,
-            userEmail,
         } = await req.json();
 
         // Verify HMAC signature — this is the critical security step
@@ -69,7 +74,7 @@ export async function POST(req: NextRequest) {
                 eventDate: eventDoc?.date ?? "",
                 eventTime: eventDoc?.time ?? "",
                 eventLocation: eventDoc?.location ?? "",
-                ticketId: razorpay_payment_id,
+                ticketId: result.order._id.toString(),
                 price: amount,
                 eventSlug: eventDoc?.slug ?? eventSlug,
             });

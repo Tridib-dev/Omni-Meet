@@ -4,6 +4,7 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import connectToDatabase from "../mongodb";
 import { Booking } from "@/database/booking.model";
 import { sendBookingConfirmation } from "@/lib/email/send";
+import { Event } from "@/database/event.model";
 
 // ─── Create Booking ───────────────────────────────────────────────────────────
 // No longer accepts email as a param — pulls identity from the active

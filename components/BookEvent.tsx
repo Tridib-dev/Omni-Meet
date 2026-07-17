@@ -233,6 +233,7 @@ const StickyBookingBar = ({
                         eventTitle: title,
                         eventSlug: slug,
                         amount: price,
+                        userEmail: user?.emailAddresses?.[0]?.emailAddress ?? "",
                     }),
                 });
 
