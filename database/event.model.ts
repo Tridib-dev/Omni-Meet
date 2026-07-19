@@ -7,6 +7,12 @@ export interface IAgendaItem {
   keynote: string;
 }
 
+export interface ISponsorItem {
+  name: string;
+  website: string;
+  logo?: string; // populated later by an auto-detect system (social/company DP or favicon.ico) — not user-entered at creation
+}
+
 export interface IEvent {
   _id?: string;
   title: string;
@@ -27,7 +33,7 @@ export interface IEvent {
   date: string;
   time: string;
   mode: string;
-  audience: string;
+  audience: string[];
   agenda: IAgendaItem[];
   organizer: string;
   creatorClerkId: string;   
@@ -40,11 +46,7 @@ export interface IEvent {
   categorySlug?: string;
   price : number;
   isFree ?: boolean;
-  sponsors: Array<{
-    name: string;
-    logo?: string;
-    website?: string;
-  }>;
+  sponsors: ISponsorItem[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -67,7 +69,6 @@ type RequiredStringField =
   | "date"
   | "time"
   | "mode"
-  | "audience"
   | "organizer";
 
 const REQUIRED_STRING_FIELDS: RequiredStringField[] = [
@@ -86,7 +87,6 @@ const REQUIRED_STRING_FIELDS: RequiredStringField[] = [
   "date",
   "time",
   "mode",
-  "audience",
   "organizer",
 ];
 
@@ -145,6 +145,28 @@ const agendaItemSchema = new Schema<IAgendaItem>(
   { _id: false }
 );
 
+// URL-ish validation kept loose on purpose — a bare "acme.com" (no protocol)
+// is a very common thing for someone to type, and the auto-detect logo
+// system (social vs favicon) will need to normalize this anyway later.
+const WEBSITE_PATTERN = /^(https?:\/\/)?([\w-]+\.)+[\w-]{2,}(\/\S*)?$/i;
+
+const sponsorItemSchema = new Schema<ISponsorItem>(
+  {
+    name: { type: String, required: true, trim: true },
+    website: {
+      type: String,
+      required: true,
+      trim: true,
+      validate: {
+        validator: (value: string) => WEBSITE_PATTERN.test(value),
+        message: (props: { value: string }) => `"${props.value}" doesn't look like a valid website or social link.`,
+      },
+    },
+    logo: { type: String, trim: true },
+  },
+  { _id: false }
+);
+
 const eventSchema = new Schema<IEvent>(
   {
     title: { type: String, required: true, trim: true },
@@ -165,7 +187,14 @@ const eventSchema = new Schema<IEvent>(
     date: { type: String, required: true, trim: true },
     time: { type: String, required: true, trim: true },
     mode: { type: String, required: true, trim: true },
-    audience: { type: String, required: true, trim: true },
+    audience: {
+      type: [{ type: String, trim: true }],
+      required: true,
+      validate: {
+        validator: (value: string[]) => value.length > 0,
+        message: "audience must contain at least one item.",
+      },
+    },
 
     price: { 
       type: Number, 
@@ -174,12 +203,13 @@ const eventSchema = new Schema<IEvent>(
       default: 0 
     },
 
-    // Sponsors
-    sponsors: [{
-      name: { type: String, required: true },
-      logo: { type: String },
-      website: { type: String },
-    }],
+    // Sponsors — optional overall, but any entry that IS provided must have
+    // a valid name + website. logo is never user-entered; it's filled in
+    // later by the auto-detect system.
+    sponsors: {
+      type: [sponsorItemSchema],
+      default: [],
+    },
     // --- Agenda ---
     agenda: {
       type: [agendaItemSchema],
@@ -232,7 +262,7 @@ const eventSchema = new Schema<IEvent>(
   }
 );
 
-eventSchema.pre("save", function validateAndNormalizeEvent(this: EventDocument) {
+eventSchema.pre("validate", function validateAndNormalizeEvent(this: EventDocument) {
   for (const field of REQUIRED_STRING_FIELDS) {
     const value = this[field];
 
@@ -263,14 +293,6 @@ eventSchema.pre("save", function validateAndNormalizeEvent(this: EventDocument) 
   this.stateSlug = createSlug(this.state);
   this.citySlug = createSlug(this.city);
   this.categorySlug = createSlug(this.category);
-
-  // if (typeof this.lat !== "number" || Number.isNaN(this.lat)) {
-  //   throw new Error("lat must be a valid number.");
-  // }
-
-  // if (typeof this.lng !== "number" || Number.isNaN(this.lng)) {
-  //   throw new Error("lng must be a valid number.");
-  // }
 
   // --- Agenda: structured validation + time normalization ---
   if (!Array.isArray(this.agenda) || this.agenda.length === 0) {
@@ -306,6 +328,17 @@ eventSchema.pre("save", function validateAndNormalizeEvent(this: EventDocument) 
     };
   });
 
+  // --- Sponsors: drop any incomplete rows rather than failing the whole save ---
+  if (Array.isArray(this.sponsors)) {
+    this.sponsors = this.sponsors
+      .map((s) => ({
+        name: s.name?.trim(),
+        website: s.website?.trim(),
+        logo: s.logo?.trim(),
+      }))
+      .filter((s) => s.name && s.website) as ISponsorItem[];
+  }
+
   // --- organizerEmails ---
   if (!Array.isArray(this.organizerEmails) || this.organizerEmails.length === 0) {
     throw new Error("organizerEmails must contain at least one item.");
@@ -317,6 +350,17 @@ eventSchema.pre("save", function validateAndNormalizeEvent(this: EventDocument) 
 
   if (this.organizerEmails.length === 0) {
     throw new Error("organizerEmails must contain non-empty items.");
+  }
+
+  // --- audience ---
+  if (!Array.isArray(this.audience) || this.audience.length === 0) {
+    throw new Error("audience must contain at least one item.");
+  }
+
+  this.audience = this.audience.map((item) => item.trim()).filter(Boolean);
+
+  if (this.audience.length === 0) {
+    throw new Error("audience must contain non-empty items.");
   }
 
   // --- tags ---
@@ -353,7 +397,6 @@ eventSchema.index({ countrySlug: 1, stateSlug: 1, citySlug: 1 });
 eventSchema.index({ mode: 1 });
 eventSchema.index({ date: 1 });
 eventSchema.index({ title: "text", description: "text", overview: "text", venue: "text" });
-eventSchema.index({ creatorClerkId: 1 });
 
 const Event = (models.Event as EventModel | undefined) ?? model<IEvent>("Event", eventSchema);
 

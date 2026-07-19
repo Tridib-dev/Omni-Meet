@@ -1,14 +1,9 @@
 import type { EventCategory } from "@/lib/constants/event-categories";
 import type { AgendaItemInput } from "./fields/AgendaFields";
+import type { SponsorItemInput } from "./fields/SponsorFields";
 import type { LocationValue } from "./fields/LocationFields";
 
 export type EventMode = "In-Person" | "Online" | "Hybrid (In-Person & Online)";
-
-export interface SponsorInput {
-  name: string;
-  logo?: string;
-  website?: string;
-}
 
 /**
  * Everything the wizard collects across all 7 steps.
@@ -35,7 +30,7 @@ export interface EventDraft {
   overview: string;
 
   // Step 4 — Details
-  audience: string;
+  audience: string[];
   tags: string[];
   agenda: AgendaItemInput[];
 
@@ -46,7 +41,7 @@ export interface EventDraft {
   // Step 6 — Organizer
   organizer: string;
   organizerEmails: string[];
-  sponsors: SponsorInput[];
+  sponsors: SponsorItemInput[];
 }
 
 export const emptyDraft: EventDraft = {
@@ -71,7 +66,7 @@ export const emptyDraft: EventDraft = {
   imagePreviewUrl: null,
   overview: "",
 
-  audience: "",
+  audience: [],
   tags: [],
   agenda: [],
 
@@ -127,7 +122,7 @@ export const validateStep = (draft: EventDraft, step: WizardStepKey): boolean =>
       const validAgenda = draft.agenda.filter(
         (a) => a.startTime && a.endTime && a.keynote.trim() && a.endTime > a.startTime
       );
-      return draft.audience.trim().length > 0 && draft.tags.length > 0 && validAgenda.length > 0;
+      return draft.audience.length > 0 && draft.tags.length > 0 && validAgenda.length > 0;
     }
     case "tickets":
       return draft.isFree || draft.price > 0;

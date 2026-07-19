@@ -4,6 +4,7 @@ import React from "react";
 import { EventDraft } from "../types";
 import TagPicker from "../fields/TagPicker";
 import AgendaFields from "../fields/AgendaFields";
+import { AUDIENCE_PERSONAS } from "@/lib/constants/audience-personas";
 
 interface Step4Props {
   draft: EventDraft;
@@ -15,18 +16,15 @@ const Step4Details = ({ draft, onUpdate }: Step4Props) => {
     <>
       <p className="cew-step-eyebrow">Step 4 of 7</p>
       <h1 className="cew-step-title">Fill in the details</h1>
-      <p className="cew-step-subtitle">Who's it for, what's it tagged as, and what's on the schedule.</p>
+      <p className="cew-step-subtitle">Who&apos;s it for, what&apos;s it tagged as, and what&apos;s on the schedule.</p>
 
       <div className="cew-step-body">
         <div className="field">
-          <label htmlFor="audience">Audience</label>
-          <input
-            id="audience"
-            name="audience"
-            type="text"
-            value={draft.audience}
-            onChange={(e) => onUpdate({ audience: e.target.value })}
-            placeholder="Cloud engineers, DevOps, AI researchers"
+          <label>Audience</label>
+          <TagPicker
+            options={AUDIENCE_PERSONAS}
+            placeholder="Search roles, focus areas, org types..."
+            onChange={(audience) => onUpdate({ audience })}
           />
         </div>
 

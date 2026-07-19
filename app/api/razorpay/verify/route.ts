@@ -3,11 +3,17 @@ import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { createOrder } from "@/lib/actions/order.actions";
-import { sendBookingConfirmation } from "@/lib/email/send";
+import { sendOrderReceipt } from "@/lib/email/services/booking.email";
 import { Event } from "@/database/event.model";
 import connectToDatabase from "@/lib/mongodb";
 import { clerkClient } from "@clerk/nextjs/server";
 
+type EventEmailDoc = {
+    date?: string;
+    time?: string;
+    location?: string;
+    slug?: string;
+};
 
 
 export async function POST(req: NextRequest) {
@@ -66,16 +72,17 @@ export async function POST(req: NextRequest) {
             await connectToDatabase();
             const eventDoc = await Event.findById(eventId)
                 .select("date time location slug")
-                .lean() as any;
+                .lean<EventEmailDoc>();
         
-            sendBookingConfirmation({
+            await sendOrderReceipt({
                 to: userEmail,
                 eventTitle,
                 eventDate: eventDoc?.date ?? "",
                 eventTime: eventDoc?.time ?? "",
                 eventLocation: eventDoc?.location ?? "",
                 ticketId: result.order._id.toString(),
-                price: amount,
+                paymentId: razorpay_payment_id,
+                amount,
                 eventSlug: eventDoc?.slug ?? eventSlug,
             });
         }

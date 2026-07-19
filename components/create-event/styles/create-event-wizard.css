@@ -3,6 +3,12 @@
    Palette: white / near-black / premium blue (#008AF7)
    Signature: the "halo" — soft blue radial glow reused on the active
    illustration, the progress puck, and pressed/hovered primary surfaces.
+
+   Everything below (except :root, which must stay global for var() to
+   resolve) is scoped under .cew-scope — a wrapper class rendered once in
+   app/create-event/layout.tsx — so this stylesheet stays local to the
+   create-event route and won't affect other screens during client-side
+   navigation.
    ========================================================================== */
 
 :root {
@@ -38,16 +44,12 @@
   --cew-ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* ---------------------------------------------------------------------- */
-/* Halo — the signature motif                                             */
-/* ---------------------------------------------------------------------- */
 
-.cew-halo {
+.cew-scope .cew-halo {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background:
-    radial-gradient(closest-side, rgba(0, 138, 247, 0.28), rgba(0, 138, 247, 0) 70%);
+  background: radial-gradient(closest-side, rgba(0, 138, 247, 0.28), rgba(0, 138, 247, 0) 70%);
   filter: blur(2px);
   opacity: 0.9;
   transition: opacity 0.4s var(--cew-ease), transform 0.6s var(--cew-ease);
@@ -58,15 +60,11 @@
   50% { transform: scale(1.06); opacity: 1; }
 }
 
-.cew-halo--breathing {
+.cew-scope .cew-halo--breathing {
   animation: cew-halo-breathe 4.5s ease-in-out infinite;
 }
 
-/* ---------------------------------------------------------------------- */
-/* Shell — split pane                                                     */
-/* ---------------------------------------------------------------------- */
-
-.cew-shell {
+.cew-scope .cew-shell {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 0.86fr);
   min-height: min(820px, 100dvh);
@@ -80,51 +78,65 @@
 }
 
 @media (max-width: 900px) {
-  .cew-shell {
+  .cew-scope .cew-shell {
     grid-template-columns: 1fr;
     border-radius: 20px;
     min-height: 0;
   }
 }
 
-.cew-form-pane {
+.cew-scope .cew-form-pane {
   display: flex;
   flex-direction: column;
   padding: 40px 48px 28px;
-  background: var(--cew-paper); /* explicit — never inherits/transparent, patterns must stay outside the card */
+  background: var(--cew-paper);
   position: relative;
   z-index: 1;
   min-height: 0;
 }
 
 @media (max-width: 900px) {
-  .cew-form-pane {
+  .cew-scope .cew-form-pane {
     padding: 24px 20px calc(20px + env(safe-area-inset-bottom, 0px));
     order: 2;
   }
 }
 
-.cew-illustration-pane {
+.cew-scope .cew-illustration-pane {
   position: relative;
   z-index: 1;
-  background: linear-gradient(180deg, var(--cew-blue-tint) 0%, var(--cew-surface) 100%); /* explicit — opaque, not the backdrop pattern */
+  background: linear-gradient(180deg, var(--cew-blue-tint) 0%, var(--cew-surface) 100%);
   display: flex;
-  flex-direction: column ;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap : 20px ;
+  gap: 20px;
   padding: 40px;
   overflow: hidden;
   border-left: 1px solid var(--cew-line);
 }
 
+.cew-scope .cew-illustration-caption {
+  text-align: center;
+  max-width: 280px;
+}
 
-.cew-illustration-caption { text-align: center; max-width: 280px; }
-.cew-illustration-caption-title { font-size: 16px; font-weight: 700; color: var(--cew-ink); margin: 0 0 4px; }
-.cew-illustration-caption-subtitle { font-size: 13.5px; color: var(--cew-ink-soft); margin: 0; line-height: 1.5; }
+.cew-scope .cew-illustration-caption-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--cew-ink);
+  margin: 0 0 4px;
+}
+
+.cew-scope .cew-illustration-caption-subtitle {
+  font-size: 13.5px;
+  color: var(--cew-ink-soft);
+  margin: 0;
+  line-height: 1.5;
+}
 
 @media (max-width: 900px) {
-  .cew-illustration-pane {
+  .cew-scope .cew-illustration-pane {
     order: 1;
     border-left: none;
     border-bottom: 1px solid var(--cew-line);
@@ -133,7 +145,7 @@
   }
 }
 
-.cew-doodle-slot {
+.cew-scope .cew-doodle-slot {
   position: relative;
   width: 100%;
   max-width: 340px;
@@ -150,40 +162,30 @@
   gap: 6px;
   z-index: 1;
 }
- 
-.cew-doodle-slot--filled {
+
+.cew-scope .cew-doodle-slot--filled {
   border: none;
   background: transparent;
 }
- 
-.cew-doodle-slot span {
+
+.cew-scope .cew-doodle-slot span {
   max-width: 200px;
 }
 
-/* ---------------------------------------------------------------------- */
-/* Page backdrop — scattered doodle field (used by app/create-event/layout.tsx) */
-/* ---------------------------------------------------------------------- */
-
-.cew-backdrop {
+.cew-scope .cew-backdrop {
   position: relative;
   min-height: 100dvh;
   width: 100%;
   background: var(--cew-backdrop);
 }
 
-/*
- * Safety net: this stylesheet only loads on the create-event route, so
- * this can't leak onto other pages. If any ancestor (body, a wrapper
- * div, etc.) isn't truly full-width, this guarantees the gap reads as
- * the same soft gray instead of whatever the site's default page
- * background is (e.g. a dark landing-page theme showing through).
- */
-html:has(.cew-backdrop),
-body:has(.cew-backdrop) {
+.cew-scope {
+  display: block;
+  min-height: 100dvh;
   background: var(--cew-backdrop);
 }
 
-.cew-doodle-field {
+.cew-scope .cew-doodle-field {
   position: fixed;
   inset: 0;
   z-index: 0;
@@ -191,37 +193,25 @@ body:has(.cew-backdrop) {
   pointer-events: none;
 }
 
-.cew-doodle {
+.cew-scope .cew-doodle {
   position: absolute;
   color: var(--cew-ink);
-  opacity: 0.45;
+  opacity: 0.4;
 }
 
-/* Roughly half the field hides on small screens so it doesn't compete with the card for attention */
 @media (max-width: 720px) {
-  .cew-doodle--desktop-only { display: none; }
-  .cew-doodle { opacity: 0.32; }
+  .cew-scope .cew-doodle--desktop-only { display: none; }
+  .cew-scope .cew-doodle { opacity: 0.32; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .cew-doodle { transition: none !important; }
+  .cew-scope .cew-doodle { transition: none !important; }
 }
 
-:root {
-  --cew-topbar-height: 84px; /* fallback only — real height is measured by WizardShell via ResizeObserver and set inline, so this never has to be "correct" */
-}
-
-/*
- * Dark-mode readiness: every color in this file is a --cew-* custom
- * property, nothing is hardcoded downstream. To add dark mode later,
- * add a sibling block here (e.g. [data-theme="dark"] { --cew-ink: #f5f7fa; --cew-paper: #14161a; ... })
- * and the whole wizard repaints — no component-level changes needed.
- */
-
-.cew-page {
+.cew-scope .cew-page {
   padding-top: var(--cew-topbar-height);
   min-height: 100dvh;
-  background: transparent; /* backdrop now owned by app/create-event/layout.tsx */
+  background: transparent;
   position: relative;
   z-index: 1;
   display: flex;
@@ -230,7 +220,7 @@ body:has(.cew-backdrop) {
   transition: padding-top 0.2s var(--cew-ease);
 }
 
-.cew-topbar {
+.cew-scope .cew-topbar {
   position: fixed;
   top: 0;
   left: 0;
@@ -240,26 +230,25 @@ body:has(.cew-backdrop) {
   align-items: center;
   gap: 20px;
   padding: 16px 20px;
-  background: #fffdfd;;
+  background: #f6f8fb;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--cew-line);
   box-shadow: 0 1px 0 rgba(11, 13, 16, 0.03), 0 10px 24px -18px rgba(11, 13, 16, 0.15);
 }
 
-.cew-marble-step[data-clickable="true"] .cew-marble {
+.cew-scope .cew-marble-step[data-clickable="true"] .cew-marble {
   cursor: pointer;
 }
-.cew-marble-step[data-clickable="true"]:hover .cew-marble {
+.cew-scope .cew-marble-step[data-clickable="true"]:hover .cew-marble {
   transform: translateY(-2px) scale(1.06);
   box-shadow: 0 6px 14px -6px rgba(11, 13, 16, 0.25);
 }
-.cew-marble-step[data-status="upcoming"] .cew-marble {
+.cew-scope .cew-marble-step[data-status="upcoming"] .cew-marble {
   cursor: not-allowed;
 }
 
-/* the "string with marbles" */
-.cew-marble-rail {
+.cew-scope .cew-marble-rail {
   position: relative;
   flex: 1;
   display: flex;
@@ -269,7 +258,7 @@ body:has(.cew-backdrop) {
   padding: 0 8px;
 }
 
-.cew-marble-track {
+.cew-scope .cew-marble-track {
   position: absolute;
   top: 15px;
   left: 24px;
@@ -280,7 +269,7 @@ body:has(.cew-backdrop) {
   z-index: 0;
 }
 
-.cew-marble-track-fill {
+.cew-scope .cew-marble-track-fill {
   position: absolute;
   top: 0;
   left: 0;
@@ -291,7 +280,7 @@ body:has(.cew-backdrop) {
   transition: width 0.5s var(--cew-ease);
 }
 
-.cew-marble-step {
+.cew-scope .cew-marble-step {
   position: relative;
   z-index: 1;
   display: flex;
@@ -305,7 +294,7 @@ body:has(.cew-backdrop) {
   font: inherit;
 }
 
-.cew-marble {
+.cew-scope .cew-marble {
   width: 30px;
   height: 30px;
   border-radius: 50%;
@@ -320,22 +309,22 @@ body:has(.cew-backdrop) {
   transition: all 0.3s var(--cew-ease);
 }
 
-.cew-marble-step[data-status="completed"] .cew-marble {
+.cew-scope .cew-marble-step[data-status="completed"] .cew-marble {
   background: var(--cew-success);
   border-color: var(--cew-success);
   color: #fff;
 }
 
-.cew-marble-step[data-status="current"] {
+.cew-scope .cew-marble-step[data-status="current"] {
   position: relative;
 }
-.cew-marble-step[data-status="current"] .cew-marble {
+.cew-scope .cew-marble-step[data-status="current"] .cew-marble {
   border-color: var(--cew-blue);
   color: var(--cew-blue);
   background: var(--cew-paper);
   box-shadow: 0 0 0 5px rgba(0, 138, 247, 0.14);
 }
-.cew-marble-step[data-status="current"] .cew-marble::after {
+.cew-scope .cew-marble-step[data-status="current"] .cew-marble::after {
   content: "";
   position: absolute;
   inset: -9px;
@@ -345,23 +334,23 @@ body:has(.cew-backdrop) {
   z-index: -1;
 }
 
-.cew-marble-label {
+.cew-scope .cew-marble-label {
   display: none;
   font-size: 10.5px;
   font-weight: 600;
   color: var(--cew-ink-soft);
   white-space: nowrap;
 }
-.cew-marble-step[data-status="current"] .cew-marble-label { color: var(--cew-ink); }
+.cew-scope .cew-marble-step[data-status="current"] .cew-marble-label { color: var(--cew-ink); }
 
 @media (min-width: 720px) {
-  .cew-marble-label { display: block; }
+  .cew-scope .cew-marble-label { display: block; }
 }
 
 @media (max-width: 719px) {
-  .cew-marble-rail { justify-content: flex-start; gap: 18px; overflow-x: auto; scrollbar-width: none; }
-  .cew-marble-rail::-webkit-scrollbar { display: none; }
-  .cew-topbar-current-label {
+  .cew-scope .cew-marble-rail { justify-content: flex-start; gap: 18px; overflow-x: auto; scrollbar-width: none; }
+  .cew-scope .cew-marble-rail::-webkit-scrollbar { display: none; }
+  .cew-scope .cew-topbar-current-label {
     display: block;
     font-size: 12px;
     font-weight: 600;
@@ -373,71 +362,10 @@ body:has(.cew-backdrop) {
   }
 }
 @media (min-width: 720px) {
-  .cew-topbar-current-label { display: none; }
+  .cew-scope .cew-topbar-current-label { display: none; }
 }
 
-/* ---------------------------------------------------------------------- */
-/* Progress rail (legacy — kept for reference, unused by WizardShell)     */
-/* ---------------------------------------------------------------------- */
-
-.cew-progress {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 28px;
-}
-
-.cew-progress-rail {
-  position: relative;
-  flex: 1;
-  height: 6px;
-  border-radius: 999px;
-  background: var(--cew-line);
-  overflow: visible;
-}
-
-.cew-progress-fill {
-  position: absolute;
-  inset: 0;
-  border-radius: 999px;
-  background: var(--cew-blue);
-  transform-origin: left center;
-  transition: transform 0.5s var(--cew-ease);
-}
-
-.cew-progress-puck {
-  position: absolute;
-  top: 50%;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: var(--cew-paper);
-  border: 3px solid var(--cew-blue);
-  transform: translate(-50%, -50%);
-  transition: left 0.5s var(--cew-ease);
-}
-
-.cew-progress-puck::before {
-  content: "";
-  position: absolute;
-  inset: -10px;
-  border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(0, 138, 247, 0.35), rgba(0, 138, 247, 0));
-  animation: cew-halo-breathe 3s ease-in-out infinite;
-}
-
-.cew-progress-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--cew-ink-soft);
-  white-space: nowrap;
-}
-
-/* ---------------------------------------------------------------------- */
-/* Step chrome                                                            */
-/* ---------------------------------------------------------------------- */
-
-.cew-step-eyebrow {
+.cew-scope .cew-step-eyebrow {
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -446,7 +374,7 @@ body:has(.cew-backdrop) {
   margin-bottom: 8px;
 }
 
-.cew-step-title {
+.cew-scope .cew-step-title {
   font-size: 26px;
   font-weight: 650;
   letter-spacing: -0.01em;
@@ -454,14 +382,14 @@ body:has(.cew-backdrop) {
   margin: 0 0 6px;
 }
 
-.cew-step-subtitle {
+.cew-scope .cew-step-subtitle {
   font-size: 14.5px;
   color: var(--cew-ink-soft);
   margin: 0 0 28px;
   max-width: 46ch;
 }
 
-.cew-step-body {
+.cew-scope .cew-step-body {
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -471,36 +399,32 @@ body:has(.cew-backdrop) {
   padding-bottom: 8px;
 }
 
-/* ---------------------------------------------------------------------- */
-/* Fields (shared with existing OrganizerEmails / TagPicker / etc.)       */
-/* ---------------------------------------------------------------------- */
-
-.field {
+.cew-scope .field {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.field-row {
+.cew-scope .field-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 16px;
 }
 
-.field label {
+.cew-scope .field label {
   font-size: 13px;
   font-weight: 600;
   color: var(--cew-ink);
 }
 
-.field input[type="text"],
-.field input[type="email"],
-.field input[type="date"],
-.field input[type="time"],
-.field input[type="number"],
-.field textarea,
-.field select,
-.tag-input-wrapper {
+.cew-scope .field input[type="text"],
+.cew-scope .field input[type="email"],
+.cew-scope .field input[type="date"],
+.cew-scope .field input[type="time"],
+.cew-scope .field input[type="number"],
+.cew-scope .field textarea,
+.cew-scope .field select,
+.cew-scope .tag-input-wrapper {
   font-size: 15px;
   padding: 12px 14px;
   border-radius: var(--cew-radius-sm);
@@ -511,50 +435,49 @@ body:has(.cew-backdrop) {
   width: 100%;
 }
 
-.field textarea {
+.cew-scope .field textarea {
   resize: vertical;
   min-height: 84px;
 }
 
-.field input:hover,
-.field select:hover,
-.field textarea:hover,
-.tag-input-wrapper:hover {
+.cew-scope .field input:hover,
+.cew-scope .field select:hover,
+.cew-scope .field textarea:hover,
+.cew-scope .tag-input-wrapper:hover {
   border-color: var(--cew-line-strong);
 }
 
-.field input:focus,
-.field select:focus,
-.field textarea:focus,
-.tag-input-wrapper:focus-within {
+.cew-scope .field input:focus,
+.cew-scope .field select:focus,
+.cew-scope .field textarea:focus,
+.cew-scope .tag-input-wrapper:focus-within {
   outline: none;
   border-color: var(--cew-blue);
   background: var(--cew-paper);
   box-shadow: 0 0 0 4px rgba(0, 138, 247, 0.14);
 }
 
-.field-hint {
+.cew-scope .field-hint {
   font-size: 12.5px;
   color: var(--cew-ink-soft);
   margin: 0;
 }
 
-.field-error {
+.cew-scope .field-error {
   font-size: 12.5px;
   color: var(--cew-danger);
   margin: 0;
   font-weight: 500;
 }
 
-/* Chip inputs (OrganizerEmails / TagPicker) */
-.tag-input-wrapper {
+.cew-scope .tag-input-wrapper {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
 }
 
-.tag-input-wrapper input {
+.cew-scope .tag-input-wrapper input {
   flex: 1;
   min-width: 120px;
   border: none;
@@ -562,9 +485,9 @@ body:has(.cew-backdrop) {
   padding: 4px;
   font-size: 15px;
 }
-.tag-input-wrapper input:focus { outline: none; box-shadow: none; }
+.cew-scope .tag-input-wrapper input:focus { outline: none; box-shadow: none; }
 
-.pill {
+.cew-scope .pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -576,7 +499,7 @@ body:has(.cew-backdrop) {
   font-weight: 600;
 }
 
-.pill-removable button {
+.cew-scope .pill-removable button {
   border: none;
   background: rgba(0, 138, 247, 0.15);
   color: var(--cew-blue-deep);
@@ -591,9 +514,9 @@ body:has(.cew-backdrop) {
   justify-content: center;
 }
 
-.tag-picker { position: relative; }
+.cew-scope .tag-picker { position: relative; }
 
-.tag-suggestions {
+.cew-scope .tag-suggestions {
   position: absolute;
   z-index: 20;
   margin-top: 6px;
@@ -607,7 +530,7 @@ body:has(.cew-backdrop) {
   padding: 8px;
 }
 
-.tag-suggestion-category {
+.cew-scope .tag-suggestion-category {
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
@@ -616,7 +539,7 @@ body:has(.cew-backdrop) {
   padding: 6px 8px 2px;
 }
 
-.tag-suggestion-item, .tag-suggestion-custom {
+.cew-scope .tag-suggestion-item, .tag-suggestion-custom {
   display: block;
   width: 100%;
   text-align: left;
@@ -628,41 +551,36 @@ body:has(.cew-backdrop) {
   color: var(--cew-ink);
   cursor: pointer;
 }
-.tag-suggestion-item:hover, .tag-suggestion-custom:hover {
+.cew-scope .tag-suggestion-item:hover, .tag-suggestion-custom:hover {
   background: var(--cew-blue-tint);
   color: var(--cew-blue-deep);
 }
-.tag-suggestion-custom {
+.cew-scope .tag-suggestion-custom {
   color: var(--cew-blue);
   font-weight: 600;
 }
-.tag-suggestions-empty { padding: 8px; font-size: 13px; color: var(--cew-ink-soft); }
+.cew-scope .tag-suggestions-empty { padding: 8px; font-size: 13px; color: var(--cew-ink-soft); }
 
-/* Agenda rows */
-.agenda-rows { display: flex; flex-direction: column; gap: 10px; }
-.agenda-row-block { background: var(--cew-surface); border: 1.5px solid var(--cew-line); border-radius: var(--cew-radius-sm); padding: 10px; }
-.agenda-row-fields { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-.agenda-row-fields input[type="time"] { width: 120px; flex: none; }
-.agenda-keynote-input { flex: 1; min-width: 160px; }
-.agenda-row-separator { font-size: 13px; color: var(--cew-ink-soft); }
-.row-remove {
+.cew-scope .agenda-rows { display: flex; flex-direction: column; gap: 10px; }
+.cew-scope .agenda-row-block { background: var(--cew-surface); border: 1.5px solid var(--cew-line); border-radius: var(--cew-radius-sm); padding: 10px; }
+.cew-scope .agenda-row-fields { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.cew-scope .agenda-row-fields input[type="time"] { width: 120px; flex: none; }
+.cew-scope .agenda-keynote-input { flex: 1; min-width: 160px; }
+.cew-scope .agenda-row-separator { font-size: 13px; color: var(--cew-ink-soft); }
+.cew-scope .row-remove {
   width: 28px; height: 28px; border-radius: 8px; border: 1.5px solid var(--cew-line);
   background: var(--cew-paper); cursor: pointer; color: var(--cew-ink-soft); flex: none;
 }
-.row-remove:hover { border-color: var(--cew-danger); color: var(--cew-danger); }
-.row-remove:disabled { opacity: 0.4; cursor: not-allowed; }
-.row-add {
+.cew-scope .row-remove:hover { border-color: var(--cew-danger); color: var(--cew-danger); }
+.cew-scope .row-remove:disabled { opacity: 0.4; cursor: not-allowed; }
+.cew-scope .row-add {
   align-self: flex-start; padding: 10px 14px; border-radius: var(--cew-radius-sm);
   border: 1.5px dashed var(--cew-line-strong); background: transparent; color: var(--cew-blue);
   font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.18s var(--cew-ease);
 }
-.row-add:hover { background: var(--cew-blue-tint); border-style: solid; border-color: var(--cew-blue); }
+.cew-scope .row-add:hover { background: var(--cew-blue-tint); border-style: solid; border-color: var(--cew-blue); }
 
-/* ---------------------------------------------------------------------- */
-/* Buttons — 4 explicit states via data-state                             */
-/* ---------------------------------------------------------------------- */
-
-.cew-btn {
+.cew-scope .cew-btn {
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -679,11 +597,11 @@ body:has(.cew-backdrop) {
   overflow: hidden;
 }
 
-.cew-btn-primary {
+.cew-scope .cew-btn-primary {
   background: var(--cew-blue);
   color: #fff;
 }
-.cew-btn-primary::after {
+.cew-scope .cew-btn-primary::after {
   content: "";
   position: absolute;
   inset: -40%;
@@ -692,33 +610,33 @@ body:has(.cew-backdrop) {
   transition: opacity 0.25s var(--cew-ease);
   z-index: -1;
 }
-.cew-btn-primary[data-state="normal"] { background: var(--cew-blue); }
-.cew-btn-primary[data-state="hover"] {
+.cew-scope .cew-btn-primary[data-state="normal"] { background: var(--cew-blue); }
+.cew-scope .cew-btn-primary[data-state="hover"] {
   background: var(--cew-blue);
   box-shadow: 0 8px 24px -8px rgba(0, 138, 247, 0.65);
   transform: translateY(-1px);
 }
-.cew-btn-primary[data-state="hover"]::after { opacity: 1; }
-.cew-btn-primary[data-state="active"] {
+.cew-scope .cew-btn-primary[data-state="hover"]::after { opacity: 1; }
+.cew-scope .cew-btn-primary[data-state="active"] {
   background: var(--cew-blue-deep);
   transform: translateY(0px) scale(0.98);
   box-shadow: 0 2px 10px -4px rgba(0, 104, 196, 0.6);
 }
-.cew-btn-primary[data-state="loading"] {
+.cew-scope .cew-btn-primary[data-state="loading"] {
   background: var(--cew-blue-deep);
   cursor: progress;
   color: transparent;
 }
 
-.cew-btn-ghost {
+.cew-scope .cew-btn-ghost {
   background: transparent;
   color: var(--cew-ink-soft);
   border: 1.5px solid var(--cew-line);
 }
-.cew-btn-ghost[data-state="hover"] { border-color: var(--cew-line-strong); color: var(--cew-ink); background: var(--cew-surface); }
-.cew-btn-ghost[data-state="active"] { transform: scale(0.97); background: var(--cew-surface); }
+.cew-scope .cew-btn-ghost[data-state="hover"] { border-color: var(--cew-line-strong); color: var(--cew-ink); background: var(--cew-surface); }
+.cew-scope .cew-btn-ghost[data-state="active"] { transform: scale(0.97); background: var(--cew-surface); }
 
-.cew-btn-spinner {
+.cew-scope .cew-btn-spinner {
   position: absolute;
   width: 18px;
   height: 18px;
@@ -729,25 +647,15 @@ body:has(.cew-backdrop) {
 }
 @keyframes cew-spin { to { transform: rotate(360deg); } }
 
-.cew-btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+.cew-scope .cew-btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
 
-/* ---------------------------------------------------------------------- */
-/* Mode cards (In-Person / Online / Hybrid)                               */
-/* ---------------------------------------------------------------------- */
-
-/* ---------------------------------------------------------------------- */
-/* Option cards — the one system every clickable card (mode, category,   */
-/* free/paid, and future ones) is built from. --cew-art-size controls    */
-/* the bottom-right doodle slot per instance.                             */
-/* ---------------------------------------------------------------------- */
-
-.cew-card-grid {
+.cew-scope .cew-card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 12px;
 }
 
-.cew-option-card {
+.cew-scope .cew-option-card {
   position: relative;
   text-align: left;
   padding: 16px;
@@ -763,13 +671,13 @@ body:has(.cew-backdrop) {
   --cew-art-size: 60px;
 }
 
-.cew-option-card--compact {
+.cew-scope .cew-option-card--compact {
   padding: 12px 14px;
   gap: 2px;
   --cew-art-size: 40px;
 }
 
-.cew-option-card--ticket {
+.cew-scope .cew-option-card--ticket {
   padding: 20px;
   min-height: 132px;
   border-radius: var(--cew-radius-lg);
@@ -777,28 +685,27 @@ body:has(.cew-backdrop) {
   --cew-art-size: 76px;
 }
 
-.cew-option-card[data-state="hover"] { border-color: var(--cew-line-strong); transform: translateY(-1px); }
-.cew-option-card[data-state="active"] { transform: scale(0.98); }
-.cew-option-card[data-selected="true"] {
+.cew-scope .cew-option-card[data-state="hover"] { border-color: var(--cew-line-strong); transform: translateY(-1px); }
+.cew-scope .cew-option-card[data-state="active"] { transform: scale(0.98); }
+.cew-scope .cew-option-card[data-selected="true"] {
   border-color: var(--cew-blue);
   background: var(--cew-blue-tint);
   box-shadow: 0 0 0 4px rgba(0, 138, 247, 0.12);
 }
-.cew-option-card--ticket[data-selected="true"] {
+.cew-scope .cew-option-card--ticket[data-selected="true"] {
   background: var(--cew-paper);
   box-shadow: 0 0 0 4px rgba(0, 138, 247, 0.14), var(--cew-shadow-raised);
 }
 
-.cew-option-card[data-selected="true"] .cew-halo { opacity: 0.5; }
-.cew-option-card:not([data-selected="true"]) .cew-halo { opacity: 0; }
+.cew-scope .cew-option-card[data-selected="true"] .cew-halo { opacity: 1; }
+.cew-scope .cew-option-card:not([data-selected="true"]) .cew-halo { opacity: 0; }
 
-.cew-option-card-icon { font-size: 20px; z-index: 1; }
-.cew-option-card-label { font-size: 14.5px; font-weight: 650; color: var(--cew-ink); z-index: 1; }
-.cew-option-card--ticket .cew-option-card-label { font-size: 16px; font-weight: 700; }
-.cew-option-card-desc { font-size: 12.5px; color: var(--cew-ink-soft); z-index: 1; max-width: 24ch; }
+.cew-scope .cew-option-card-icon { font-size: 20px; z-index: 1; }
+.cew-scope .cew-option-card-label { font-size: 14.5px; font-weight: 650; color: var(--cew-ink); z-index: 1; }
+.cew-scope .cew-option-card--ticket .cew-option-card-label { font-size: 16px; font-weight: 700; }
+.cew-scope .cew-option-card-desc { font-size: 12.5px; color: var(--cew-ink-soft); z-index: 1; max-width: 24ch; }
 
-/* the illustration slot pinned bottom-right of ANY option card */
-.cew-card-art {
+.cew-scope .cew-card-art {
   position: absolute;
   right: -6px;
   bottom: -6px;
@@ -812,27 +719,23 @@ body:has(.cew-backdrop) {
   z-index: 0;
   transition: transform 0.3s var(--cew-ease);
 }
-.cew-option-card[data-selected="true"] .cew-card-art { transform: scale(1.08) rotate(-4deg); }
+.cew-scope .cew-option-card[data-selected="true"] .cew-card-art { transform: scale(1.08) rotate(-4deg); }
 
-.cew-price-reveal {
+.cew-scope .cew-price-reveal {
   overflow: hidden;
   transition: max-height 0.35s var(--cew-ease), opacity 0.3s var(--cew-ease), margin-top 0.35s var(--cew-ease);
 }
 
-.cew-toggle-grid {
+.cew-scope .cew-toggle-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 14px;
 }
 @media (max-width: 480px) {
-  .cew-toggle-grid { grid-template-columns: 1fr; }
+  .cew-scope .cew-toggle-grid { grid-template-columns: 1fr; }
 }
 
-/* ---------------------------------------------------------------------- */
-/* Cover image drop zone                                                  */
-/* ---------------------------------------------------------------------- */
-
-.cew-cover-drop {
+.cew-scope .cew-cover-drop {
   position: relative;
   border-radius: var(--cew-radius-lg);
   border: 1.5px dashed var(--cew-line-strong);
@@ -845,21 +748,17 @@ body:has(.cew-backdrop) {
   overflow: hidden;
   transition: border-color 0.2s var(--cew-ease), background 0.2s var(--cew-ease);
 }
-.cew-cover-drop:hover { border-color: var(--cew-blue); background: var(--cew-blue-tint); }
-.cew-cover-drop img { width: 100%; height: 100%; object-fit: cover; }
-.cew-cover-drop-placeholder { text-align: center; color: var(--cew-ink-soft); font-size: 13px; padding: 16px; }
+.cew-scope .cew-cover-drop:hover { border-color: var(--cew-blue); background: var(--cew-blue-tint); }
+.cew-scope .cew-cover-drop img { width: 100%; height: 100%; object-fit: cover; }
+.cew-scope .cew-cover-drop-placeholder { text-align: center; color: var(--cew-ink-soft); font-size: 13px; padding: 16px; }
 
-/* ---------------------------------------------------------------------- */
-/* Skeleton loading                                                       */
-/* ---------------------------------------------------------------------- */
-
-.cew-skeleton {
+.cew-scope .cew-skeleton {
   position: relative;
   overflow: hidden;
   background: var(--cew-line);
   border-radius: var(--cew-radius-sm);
 }
-.cew-skeleton::after {
+.cew-scope .cew-skeleton::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -869,11 +768,7 @@ body:has(.cew-backdrop) {
 }
 @keyframes cew-shimmer { 100% { transform: translateX(100%); } }
 
-/* ---------------------------------------------------------------------- */
-/* Step nav footer                                                        */
-/* ---------------------------------------------------------------------- */
-
-.cew-step-footer {
+.cew-scope .cew-step-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -884,7 +779,7 @@ body:has(.cew-backdrop) {
 }
 
 @media (max-width: 900px) {
-  .cew-step-footer {
+  .cew-scope .cew-step-footer {
     position: sticky;
     bottom: 0;
     background: var(--cew-paper);
@@ -892,9 +787,8 @@ body:has(.cew-backdrop) {
   }
 }
 
-/* Respect reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  .cew-halo, .cew-halo--breathing, .cew-progress-puck::before, .cew-btn, .cew-mode-card, .cew-toggle-card {
+  .cew-scope .cew-halo, .cew-halo--breathing, .cew-btn, .cew-option-card {
     animation: none !important;
     transition: none !important;
   }

@@ -8,8 +8,8 @@ import "./styles/create-event-wizard.css";
 
 import WizardShell from "./WizardShell";
 import WizardSkeleton from "./WizardSkeleton";
-import StepNav from "./StepNav";
-import { StepStatus } from "./WizardTopBar";
+import StepNav from "@/components/create-event/StepNav";
+import { StepStatus } from "@/components/create-event/WizardTopBar";
 import { useEventDraft } from "./useEventDraft";
 import { WIZARD_STEPS, WizardStepKey, validateStep } from "./types";
 
@@ -20,16 +20,6 @@ import Step4Details from "./steps/Step4Details";
 import Step5Tickets from "./steps/Step5Tickets";
 import Step6Organizer from "./steps/Step6Organizer";
 import Step7Review from "./steps/Step7Review";
-
-const ILLUSTRATION_CAPTIONS: Record<WizardStepKey, string> = {
-  spark: "a spark / idea taking shape",
-  "time-place": "a pin dropping on a map",
-  story: "a photo developing / storytelling",
-  details: "a checklist or agenda coming together",
-  tickets: "a ticket or coin doodle",
-  organizer: "a handshake / people icon",
-  review: "a event card being handed over, ready to publish",
-};
 
 const stepIndex = (key: WizardStepKey) => WIZARD_STEPS.findIndex((s) => s.key === key);
 
@@ -49,13 +39,14 @@ const buildFormData = (draft: ReturnType<typeof useEventDraft>["draft"]): FormDa
   fd.append("date", draft.date);
   fd.append("time", draft.time);
   fd.append("mode", draft.mode);
-  fd.append("audience", draft.audience);
   fd.append("organizer", draft.organizer);
   fd.append("price", String(draft.isFree ? 0 : draft.price));
-  fd.append("sponsors", JSON.stringify(draft.sponsors));
-  fd.append("agenda", JSON.stringify(draft.agenda.map(({ id: _id, ...rest }) => rest)));
+  const validSponsors = draft.sponsors.filter((s) => s.name.trim() && s.website.trim());
+  fd.append("sponsors", JSON.stringify(validSponsors.map((s) => ({ name: s.name, website: s.website }))));
+  fd.append("agenda", JSON.stringify(draft.agenda.map((a) => ({ startTime: a.startTime, endTime: a.endTime, keynote: a.keynote }))));
 
   draft.tags.forEach((tag) => fd.append("tags", tag));
+  draft.audience.forEach((a) => fd.append("audience", a));
   draft.organizerEmails.forEach((email) => fd.append("organizerEmails", email));
 
   if (draft.imageFile) {
@@ -182,7 +173,6 @@ const CreateEventWizard = () => {
     <WizardShell
       currentStep={currentStep}
       stepStatuses={stepStatuses}
-      illustrationCaption={ILLUSTRATION_CAPTIONS[currentStep]}
       onClose={handleClose}
       onStepClick={handleStepClick}
     >

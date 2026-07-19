@@ -5,6 +5,7 @@ import { clerkClient } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import connectToDatabase from "@/lib/mongodb";
 import { User } from "@/database/User.model";
+import { sendWelcomeEmail } from "@/lib/email/services/auth.email";
 
 type OnboardingMetadata = {
     onboarded?: boolean;
@@ -95,6 +96,26 @@ export async function completeOnboarding() {
     await clerk.users.updateUserMetadata(userId, {
         publicMetadata: mergePublicMetadata(clerkUser.publicMetadata, { onboarded: true }),
     });
+
+    const userRecord = await User.findOne({ clerkId: userId })
+        .select("email firstName username")
+        .lean<{ email?: string; firstName?: string; username?: string } | null>();
+
+    const to = userRecord?.email ?? clerkUser.emailAddresses[0]?.emailAddress ?? "";
+    const firstName =
+        userRecord?.firstName?.trim() ||
+        clerkUser.firstName?.trim() ||
+        userRecord?.username?.trim() ||
+        clerkUser.username?.trim() ||
+        "there";
+
+    if (to) {
+        await sendWelcomeEmail({
+            to,
+            firstName,
+            username: userRecord?.username ?? clerkUser.username ?? undefined,
+        });
+    }
 
     return { success: true };
 }

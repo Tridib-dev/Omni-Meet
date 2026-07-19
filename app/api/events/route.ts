@@ -9,7 +9,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { validateEmails } from "@/lib/validateemail";
 import { slugifySegment } from "@/lib/seo-events";
-import { auth , clerkClient } from "@clerk/nextjs/server";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 import { notifyFollowersOfNewEvent } from "@/lib/notifications";
 
 type AgendaItem = {
@@ -31,25 +31,30 @@ const isDuplicateKeyError = (error: unknown): boolean =>
     "code" in error &&
     (error as { code?: number }).code === 11000;
 
-
+/**
+ * Normally the Clerk `user.created` webhook has already inserted this row.
+ * If it hasn't yet (webhook not reachable in dev, a missed delivery, or a
+ * race where the event fires but hasn't been processed), fetch the profile
+ * straight from Clerk and create it here instead of failing the request.
+ */
 const getOrCreateUser = async (userId: string) => {
     let creator = await User.findOneAndUpdate(
         { clerkId: userId },
         { $inc: { eventsHostedCount: 1 } },
         { returnDocument: "after" }
     ).select("username firstName lastName photo eventsHostedCount");
- 
+
     if (creator) return creator;
- 
+
     const clerk = await clerkClient();
     const clerkUser = await clerk.users.getUser(userId);
- 
+
     const email = clerkUser.emailAddresses?.[0]?.emailAddress;
     if (!email) {
         // Matches the same "no email yet" edge case the webhook already skips.
         return null;
     }
- 
+
     try {
         creator = await User.create({
             clerkId: userId,
@@ -75,13 +80,9 @@ const getOrCreateUser = async (userId: string) => {
             throw err;
         }
     }
- 
+
     return creator;
 };
- 
-
-
-
 
 export async function POST(req: NextRequest) {
     try {
@@ -92,6 +93,7 @@ export async function POST(req: NextRequest) {
 
         await connectToDatabase();
 
+        // ==================== CREATOR PROFILE (self-healing) ====================
         const creator = await getOrCreateUser(userId);
         if (!creator) {
             return NextResponse.json(
@@ -100,7 +102,7 @@ export async function POST(req: NextRequest) {
             );
         }
         const isFirstEvent = (creator.eventsHostedCount ?? 1) === 1;
-
+        // ==========================================================================
 
         const formData = await req.formData();
 
@@ -143,6 +145,7 @@ export async function POST(req: NextRequest) {
         // ========================================================
 
         const tags = formData.getAll('tags') as string[];
+        const audience = formData.getAll('audience') as string[];
 
         let agenda: AgendaItem[];
         try {
@@ -178,16 +181,6 @@ export async function POST(req: NextRequest) {
         const imageFileId = uploadResult.fileId || uploadResult.file_id || uploadResult.fileID;
 
         try {
-            const creator = await User.findOneAndUpdate(
-                { clerkId: userId },
-                { $inc: { eventsHostedCount: 1 } },
-                { returnDocument: "after" }
-            ).select("username firstName lastName photo");
-
-            if (!creator) {
-                return NextResponse.json({ message: "Creator profile not found" }, { status: 404 });
-            }
-
             const create_event = await Event.create({
                 title: String(eventFields.title ?? ""),
                 slug,
@@ -204,13 +197,13 @@ export async function POST(req: NextRequest) {
                 date: String(eventFields.date ?? ""),
                 time: String(eventFields.time ?? ""),
                 mode: String(eventFields.mode ?? ""),
-                audience: String(eventFields.audience ?? ""),
+                audience,
                 price: Number(eventFields.price ?? 0),
                 sponsors: JSON.parse(formData.get('sponsors') as string || '[]'),
                 organizer: String(eventFields.organizer ?? ""),
                 tags,
                 agenda,
-                organizerEmails, 
+                organizerEmails,
                 creatorClerkId: userId,
             });
 
@@ -225,9 +218,10 @@ export async function POST(req: NextRequest) {
             if (creator.username) {
                 revalidatePath(`/profile/${creator.username}`);
             }
-            return NextResponse.json({ 
-                message: 'Event Created Successfully', 
-                event: create_event 
+            return NextResponse.json({
+                message: 'Event Created Successfully',
+                event: create_event,
+                isFirstEvent,
             }, { status: 201 });
 
         } catch (createErr: unknown) {
@@ -255,9 +249,9 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ message: "An event with this slug already exists" }, { status: 409 });
         }
         console.error(err);
-        return NextResponse.json({ 
-            message: 'Event Creation failed', 
-            error: err instanceof Error ? err.message : 'Unknown error' 
+        return NextResponse.json({
+            message: 'Event Creation failed',
+            error: err instanceof Error ? err.message : 'Unknown error'
         }, { status: 500 });
     }
 }

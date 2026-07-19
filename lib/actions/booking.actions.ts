@@ -3,8 +3,16 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import connectToDatabase from "../mongodb";
 import { Booking } from "@/database/booking.model";
-import { sendBookingConfirmation } from "@/lib/email/send";
 import { Event } from "@/database/event.model";
+import { sendBookingConfirmation } from "@/lib/email/services/booking.email";
+
+type EventEmailDoc = {
+    title?: string;
+    date?: string;
+    time?: string;
+    location?: string;
+    slug?: string;
+};
 
 // ─── Create Booking ───────────────────────────────────────────────────────────
 // No longer accepts email as a param — pulls identity from the active
@@ -43,9 +51,9 @@ export const CreateBooking = async ({
         // Fetch event details for email — fire and forget, never blocks booking
         const eventDoc = await Event.findById(eventId)
             .select("title date time location slug")
-            .lean() as any;
+            .lean<EventEmailDoc>();
         
-        sendBookingConfirmation({
+        await sendBookingConfirmation({
             to: email,
             eventTitle: eventDoc?.title ?? "Your Event",
             eventDate: eventDoc?.date ?? "",
@@ -57,8 +65,9 @@ export const CreateBooking = async ({
         });
         
         return { success: true };
-    } catch (error: any) {
-        if (error.code === 11000) {
+    } catch (error: unknown) {
+        const bookingError = error as { code?: number };
+        if (bookingError.code === 11000) {
             return {
                 success: false,
                 error: "You've already booked this event.",

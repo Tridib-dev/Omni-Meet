@@ -3,11 +3,19 @@
 import React, { useMemo, useRef, useState } from "react";
 import { ALL_TAGS } from "@/lib/constants/event-taxonomy";
 
-export interface TagPickerProps {
-    onChange: (tags: string[]) => void;
+export interface TagOption {
+    tag: string;
+    category: string;
 }
 
-const TagPicker = ({ onChange }: TagPickerProps) => {
+export interface TagPickerProps {
+    onChange: (tags: string[]) => void;
+    /** Defaults to the tag taxonomy — pass a different list (e.g. audience personas) to reuse this same picker elsewhere. */
+    options?: TagOption[];
+    placeholder?: string;
+}
+
+const TagPicker = ({ onChange, options = ALL_TAGS, placeholder }: TagPickerProps) => {
     const [selected, setSelected] = useState<string[]>([]);
     const [inputValue, setInputValue] = useState("");
     const [isOpen, setIsOpen] = useState(false);
@@ -22,7 +30,7 @@ const TagPicker = ({ onChange }: TagPickerProps) => {
         const query = inputValue.trim().toLowerCase();
         if (!query) return [];
 
-        const matches = ALL_TAGS.filter(
+        const matches = options.filter(
             ({ tag }) => tag.toLowerCase().includes(query) && !selectedLower.has(tag.toLowerCase())
         );
 
@@ -33,13 +41,13 @@ const TagPicker = ({ onChange }: TagPickerProps) => {
         });
 
         return Array.from(grouped.entries());
-    }, [inputValue, selectedLower]);
+    }, [inputValue, selectedLower, options]);
 
     const exactMatchExists = useMemo(() => {
         const query = inputValue.trim().toLowerCase();
         if (!query) return true;
-        return ALL_TAGS.some(({ tag }) => tag.toLowerCase() === query);
-    }, [inputValue]);
+        return options.some(({ tag }) => tag.toLowerCase() === query);
+    }, [inputValue, options]);
 
     const emit = (next: string[]) => {
         setSelected(next);
@@ -96,7 +104,7 @@ const TagPicker = ({ onChange }: TagPickerProps) => {
                     onFocus={() => setIsOpen(true)}
                     onBlur={() => setTimeout(() => setIsOpen(false), 150)}
                     onKeyDown={handleKeyDown}
-                    placeholder={selected.length === 0 ? "Search or type a tag..." : ""}
+                    placeholder={selected.length === 0 ? (placeholder ?? "Search or type a tag...") : ""}
                 />
             </div>
 
