@@ -1,0 +1,632 @@
+/* ==========================================================================
+   Onboarding — design tokens & shared styles
+   Independent copy of the create-event design system (cew- → onb-, .cew-scope
+   → .onb-scope). No shared files with create-event, by design — see chat.
+
+   Difference from create-event's version: no scattered doodle backdrop.
+   Onboarding uses ONE centered hero doodle per screen instead (.onb-hero-doodle),
+   since these screens are about personalization/importance, not ambient texture.
+   ========================================================================== */
+
+:root {
+  --onb-ink: #0b0d10;
+  --onb-ink-soft: #4a5568;
+  --onb-paper: #ffffff;
+  --onb-surface: #f6f8fb;
+  --onb-surface-raised: #ffffff;
+  --onb-line: #e5e9f0;
+  --onb-line-strong: #d7deea;
+
+  --onb-blue: #008af7;
+  --onb-blue-deep: #0068c4;
+  --onb-blue-tint: #e8f4ff;
+  --onb-blue-tint-strong: #d3ebff;
+
+  --onb-danger: #e5484d;
+  --onb-success: #12b76a;
+
+  --onb-radius-lg: 20px;
+  --onb-radius-md: 14px;
+  --onb-radius-sm: 10px;
+
+  --onb-shadow-card: 0 1px 2px rgba(11, 13, 16, 0.04), 0 12px 32px -16px rgba(11, 13, 16, 0.12);
+  --onb-shadow-raised: 0 2px 6px rgba(11, 13, 16, 0.06), 0 20px 40px -20px rgba(0, 138, 247, 0.25);
+
+  --onb-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --onb-topbar-height: 84px;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Halo — the signature motif, same as create-event                       */
+/* ---------------------------------------------------------------------- */
+
+.onb-scope .onb-halo {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(closest-side, rgba(0, 138, 247, 0.28), rgba(0, 138, 247, 0) 70%);
+  filter: blur(2px);
+  opacity: 0.9;
+  transition: opacity 0.4s var(--onb-ease), transform 0.6s var(--onb-ease);
+}
+
+@keyframes onb-halo-breathe {
+  0%, 100% { transform: scale(1); opacity: 0.75; }
+  50% { transform: scale(1.06); opacity: 1; }
+}
+
+.onb-scope .onb-halo--breathing {
+  animation: onb-halo-breathe 4.5s ease-in-out infinite;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Page shell — flat light background, single column, no scattered doodles */
+/* ---------------------------------------------------------------------- */
+
+.onb-scope .onb-page {
+  padding-top: var(--onb-topbar-height);
+  min-height: 100dvh;
+  background: var(--onb-surface);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  transition: padding-top 0.2s var(--onb-ease);
+}
+
+.onb-scope .onb-card {
+  width: 100%;
+  max-width: 560px;
+  margin: 40px auto;
+  background: var(--onb-paper);
+  border-radius: var(--onb-radius-lg);
+  border: 1px solid var(--onb-line);
+  box-shadow: var(--onb-shadow-card);
+  padding: 40px 40px 28px;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 640px) {
+  .onb-scope .onb-card {
+    margin: 16px auto;
+    padding: 24px 20px calc(20px + env(safe-area-inset-bottom, 0px));
+    border-radius: var(--onb-radius-md);
+  }
+}
+
+/* ---------------------------------------------------------------------- */
+/* Hero doodle — ONE centered illustration per screen, above the heading  */
+/* ---------------------------------------------------------------------- */
+
+.onb-scope .onb-hero-doodle {
+  position: relative;
+  width: 84px;
+  height: 84px;
+  margin: 0 auto 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--onb-blue);
+}
+
+.onb-scope .onb-hero-doodle svg {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Fixed marble topbar — same system as create-event                      */
+/* ---------------------------------------------------------------------- */
+
+.onb-scope .onb-topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 16px 20px;
+  background: rgba(246, 248, 251, 0.92);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--onb-line);
+  box-shadow: 0 1px 0 rgba(11, 13, 16, 0.03), 0 10px 24px -18px rgba(11, 13, 16, 0.15);
+}
+
+.onb-scope .onb-topbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  color: var(--onb-ink);
+  text-decoration: none;
+}
+.onb-scope .onb-topbar-brand-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--onb-ink);
+}
+
+.onb-scope .onb-marble-step[data-clickable="true"] .onb-marble {
+  cursor: pointer;
+}
+.onb-scope .onb-marble-step[data-clickable="true"]:hover .onb-marble {
+  transform: translateY(-2px) scale(1.06);
+  box-shadow: 0 6px 14px -6px rgba(11, 13, 16, 0.25);
+}
+.onb-scope .onb-marble-step[data-status="upcoming"] .onb-marble {
+  cursor: not-allowed;
+}
+
+.onb-scope .onb-marble-rail {
+  position: relative;
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  max-width: 620px;
+  margin: 0 auto;
+  padding: 0 8px;
+}
+
+.onb-scope .onb-marble-track {
+  position: absolute;
+  top: 15px;
+  left: 24px;
+  right: 24px;
+  height: 2px;
+  background: var(--onb-line);
+  border-radius: 2px;
+  z-index: 0;
+}
+
+.onb-scope .onb-marble-track-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: var(--onb-success);
+  border-radius: 2px;
+  transform-origin: left center;
+  transition: width 0.5s var(--onb-ease);
+}
+
+.onb-scope .onb-marble-step {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  min-width: 32px;
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+}
+
+.onb-scope .onb-marble {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--onb-paper);
+  border: 2px solid var(--onb-line-strong);
+  color: var(--onb-ink-soft);
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s var(--onb-ease);
+}
+
+.onb-scope .onb-marble-step[data-status="completed"] .onb-marble {
+  background: var(--onb-success);
+  border-color: var(--onb-success);
+  color: #fff;
+}
+
+.onb-scope .onb-marble-step[data-status="current"] {
+  position: relative;
+}
+.onb-scope .onb-marble-step[data-status="current"] .onb-marble {
+  border-color: var(--onb-blue);
+  color: var(--onb-blue);
+  background: var(--onb-paper);
+  box-shadow: 0 0 0 5px rgba(0, 138, 247, 0.14);
+}
+.onb-scope .onb-marble-step[data-status="current"] .onb-marble::after {
+  content: "";
+  position: absolute;
+  inset: -9px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(0, 138, 247, 0.3), rgba(0, 138, 247, 0));
+  animation: onb-halo-breathe 3s ease-in-out infinite;
+  z-index: -1;
+}
+
+.onb-scope .onb-marble-label {
+  display: none;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--onb-ink-soft);
+  white-space: nowrap;
+}
+.onb-scope .onb-marble-step[data-status="current"] .onb-marble-label { color: var(--onb-ink); }
+
+@media (min-width: 720px) {
+  .onb-scope .onb-marble-label { display: block; }
+}
+
+@media (max-width: 719px) {
+  .onb-scope .onb-marble-rail { justify-content: flex-start; gap: 18px; overflow-x: auto; scrollbar-width: none; }
+  .onb-scope .onb-marble-rail::-webkit-scrollbar { display: none; }
+  .onb-scope .onb-topbar-current-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--onb-ink-soft);
+    position: absolute;
+    left: 50%;
+    bottom: 6px;
+    transform: translateX(-50%);
+  }
+}
+@media (min-width: 720px) {
+  .onb-scope .onb-topbar-current-label { display: none; }
+}
+
+/* ---------------------------------------------------------------------- */
+/* Step chrome — heading block, reused by every onboarding page           */
+/* ---------------------------------------------------------------------- */
+
+.onb-scope .onb-step-eyebrow {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--onb-blue);
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.onb-scope .onb-step-title {
+  font-size: 24px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--onb-ink);
+  margin: 0 0 6px;
+  text-align: center;
+}
+
+.onb-scope .onb-step-subtitle {
+  font-size: 14px;
+  color: var(--onb-ink-soft);
+  margin: 0 0 28px;
+  text-align: center;
+}
+
+.onb-scope .onb-step-body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.onb-scope .onb-step-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 20px;
+  margin-top: 8px;
+  border-top: 1px solid var(--onb-line);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Fields — bio textarea etc.                                             */
+/* ---------------------------------------------------------------------- */
+
+.onb-scope .onb-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.onb-scope .onb-field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--onb-ink);
+}
+
+.onb-scope .onb-field input[type="text"],
+.onb-scope .onb-field textarea,
+.onb-scope .onb-field select {
+  font-size: 15px;
+  padding: 12px 14px;
+  border-radius: var(--onb-radius-sm);
+  border: 1.5px solid var(--onb-line);
+  background: var(--onb-surface);
+  color: var(--onb-ink);
+  transition: border-color 0.18s var(--onb-ease), box-shadow 0.18s var(--onb-ease), background 0.18s var(--onb-ease);
+  width: 100%;
+}
+
+.onb-scope .onb-field textarea {
+  resize: vertical;
+  min-height: 84px;
+}
+
+.onb-scope .onb-field input:hover,
+.onb-scope .onb-field textarea:hover {
+  border-color: var(--onb-line-strong);
+}
+
+.onb-scope .onb-field input:focus,
+.onb-scope .onb-field textarea:focus {
+  outline: none;
+  border-color: var(--onb-blue);
+  background: var(--onb-paper);
+  box-shadow: 0 0 0 4px rgba(0, 138, 247, 0.14);
+}
+
+.onb-scope .onb-field-hint {
+  font-size: 12.5px;
+  color: var(--onb-ink-soft);
+  margin: 0;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Buttons — 4 explicit states, identical system to create-event          */
+/* ---------------------------------------------------------------------- */
+
+.onb-scope .onb-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 24px;
+  border-radius: var(--onb-radius-md);
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.15s var(--onb-ease), box-shadow 0.2s var(--onb-ease), background 0.2s var(--onb-ease);
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.onb-scope .onb-btn-primary {
+  background: var(--onb-blue);
+  color: #fff;
+}
+.onb-scope .onb-btn-primary::after {
+  content: "";
+  position: absolute;
+  inset: -40%;
+  background: radial-gradient(closest-side, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0) 70%);
+  opacity: 0;
+  transition: opacity 0.25s var(--onb-ease);
+  z-index: -1;
+}
+.onb-scope .onb-btn-primary[data-state="normal"] { background: var(--onb-blue); }
+.onb-scope .onb-btn-primary[data-state="hover"] {
+  background: var(--onb-blue);
+  box-shadow: 0 8px 24px -8px rgba(0, 138, 247, 0.65);
+  transform: translateY(-1px);
+}
+.onb-scope .onb-btn-primary[data-state="hover"]::after { opacity: 1; }
+.onb-scope .onb-btn-primary[data-state="active"] {
+  background: var(--onb-blue-deep);
+  transform: translateY(0px) scale(0.98);
+  box-shadow: 0 2px 10px -4px rgba(0, 104, 196, 0.6);
+}
+.onb-scope .onb-btn-primary[data-state="loading"] {
+  background: var(--onb-blue-deep);
+  cursor: progress;
+  color: transparent;
+}
+
+.onb-scope .onb-btn-ghost {
+  background: transparent;
+  color: var(--onb-ink-soft);
+  border: 1.5px solid var(--onb-line);
+}
+.onb-scope .onb-btn-ghost[data-state="hover"] { border-color: var(--onb-line-strong); color: var(--onb-ink); background: var(--onb-surface); }
+.onb-scope .onb-btn-ghost[data-state="active"] { transform: scale(0.97); background: var(--onb-surface); }
+
+.onb-scope .onb-btn-spinner {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  animation: onb-spin 0.7s linear infinite;
+}
+@keyframes onb-spin { to { transform: rotate(360deg); } }
+
+.onb-scope .onb-btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+
+/* ---------------------------------------------------------------------- */
+/* Option cards — role cards, source cards, etc.                          */
+/* ---------------------------------------------------------------------- */
+
+.onb-scope .onb-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.onb-scope .onb-option-card {
+  position: relative;
+  text-align: left;
+  padding: 16px;
+  border-radius: var(--onb-radius-md);
+  border: 1.5px solid var(--onb-line);
+  background: var(--onb-paper);
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 0.18s var(--onb-ease), box-shadow 0.2s var(--onb-ease), transform 0.15s var(--onb-ease);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.onb-scope .onb-option-card--compact {
+  padding: 12px 14px;
+  gap: 2px;
+}
+
+.onb-scope .onb-option-card--centered {
+  text-align: center;
+  align-items: center;
+}
+
+.onb-scope .onb-option-card[data-state="hover"] { border-color: var(--onb-line-strong); transform: translateY(-1px); }
+.onb-scope .onb-option-card[data-state="active"] { transform: scale(0.98); }
+.onb-scope .onb-option-card[data-selected="true"] {
+  border-color: var(--onb-blue);
+  background: var(--onb-blue-tint);
+  box-shadow: 0 0 0 4px rgba(0, 138, 247, 0.12);
+}
+
+.onb-scope .onb-option-card[data-selected="true"] .onb-halo { opacity: 1; }
+.onb-scope .onb-option-card:not([data-selected="true"]) .onb-halo { opacity: 0; }
+
+.onb-scope .onb-option-card-icon { font-size: 22px; z-index: 1; }
+.onb-scope .onb-option-card-label { font-size: 13.5px; font-weight: 650; color: var(--onb-ink); z-index: 1; }
+.onb-scope .onb-option-card-desc { font-size: 11.5px; color: var(--onb-ink-soft); z-index: 1; line-height: 1.4; }
+
+/* ---------------------------------------------------------------------- */
+/* Tag toggle — fixed preset pill list (interests), NOT autocomplete      */
+/* ---------------------------------------------------------------------- */
+
+.onb-scope .onb-tag-toggle-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.onb-scope .onb-tag-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1.5px solid var(--onb-line);
+  background: var(--onb-paper);
+  color: var(--onb-ink-soft);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s var(--onb-ease);
+}
+.onb-scope .onb-tag-toggle[data-state="hover"] { border-color: var(--onb-line-strong); color: var(--onb-ink); }
+.onb-scope .onb-tag-toggle[data-state="active"] { transform: scale(0.96); }
+.onb-scope .onb-tag-toggle[data-selected="true"] {
+  background: var(--onb-blue-tint);
+  border-color: var(--onb-blue);
+  color: var(--onb-blue-deep);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Info row — non-interactive "coming soon" rows (Tools / Ads)            */
+/* ---------------------------------------------------------------------- */
+
+.onb-scope .onb-info-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border-radius: var(--onb-radius-md);
+  border: 1.5px solid var(--onb-line);
+  background: var(--onb-paper);
+}
+
+.onb-scope .onb-info-row-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--onb-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  font-size: 18px;
+}
+
+.onb-scope .onb-info-row-body { flex: 1; min-width: 0; }
+.onb-scope .onb-info-row-title { font-size: 13px; font-weight: 650; color: var(--onb-ink); margin: 0; }
+.onb-scope .onb-info-row-desc { font-size: 11.5px; color: var(--onb-ink-soft); margin: 2px 0 0; }
+
+.onb-scope .onb-info-row-badge {
+  flex: none;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: var(--onb-surface);
+  border: 1px solid var(--onb-line);
+  color: var(--onb-ink-soft);
+}
+
+.onb-scope .onb-avatar-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border-radius: var(--onb-radius-md);
+  border: 1.5px solid var(--onb-line);
+  background: var(--onb-surface);
+  margin-bottom: 8px;
+}
+
+.onb-scope .onb-avatar-circle {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex: none;
+  background: linear-gradient(135deg, var(--onb-blue), var(--onb-blue-deep));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+}
+.onb-scope .onb-avatar-circle img { width: 100%; height: 100%; object-fit: cover; }
+
+.onb-scope .onb-avatar-name { font-size: 14px; font-weight: 650; color: var(--onb-ink); margin: 0; }
+.onb-scope .onb-avatar-email { font-size: 12px; color: var(--onb-ink-soft); margin: 1px 0 0; }
+.onb-scope .onb-avatar-caption { font-size: 11px; color: var(--onb-ink-soft); opacity: 0.8; margin: 2px 0 0; }
+
+/* ---------------------------------------------------------------------- */
+/* Skeleton loading                                                       */
+/* ---------------------------------------------------------------------- */
+
+.onb-scope .onb-skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--onb-line);
+  border-radius: var(--onb-radius-sm);
+}
+.onb-scope .onb-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.7), transparent);
+  animation: onb-shimmer 1.4s infinite;
+}
+@keyframes onb-shimmer { 100% { transform: translateX(100%); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .onb-scope .onb-halo, .onb-halo--breathing, .onb-btn, .onb-option-card, .onb-tag-toggle, .onb-marble {
+    animation: none !important;
+    transition: none !important;
+  }
+}
