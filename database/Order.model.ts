@@ -11,6 +11,8 @@ export interface IOrder {
     razorpayPaymentId?: string;      // filled after successful payment
     razorpaySignature?: string;      // filled after verification
     status: "pending" | "paid" | "failed";
+    checkedIn: boolean;     // interface
+    checkedInAt?: Date;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -28,6 +30,8 @@ const orderSchema = new Schema<IOrder>(
         razorpayOrderId: { type: String, required: true, unique: true },
         razorpayPaymentId: { type: String },
         razorpaySignature: { type: String },
+        checkedIn: { type: Boolean, default: false },   // schema
+        checkedInAt: { type: Date },
         status: {
             type: String,
             enum: ["pending", "paid", "failed"],
