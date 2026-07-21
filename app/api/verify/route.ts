@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
 
         if (!ticketId || !eventId) {
             return NextResponse.json(
-                { valid: false, reason: "not_found" },
+                { valid: false, reason: "invalid_request" },
                 { status: 400 }
             );
         }
@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     } catch (error) {
         console.error("[GET /api/verify]", error);
         return NextResponse.json(
-            { valid: false, reason: "not_found" },
+            { valid: false, reason: "server_error" },
             { status: 500 }
         );
     }
