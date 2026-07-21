@@ -736,7 +736,7 @@ export async function autoCheckInOnRoomJoin(eventId: string): Promise<AutoCheckI
                     success: true,
                     ticketType: "booking",
                     ticketId: booking._id.toString(),
-                    checkedIn: Boolean(updated),
+                    checkedIn: true,
                     alreadyCheckedIn: false,
                 };
             }
@@ -745,7 +745,7 @@ export async function autoCheckInOnRoomJoin(eventId: string): Promise<AutoCheckI
                 success: true,
                 ticketType: "booking",
                 ticketId: booking._id.toString(),
-                checkedIn: false,
+                checkedIn: true,
                 alreadyCheckedIn: true,
             };
         }
@@ -773,7 +773,7 @@ export async function autoCheckInOnRoomJoin(eventId: string): Promise<AutoCheckI
                     success: true,
                     ticketType: "order",
                     ticketId: order._id.toString(),
-                    checkedIn: Boolean(updated),
+                    checkedIn: true,
                     alreadyCheckedIn: false,
                 };
             }
@@ -782,7 +782,7 @@ export async function autoCheckInOnRoomJoin(eventId: string): Promise<AutoCheckI
                 success: true,
                 ticketType: "order",
                 ticketId: order._id.toString(),
-                checkedIn: false,
+                checkedIn: true,
                 alreadyCheckedIn: true,
             };
         }
