@@ -43,7 +43,7 @@ export interface VerifyTicketResult {
 
 export interface CheckInTicketResult {
     success: boolean;
-    reason?: "not_found" | "already_used" | "wrong_event" | "unauthorized";
+    reason?: "not_found" | "already_used" | "wrong_event" | "unauthorized" | "expired";
     ticket?: {
         id: string;
         type: TicketType;
@@ -116,6 +116,8 @@ type CoOrganizerDoc = {
     addedAt: Date;
 };
 
+const GATE_CHECKIN_GRACE_MS = 3 * 60 * 60 * 1000;
+
 function toIso(value?: Date | string | null): string | undefined {
     if (!value) return undefined;
     const date = value instanceof Date ? value : new Date(value);
@@ -134,7 +136,7 @@ function parseEventStart(eventDate?: string, eventTime?: string): Date | null {
         const minute = Number(minutePart);
 
         if (Number.isFinite(hour) && Number.isFinite(minute)) {
-            start.setHours(hour, minute, 0, 0);
+            start.setUTCHours(hour, minute, 0, 0);
         }
     }
 
@@ -147,6 +149,13 @@ function isWithinWindow(eventDate?: string, eventTime?: string, windowMinutes = 
 
     const diff = Math.abs(Date.now() - start.getTime());
     return diff <= windowMinutes * 60 * 1000;
+}
+
+function isTicketExpired(eventDate?: string, eventTime?: string): boolean {
+    const start = parseEventStart(eventDate, eventTime);
+    if (!start) return false;
+
+    return Date.now() > start.getTime() + GATE_CHECKIN_GRACE_MS;
 }
 
 async function getAuthenticatedUserId(): Promise<string | null> {
@@ -537,8 +546,7 @@ export async function verifyTicket(ticketId: string, eventId: string): Promise<V
             };
         }
 
-        const eventStart = parseEventStart(event.date, event.time);
-        if (eventStart && eventStart.getTime() < Date.now()) {
+        if (isTicketExpired(event.date, event.time)) {
             return { valid: false, reason: "expired" };
         }
 
@@ -598,6 +606,19 @@ export async function checkInTicket(
                 reason: "already_used",
                 ticket: buildTicketPayload(ticket),
             };
+        }
+
+        const event = await Event.findById(eventId).select("date time").lean<{
+            date?: string;
+            time?: string;
+        } | null>();
+
+        if (!event) {
+            return { success: false, reason: "not_found" };
+        }
+
+        if (isTicketExpired(event.date, event.time)) {
+            return { success: false, reason: "expired" };
         }
 
         if (ticket.type === "booking") {

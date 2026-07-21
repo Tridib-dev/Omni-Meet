@@ -12,9 +12,22 @@ type CheckInBody = {
 const isTicketType = (value: unknown): value is TicketType =>
     value === "booking" || value === "order";
 
+function getCheckInBody(payload: unknown): CheckInBody {
+    if (!payload || typeof payload !== "object") {
+        return {};
+    }
+
+    const body = payload as Partial<CheckInBody>;
+    return {
+        ticketId: typeof body.ticketId === "string" ? body.ticketId : undefined,
+        ticketType: isTicketType(body.ticketType) ? body.ticketType : undefined,
+        eventId: typeof body.eventId === "string" ? body.eventId : undefined,
+    };
+}
+
 export async function POST(request: NextRequest) {
     try {
-        const body = (await request.json()) as CheckInBody;
+        const body = getCheckInBody(await request.json());
         const ticketId = body.ticketId?.trim() ?? "";
         const eventId = body.eventId?.trim() ?? "";
         const ticketType = body.ticketType;
@@ -40,7 +53,7 @@ export async function POST(request: NextRequest) {
 
         console.error("[POST /api/verify/checkin]", error);
         return NextResponse.json(
-            { success: false, reason: "not_found" },
+            { success: false, reason: "server_error" },
             { status: 500 }
         );
     }
