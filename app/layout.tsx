@@ -20,6 +20,8 @@ export default function RootLayout({
     <html lang="en" className="font-sans">
       <body className="min-h-screen h-full antialiased">
         <ClerkProvider
+          signInUrl="/sign-in"
+          signUpUrl="/sign-up"
           signInFallbackRedirectUrl="/dashboard"
           signUpFallbackRedirectUrl="/dashboard"
         >

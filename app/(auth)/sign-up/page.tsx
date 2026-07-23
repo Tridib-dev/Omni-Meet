@@ -1,6 +1,4 @@
-// app/(auth)/sign-up/[[...sign-up]]/page.tsx
 "use client";
-
 
 import SignUpForm from "@/components/auth/SignUpForm";
 import { Suspense } from "react";
@@ -8,7 +6,7 @@ import { Suspense } from "react";
 export default function SignUpPage() {
   return (
     <Suspense fallback={<div className="text-white">Loading...</div>}>
-      <SignUpForm/>
+      <SignUpForm />
     </Suspense>
   );
 }
