@@ -23,6 +23,7 @@ export default function ManualLookup({ eventId, onCheckedIn }: ManualLookupProps
   const [checkingIn, setCheckingIn] = useState(false);
   const [result, setResult] = useState<VerifyTicketResult | null>(null);
   const [justCheckedIn, setJustCheckedIn] = useState(false);
+  const [requestError, setRequestError] = useState<string | null>(null);
 
   async function handleLookup() {
     const id = value.trim();
@@ -30,9 +31,13 @@ export default function ManualLookup({ eventId, onCheckedIn }: ManualLookupProps
 
     setLoading(true);
     setJustCheckedIn(false);
+    setRequestError(null);
+    setResult(null);
     try {
       const res = await verifyTicketClient(id, eventId);
       setResult(res);
+    } catch {
+      setRequestError("Unable to look up the ticket right now. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -42,6 +47,7 @@ export default function ManualLookup({ eventId, onCheckedIn }: ManualLookupProps
     if (!result?.valid || !result.ticket || checkingIn) return;
 
     setCheckingIn(true);
+    setRequestError(null);
     try {
       const res = await checkInTicketClient(result.ticket.id, result.ticket.type, eventId);
       if (res.success) {
@@ -53,8 +59,14 @@ export default function ManualLookup({ eventId, onCheckedIn }: ManualLookupProps
           setJustCheckedIn(false);
         }, 1200);
       } else {
-        setResult({ valid: false, reason: "already_used", ticket: result.ticket });
+        setResult({
+          valid: false,
+          reason: res.reason ?? "already_used",
+          ticket: result.ticket,
+        });
       }
+    } catch {
+      setRequestError("Check-in failed before the server responded. Please retry.");
     } finally {
       setCheckingIn(false);
     }
@@ -79,6 +91,12 @@ export default function ManualLookup({ eventId, onCheckedIn }: ManualLookupProps
           Look up
         </button>
       </div>
+
+      {requestError && (
+        <p className="rounded-lg border border-[var(--gv-stop)]/40 bg-[var(--gv-stop)]/10 px-3 py-2 text-sm text-[var(--gv-stop)]">
+          {requestError}
+        </p>
+      )}
 
       {result && (
         <div className="rounded-lg border border-[var(--gv-line)] bg-[var(--gv-panel-2)] p-3 text-sm">
@@ -105,7 +123,9 @@ export default function ManualLookup({ eventId, onCheckedIn }: ManualLookupProps
               )}
             </div>
           ) : (
-            <p className="text-[var(--gv-stop)]">{verifyReasonMessage(result.reason)}</p>
+            <p className="text-[var(--gv-stop)]">
+              {verifyReasonMessage(result.reason, result.ticket?.checkedInAt)}
+            </p>
           )}
         </div>
       )}

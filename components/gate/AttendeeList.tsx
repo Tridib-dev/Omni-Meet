@@ -71,6 +71,7 @@ export default function AttendeeList({ eventId, eventSlug, refreshKey, onChecked
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search by email…"
+          aria-label="Search attendees by email"
           className="w-full rounded-lg border border-[var(--gv-line)] bg-[var(--gv-panel-2)] py-2 pl-9 pr-3 text-sm text-[var(--gv-ink)] placeholder:text-[var(--gv-ink-dim)] focus:outline-none focus:ring-2 focus:ring-[var(--gv-scan)]"
         />
       </div>
@@ -79,7 +80,9 @@ export default function AttendeeList({ eventId, eventSlug, refreshKey, onChecked
         {FILTERS.map((f) => (
           <button
             key={f.id}
+            type="button"
             onClick={() => setFilter(f.id)}
+            aria-pressed={filter === f.id}
             className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
               filter === f.id
                 ? "border-[var(--gv-scan)] bg-[var(--gv-scan)]/10 text-[var(--gv-scan)]"

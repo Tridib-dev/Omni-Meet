@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
@@ -30,6 +30,10 @@ const Navbar = () => {
     const [scrolled, setScrolled] = useState(false);
     const [indicator, setIndicator] = useState({ left: 0, width: 0, ready: false });
     const [mobileOpen, setMobileOpen] = useState(false);
+    const handleSignUp = () => {
+        setMobileOpen(false);
+        router.push("/sign-up");
+    };
 
     const containerRef = useRef<HTMLUListElement>(null);
     const linkRefs = useRef<Map<string, HTMLAnchorElement>>(new Map());
@@ -39,7 +43,7 @@ const Navbar = () => {
         NAV_LINKS.find((link) => link.href !== "/" && pathname?.startsWith(link.href))?.href ??
         "";
 
-    const measureIndicator = () => {
+    const measureIndicator = useCallback(() => {
         const activeEl = linkRefs.current.get(activeHref);
         const container = containerRef.current;
 
@@ -61,11 +65,11 @@ const Navbar = () => {
             width: activeRect.width,
             ready: true,
         });
-    };
+    }, [activeHref]);
 
     useLayoutEffect(() => {
         measureIndicator();
-    }, [activeHref]);
+    }, [measureIndicator]);
 
     useEffect(() => {
         const container = containerRef.current;
@@ -76,13 +80,13 @@ const Navbar = () => {
         linkRefs.current.forEach((el) => observer.observe(el));
 
         return () => observer.disconnect();
-    }, [activeHref]);
+    }, [measureIndicator]);
 
     useEffect(() => {
         const handleResize = () => measureIndicator();
         window.addEventListener("resize", handleResize);
         return () => window.removeEventListener("resize", handleResize);
-    }, [activeHref]);
+    }, [measureIndicator]);
 
     useEffect(() => {
         const handleScroll = () => setScrolled(window.scrollY > 8);
@@ -141,7 +145,7 @@ const Navbar = () => {
                                                 Sign in
                                             </button>
                                         </SignInButton>
-                                        <FlowButtonV1 onClick={() => router.push("/sign-up")} />
+                                        <FlowButtonV1 onClick={handleSignUp} />
                                     </div>
                                 ) : (
                                     <div className="flex items-center rounded-full border border-white/10 bg-white/10 px-2 py-1 backdrop-blur-sm">
@@ -157,7 +161,7 @@ const Navbar = () => {
                         {isLoaded && (
                             <>
                                 {!isSignedIn ? (
-                                    <FlowButtonV1 onClick={() => router.push("/sign-up")} />
+                                    <FlowButtonV1 onClick={handleSignUp} />
                                 ) : (
                                     <div className="flex items-center rounded-full border border-white/10 bg-white/10 px-2 py-1 backdrop-blur-sm">
                                         <UserButton />
@@ -225,7 +229,7 @@ const Navbar = () => {
                                                     Sign in
                                                 </button>
                                             </SignInButton>
-                                            <FlowButtonV1 onClick={() => router.push("/sign-up")} />
+                                            <FlowButtonV1 onClick={handleSignUp} />
                                         </div>
                                     ) : (
                                         <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/10 px-3 py-3">

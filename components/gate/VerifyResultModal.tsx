@@ -34,6 +34,9 @@ function playTone(frequency: number, durationMs: number) {
     osc.start();
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + durationMs / 1000);
     osc.stop(ctx.currentTime + durationMs / 1000);
+    window.setTimeout(() => {
+      void ctx.close().catch(() => {});
+    }, durationMs + 80);
   } catch {
     // Audio isn't available (e.g. no user gesture yet) — fail silently.
   }
@@ -57,6 +60,9 @@ export default function VerifyResultModal({ result, onDismiss }: VerifyResultMod
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onDismiss}
+          role="status"
+          aria-live="assertive"
+          aria-atomic="true"
           className={`fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 px-6 text-center ${
             result.valid ? "bg-[var(--gv-go)]" : "bg-[var(--gv-stop)]"
           }`}

@@ -10,7 +10,7 @@
 // modeled on a departures/gate display: near-black panel, mono digits for
 // counts and timestamps, clear go/stop/wait signal colors.
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import { ArrowLeft } from "lucide-react";
@@ -51,7 +51,7 @@ export default function GateShell({ eventId, eventTitle, eventMode, eventSlug }:
   const [activeTab, setActiveTab] = useState<GateTab>("scanner");
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const handleCheckedIn = () => setRefreshKey((k) => k + 1);
+  const handleCheckedIn = useCallback(() => setRefreshKey((k) => k + 1), []);
 
   return (
     <div
@@ -76,9 +76,9 @@ export default function GateShell({ eventId, eventTitle, eventMode, eventSlug }:
         <div className="mx-auto flex max-w-2xl items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-2">
             <Link
-              href="/"
+              href={`/events/${eventSlug}`}
               className="shrink-0 rounded-full p-1.5 text-[var(--gv-ink-dim)] hover:bg-[var(--gv-panel-2)] hover:text-[var(--gv-ink)] transition-colors"
-              aria-label="Back"
+              aria-label="Back to event"
             >
               <ArrowLeft size={18} />
             </Link>

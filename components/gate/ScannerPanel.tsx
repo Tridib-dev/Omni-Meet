@@ -10,7 +10,7 @@
 // If valid -> POST /api/verify/checkin immediately (self-serve gate: a
 // valid scan IS the check-in action) -> onCheckedIn() bumps stats/list.
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { QrCode, Keyboard, Search } from "lucide-react";
 import QRScanner from "./QRScanner";
 import BarcodeInput from "./BarcodeInput";
@@ -35,14 +35,14 @@ const SUB_TABS: { id: SubTab; label: string; icon: typeof QrCode }[] = [
 export default function ScannerPanel({ eventId, onCheckedIn }: ScannerPanelProps) {
   const [subTab, setSubTab] = useState<SubTab>("qr");
   const [result, setResult] = useState<VerifyTicketResult | null>(null);
-  const [busy, setBusy] = useState(false);
+  const busyRef = useRef(false);
 
   const handleScan = useCallback(
     async (ticketId: string) => {
       const cleanId = ticketId.trim();
-      if (!cleanId || busy) return;
+      if (!cleanId || busyRef.current) return;
 
-      setBusy(true);
+      busyRef.current = true;
       try {
         const verifyResult = await verifyTicketClient(cleanId, eventId);
         setResult(verifyResult);
@@ -64,11 +64,13 @@ export default function ScannerPanel({ eventId, onCheckedIn }: ScannerPanelProps
             });
           }
         }
+      } catch {
+        setResult({ valid: false, reason: "not_found" });
       } finally {
-        setBusy(false);
+        busyRef.current = false;
       }
     },
-    [eventId, busy, onCheckedIn]
+    [eventId, onCheckedIn]
   );
 
   return (

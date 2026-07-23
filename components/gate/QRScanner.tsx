@@ -10,6 +10,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { CameraOff } from "lucide-react";
+import CameraPermissionDrawer from "./CameraPermissionDrawer";
 
 export interface QRScannerProps {
   onScan: (ticketId: string) => void;
@@ -31,9 +32,16 @@ function extractTicketId(rawValue: string): string | null {
 export default function QRScanner({ onScan, active }: QRScannerProps) {
   const scannerRef = useRef<import("html5-qrcode").Html5Qrcode | null>(null);
   const startedRef = useRef(false);
+  const onScanRef = useRef(onScan);
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [permissionDrawerOpen, setPermissionDrawerOpen] = useState(false);
+  const [retryToken, setRetryToken] = useState(0);
   const lastScanRef = useRef<{ value: string; at: number }>({ value: "", at: 0 });
+
+  useEffect(() => {
+    onScanRef.current = onScan;
+  }, [onScan]);
 
   useEffect(() => {
     if (!active) return;
@@ -44,6 +52,8 @@ export default function QRScanner({ onScan, active }: QRScannerProps) {
         const { Html5Qrcode } = await import("html5-qrcode");
         if (cancelled) return;
 
+        setError(null);
+        setPermissionDrawerOpen(false);
         const instance = new Html5Qrcode(REGION_ID, { verbose: false });
         scannerRef.current = instance;
 
@@ -59,7 +69,7 @@ export default function QRScanner({ onScan, active }: QRScannerProps) {
             lastScanRef.current = { value: decodedText, at: now };
 
             const ticketId = extractTicketId(decodedText);
-            if (ticketId) onScan(ticketId);
+            if (ticketId) onScanRef.current(ticketId);
           },
           () => {
             // per-frame decode failures are expected while aiming — ignore.
@@ -72,7 +82,8 @@ export default function QRScanner({ onScan, active }: QRScannerProps) {
         if (!(err instanceof Error && err.name === "NotAllowedError")) {
           console.error("[QRScanner]", err);
         }
-        if (!cancelled) setError("Couldn't access camera. Check permissions.");
+        if (!cancelled) setError(" Couldn't access camera.");
+        if (!cancelled) setPermissionDrawerOpen(true);
       }
     }
 
@@ -83,16 +94,25 @@ export default function QRScanner({ onScan, active }: QRScannerProps) {
       const instance = scannerRef.current;
       if (instance && startedRef.current) {
         try {
-          void instance.stop().then(() => instance.clear()).catch(() => {});
+          void (async () => {
+            try {
+              await instance.stop();
+              await instance.clear();
+            } catch {
+              // Ignore cleanup errors during unmount or rapid tab switches.
+            }
+          })();
         } catch {
-          void instance.clear().catch(() => {});
+          void instance.clear();
         }
       }
       startedRef.current = false;
       scannerRef.current = null;
       setRunning(false);
+      setError(null);
+      setPermissionDrawerOpen(false);
     };
-  }, [active, onScan]);
+  }, [active, retryToken]);
 
   return (
     <div className="space-y-2">
@@ -108,15 +128,33 @@ export default function QRScanner({ onScan, active }: QRScannerProps) {
         )}
       </div>
       {error && (
-        <p className="flex items-center gap-1.5 text-xs text-[var(--gv-stop)]">
-          <CameraOff size={13} /> {error}
-        </p>
+        <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-[var(--gv-stop)]">
+          <CameraOff size={13} className="mt-0.5 shrink-0" />
+          <span>{error}</span>
+          <button
+            type="button"
+            onClick={() => setPermissionDrawerOpen(true)}
+            className="underline decoration-dotted underline-offset-2 transition-opacity hover:opacity-80"
+          >
+            Check permissions
+          </button>
+        </div>
       )}
       {running && (
         <p className="text-center text-xs text-[var(--gv-ink-dim)]">
           Point the camera at a ticket QR code
         </p>
       )}
+
+      <CameraPermissionDrawer
+        open={permissionDrawerOpen}
+        onOpenChange={setPermissionDrawerOpen}
+        onRetry={() => {
+          setError(null);
+          setPermissionDrawerOpen(false);
+          setRetryToken((current) => current + 1);
+        }}
+      />
     </div>
   );
 }
