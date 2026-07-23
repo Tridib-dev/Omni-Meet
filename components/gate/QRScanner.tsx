@@ -30,6 +30,7 @@ function extractTicketId(rawValue: string): string | null {
 
 export default function QRScanner({ onScan, active }: QRScannerProps) {
   const scannerRef = useRef<import("html5-qrcode").Html5Qrcode | null>(null);
+  const startedRef = useRef(false);
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const lastScanRef = useRef<{ value: string; at: number }>({ value: "", at: 0 });
@@ -65,9 +66,12 @@ export default function QRScanner({ onScan, active }: QRScannerProps) {
           }
         );
 
+        startedRef.current = true;
         if (!cancelled) setRunning(true);
       } catch (err) {
-        console.error("[QRScanner]", err);
+        if (!(err instanceof Error && err.name === "NotAllowedError")) {
+          console.error("[QRScanner]", err);
+        }
         if (!cancelled) setError("Couldn't access camera. Check permissions.");
       }
     }
@@ -77,12 +81,15 @@ export default function QRScanner({ onScan, active }: QRScannerProps) {
     return () => {
       cancelled = true;
       const instance = scannerRef.current;
-      if (instance) {
-        instance
-          .stop()
-          .then(() => instance.clear())
-          .catch(() => {});
+      if (instance && startedRef.current) {
+        try {
+          void instance.stop().then(() => instance.clear()).catch(() => {});
+        } catch {
+          void instance.clear().catch(() => {});
+        }
       }
+      startedRef.current = false;
+      scannerRef.current = null;
       setRunning(false);
     };
   }, [active, onScan]);

@@ -33,7 +33,7 @@ export interface GateShellProps {
 }
 
 function LiveClock() {
-  const [now, setNow] = useState<Date>(() => new Date());
+  const [now, setNow] = useState<Date | null>(null);
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000);
@@ -42,12 +42,12 @@ function LiveClock() {
 
   return (
     <span className="font-[family-name:var(--font-mono)] text-sm tabular-nums text-[var(--gv-ink-dim)]">
-      {formatClockTime(now)}
+      {now ? formatClockTime(now) : "--:--:--"}
     </span>
   );
 }
 
-export default function GateShell({ eventId, eventTitle, eventMode }: GateShellProps) {
+export default function GateShell({ eventId, eventTitle, eventMode, eventSlug }: GateShellProps) {
   const [activeTab, setActiveTab] = useState<GateTab>("scanner");
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -96,7 +96,7 @@ export default function GateShell({ eventId, eventTitle, eventMode }: GateShellP
       </header>
 
       <div className="mx-auto max-w-2xl px-4 pb-24 pt-4">
-        <GateStats eventId={eventId} refreshKey={refreshKey} />
+        <GateStats eventSlug={eventSlug} refreshKey={refreshKey} />
 
         <div className="mt-5">
           <GateTabs active={activeTab} onTabChange={setActiveTab} />
@@ -106,7 +106,12 @@ export default function GateShell({ eventId, eventTitle, eventMode }: GateShellP
           {activeTab === "scanner" ? (
             <ScannerPanel eventId={eventId} onCheckedIn={handleCheckedIn} />
           ) : (
-            <AttendeeList eventId={eventId} eventSlug={eventSlug} refreshKey={refreshKey} />
+            <AttendeeList
+              eventId={eventId}
+              eventSlug={eventSlug}
+              refreshKey={refreshKey}
+              onCheckedIn={handleCheckedIn}
+            />
           )}
         </div>
       </div>

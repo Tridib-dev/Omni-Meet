@@ -13,6 +13,7 @@ export interface AttendeeListProps {
   eventId: string;
   eventSlug: string;
   refreshKey: number;
+  onCheckedIn: (ticketId: string) => void;
 }
 
 type Filter = "all" | "checked-in" | "remaining";
@@ -23,7 +24,7 @@ const FILTERS: { id: Filter; label: string }[] = [
   { id: "remaining", label: "Remaining" },
 ];
 
-export default function AttendeeList({ eventId, eventSlug, refreshKey }: AttendeeListProps) {
+export default function AttendeeList({ eventId, eventSlug, refreshKey, onCheckedIn }: AttendeeListProps) {
   const [attendees, setAttendees] = useState<GateAttendeeItem[]>([]);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
@@ -56,6 +57,7 @@ export default function AttendeeList({ eventId, eventSlug, refreshKey }: Attende
     setAttendees((prev) =>
       prev.map((a) => (a.id === id ? { ...a, checkedIn: true, checkedInAt: new Date().toISOString() } : a))
     );
+    onCheckedIn(id);
   }
 
   return (

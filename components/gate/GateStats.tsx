@@ -10,7 +10,7 @@ import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import { fetchAttendees } from "./gate-client";
 
 export interface GateStatsProps {
-  eventId: string;
+  eventSlug: string;
   refreshKey: number;
 }
 
@@ -33,7 +33,7 @@ function CountUp({ value, className }: { value: number; className?: string }) {
   );
 }
 
-export default function GateStats({ eventId, refreshKey }: GateStatsProps) {
+export default function GateStats({ eventSlug, refreshKey }: GateStatsProps) {
   const [stats, setStats] = useState({ total: 0, checkedIn: 0, remaining: 0 });
   const [loading, setLoading] = useState(true);
 
@@ -41,7 +41,7 @@ export default function GateStats({ eventId, refreshKey }: GateStatsProps) {
     let cancelled = false;
 
     async function load() {
-      const data = await fetchAttendees(eventId);
+      const data = await fetchAttendees(eventSlug);
       if (!cancelled) {
         setStats({ total: data.total, checkedIn: data.checkedIn, remaining: data.remaining });
         setLoading(false);
@@ -54,7 +54,7 @@ export default function GateStats({ eventId, refreshKey }: GateStatsProps) {
       cancelled = true;
       clearInterval(id);
     };
-  }, [eventId, refreshKey]);
+  }, [eventSlug, refreshKey]);
 
   return (
     <div className="grid grid-cols-3 divide-x divide-[var(--gv-line)] overflow-hidden rounded-xl border border-[var(--gv-line)] bg-[var(--gv-panel)]">
