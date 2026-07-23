@@ -101,7 +101,7 @@ export const getEventBySlug = async (slug: string) => {
         return event ? JSON.parse(JSON.stringify(event)) : null;
     } catch (e) {
         console.error("Failed to fetch event by slug:", e);
-        return null;
+        throw e;
     }
 };
 
