@@ -2,9 +2,9 @@
 
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
-import { useUser, UserButton, SignInButton, SignUpButton } from "@clerk/nextjs";
+import { useUser, UserButton, SignInButton } from "@clerk/nextjs";
 import FlowButtonV1 from './GetStartedBTN';
 
 interface NavLink {
@@ -24,6 +24,7 @@ const signInButtonClass =
 
 const Navbar = () => {
     const pathname = usePathname();
+    const router = useRouter();
     const { isSignedIn, isLoaded } = useUser();
 
     const [scrolled, setScrolled] = useState(false);
@@ -140,9 +141,7 @@ const Navbar = () => {
                                                 Sign in
                                             </button>
                                         </SignInButton>
-                                        <SignUpButton mode="redirect" fallbackRedirectUrl="/sign-up">
-                                            <FlowButtonV1 />
-                                        </SignUpButton>
+                                        <FlowButtonV1 onClick={() => router.push("/sign-up")} />
                                     </div>
                                 ) : (
                                     <div className="flex items-center rounded-full border border-white/10 bg-white/10 px-2 py-1 backdrop-blur-sm">
@@ -158,9 +157,7 @@ const Navbar = () => {
                         {isLoaded && (
                             <>
                                 {!isSignedIn ? (
-                                    <SignUpButton mode="redirect" fallbackRedirectUrl="/sign-up">
-                                        <FlowButtonV1 />
-                                    </SignUpButton>
+                                    <FlowButtonV1 onClick={() => router.push("/sign-up")} />
                                 ) : (
                                     <div className="flex items-center rounded-full border border-white/10 bg-white/10 px-2 py-1 backdrop-blur-sm">
                                         <UserButton />
@@ -228,9 +225,7 @@ const Navbar = () => {
                                                     Sign in
                                                 </button>
                                             </SignInButton>
-                                            <SignUpButton mode="redirect" fallbackRedirectUrl="/sign-up">
-                                                <FlowButtonV1 />
-                                            </SignUpButton>
+                                            <FlowButtonV1 onClick={() => router.push("/sign-up")} />
                                         </div>
                                     ) : (
                                         <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/10 px-3 py-3">

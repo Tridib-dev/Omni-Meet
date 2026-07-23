@@ -9,6 +9,7 @@ export default function FlowButtonV1({
 } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button
+      type="button"
       {...rest}
       className={`flow-btn-glow group relative flex items-center gap-1 overflow-hidden
                  rounded-[100px] border-[1.5px] border-white/30 bg-transparent px-8 py-3

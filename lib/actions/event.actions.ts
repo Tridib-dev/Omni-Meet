@@ -90,6 +90,21 @@ export const getSimilarEventsBySlug = async (slug: string, limit = 6) => {
     }
 };
 
+export const getEventBySlug = async (slug: string) => {
+    try {
+        const normalizedSlug = slug.trim().toLowerCase();
+        if (!normalizedSlug) return null;
+
+        await connectToDatabase();
+
+        const event = await Event.findOne({ slug: normalizedSlug }).lean();
+        return event ? JSON.parse(JSON.stringify(event)) : null;
+    } catch (e) {
+        console.error("Failed to fetch event by slug:", e);
+        return null;
+    }
+};
+
 
 export const createEvent = async (data: Omit<IEvent, '_id' | 'slug' | 'createdAt' | 'updatedAt' | 'tagSlugs' | 'countrySlug' | 'stateSlug' | 'citySlug' | 'categorySlug'>) => {
     try {
