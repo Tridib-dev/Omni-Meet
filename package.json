@@ -16,6 +16,7 @@
     "@imagekit/next": "^2.1.5",
     "@react-email/components": "^1.0.12",
     "@react-email/render": "^2.1.0",
+    "@stream-io/video-react-sdk": "^1.39.3",
     "@stripe/stripe-js": "^9.9.0",
     "canvas-confetti": "^1.9.4",
     "class-variance-authority": "^0.7.1",
