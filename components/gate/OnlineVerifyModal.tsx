@@ -3,22 +3,10 @@
 // components/gate/OnlineVerifyModal.tsx
 // Shown when an attendee clicks "Join Room" on the event page.
 //
-// GAP: this calls POST /api/verify/room-join to run autoCheckInOnRoomJoin()
-// on join, but that route isn't among the ones you shared — only
-// /api/verify (GET) and /api/verify/checkin (POST) exist so far. The
-// action itself (autoCheckInOnRoomJoin) is already written in
-// gate.actions.ts but nothing calls it yet. You'll need a small route:
-//
-//   // app/api/verify/room-join/route.ts
-//   export async function POST(req: NextRequest) {
-//     const { eventId } = await req.json();
-//     const result = await autoCheckInOnRoomJoin(eventId);
-//     return NextResponse.json(result, { status: result.success ? 200 : 200 });
-//   }
-//
-// Until that exists, "Join room" below will verify the ticket fine but
-// the auto-check-in call will just fail quietly (caught, ignored) and
-// onVerified() still fires so the room loads.
+// The join action verifies the ticket first, then calls
+// POST /api/verify/room-join to run autoCheckInOnRoomJoin() for online/hybrid
+// events. If that request fails, the room still opens so the join flow stays
+// non-blocking.
 
 import { useEffect, useState } from "react";
 import { Loader2, CheckCircle2, XCircle } from "lucide-react";
@@ -61,7 +49,7 @@ export default function OnlineVerifyModal({ ticketId, eventId, eventMode, onVeri
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ eventId }),
       }).catch(() => {
-        // Route may not exist yet — see note above. Don't block the join.
+        // Keep the join non-blocking if the network request fails.
       });
     } finally {
       onVerified();
