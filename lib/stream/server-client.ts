@@ -9,7 +9,7 @@ let client: StreamClient | null = null;
 export function getServerStreamClient(): StreamClient {
   if (!apiKey) throw new Error("[Stream]: API key missing");
   if (!apiSecret) throw new Error("[Stream]: API secret missing");
-  if (!client) client = new StreamClient(apiKey, apiSecret);
+  if (!client) client = new StreamClient(apiKey, apiSecret, { timeout: 10_000 });
   return client;
 }
 

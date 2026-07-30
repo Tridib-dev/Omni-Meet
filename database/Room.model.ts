@@ -3,7 +3,7 @@
 import { Schema, model, models, Document, Types } from "mongoose";
 
 export type RoomStatus = "scheduled" | "live" | "ended" | "cancelled";
-export type RoomMemberRole = "organizer" | "co-organizer" | "speaker" | "attendee";
+export type RoomMemberRole = "organizer" | "co-organizer" | "attendee";
 
 export interface IRoom extends Document {
   eventId: Types.ObjectId;
@@ -55,7 +55,7 @@ const roomMemberSchema = new Schema<IRoomMember>(
     clerkId: { type: String, required: true, trim: true },
     role: {
       type: String,
-      enum: ["organizer", "co-organizer", "speaker", "attendee"],
+      enum: ["organizer", "co-organizer", "attendee"],
       required: true,
       default: "attendee",
     },

@@ -17,14 +17,13 @@ export type RoomPhase = "not_configured" | "locked" | "lobby" | "live" | "ended"
 
 const LOBBY_OPEN_MINUTES_BEFORE = 30;
 
-function toStreamRole(role: RoomMemberRole): "attendee" | "speaker" | "admin" {
+function toStreamRole(role: RoomMemberRole): "call_member" | "admin" {
   if (role === "organizer" || role === "co-organizer") return "admin";
-  if (role === "speaker") return "speaker";
-  return "attendee";
+  return "call_member";
 }
 
 
-export function getEffectivePhase(
+function getEffectivePhase(
   room: { status: RoomStatus; scheduledStart: Date },
   now: Date = new Date()
 ): RoomPhase {

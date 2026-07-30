@@ -1,32 +1,54 @@
 "use client";
 
-import { ReactNode, useMemo, useEffect } from "react";
+import { ReactNode, useEffect, useMemo } from "react";
 import { StreamVideo, StreamVideoClient } from "@stream-io/video-react-sdk";
 import { useUser } from "@clerk/nextjs";
-import { tokenProvider } from "@/lib/actions/stream.actions";
 
 const apiKey = process.env.NEXT_PUBLIC_STREAM_API_KEY;
 
 const StreamVideoProvider = ({ children }: { children: ReactNode }) => {
   const { user, isLoaded } = useUser();
+  const userId = user?.id ?? null;
+  const userName = user?.fullName ?? user?.username ?? userId ?? undefined;
+  const userImage = user?.imageUrl ?? undefined;
 
-  // Derived value, not a subscription — useMemo, not useEffect+setState.
-  const videoClient = useMemo(() => {
-    if (!isLoaded || !user) return undefined;
-    if (!apiKey) throw new Error("[Stream Room Setup]: Stream API key missing");
+  const videoClient = useMemo<StreamVideoClient | null>(() => {
+    if (!isLoaded || !userId) {
+      return null;
+    }
 
-    return new StreamVideoClient({
+    if (!apiKey) {
+      throw new Error("[Stream Room Setup]: Stream API key missing");
+    }
+
+    return StreamVideoClient.getOrCreateInstance({
       apiKey,
       user: {
-        id: user.id,
-        name: user.fullName ?? user.username ?? user.id,
-        image: user.imageUrl,
+        id: userId,
+        name: userName,
+        image: userImage,
       },
-      tokenProvider,
-    });
-  }, [isLoaded,user]);
+      tokenProvider: async () => {
+        const res = await fetch("/api/stream/token", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        });
 
-  // The actual side effect: clean up the connection when the client changes/unmounts.
+        if (!res.ok) {
+          throw new Error("[Stream]: failed to fetch user token");
+        }
+
+        return await res.text();
+      },
+      options: {
+        maxConnectUserRetries: 3,
+        onConnectUserError: (err) => {
+          console.error("[StreamVideoProvider] connectUser failed", err);
+        },
+      },
+    });
+  }, [isLoaded, userId, userName, userImage]);
+
   useEffect(() => {
     return () => {
       videoClient?.disconnectUser();

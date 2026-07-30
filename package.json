@@ -52,7 +52,8 @@
     "svix": "^1.96.1",
     "tailwind-merge": "^3.6.0",
     "validator": "^13.15.35",
-    "vaul": "^1.1.2"
+    "vaul": "^1.1.2",
+    "ws": "^8.21.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
