@@ -38,12 +38,19 @@ export interface LiveRoomScreenProps {
 
 type DrawerKind = "chat" | "qa" | null;
 
+type ReactionItem = {
+  emoji: string;
+  count: number;
+};
+
 type MessageItem = {
   id: string;
   author: string;
   role: string;
   body: string;
   createdAt: number;
+  reactions: ReactionItem[];
+  myReactions: string[];
 };
 
 type QuestionItem = {
@@ -56,6 +63,8 @@ type QuestionItem = {
   answerBody?: string;
   answeredAt?: number;
   answeredByClerkId?: string;
+  reactions: ReactionItem[];
+  myReactions: string[];
 };
 
 type DiscussionMessageApiItem = {
@@ -64,6 +73,8 @@ type DiscussionMessageApiItem = {
   authorRole?: string;
   body?: string;
   createdAt?: string;
+  reactions?: ReactionItem[];
+  myReactions?: string[];
 };
 
 type DiscussionQuestionApiItem = {
@@ -76,7 +87,11 @@ type DiscussionQuestionApiItem = {
   answerBody?: string;
   answeredAt?: string;
   answeredByClerkId?: string;
+  reactions?: ReactionItem[];
+  myReactions?: string[];
 };
+
+const REACTION_OPTIONS = ["👍", "❤️", "🎉", "😂", "🙌"] as const;
 
 function makeId() {
   return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -114,6 +129,53 @@ function participantRoleLabel(participant: StreamVideoParticipant) {
 function participantRoleBadge(role: string) {
   if (role === "organizer" || role === "co-organizer") return "host";
   return role;
+}
+
+function reactionKey(kind: "message" | "question", targetId: string, emoji: string) {
+  return `${kind}:${targetId}:${emoji}`;
+}
+
+function ReactionBar({
+  kind,
+  targetId,
+  reactions,
+  myReactions,
+  onToggleReaction,
+  sendingReactionKey,
+}: {
+  kind: "message" | "question";
+  targetId: string;
+  reactions: ReactionItem[];
+  myReactions: string[];
+  onToggleReaction: (kind: "message" | "question", targetId: string, emoji: string) => void;
+  sendingReactionKey: string | null;
+}) {
+  return (
+    <div className="mt-3 flex flex-wrap gap-2">
+      {REACTION_OPTIONS.map((emoji) => {
+        const summary = reactions.find((item) => item.emoji === emoji);
+        const active = myReactions.includes(emoji);
+        const key = reactionKey(kind, targetId, emoji);
+
+        return (
+          <button
+            key={emoji}
+            type="button"
+            onClick={() => onToggleReaction(kind, targetId, emoji)}
+            disabled={sendingReactionKey !== null && sendingReactionKey !== key}
+            className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs transition ${
+              active
+                ? "border-[#4FD1FF]/40 bg-[#4FD1FF]/15 text-[#F3F5F8]"
+                : "border-[#262B35] bg-[#0A0C10] text-[#8891A3] hover:border-[#4FD1FF]/40 hover:text-[#F3F5F8]"
+            }`}
+          >
+            <span>{emoji}</span>
+            <span>{summary?.count ?? 0}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
 }
 
 function ParticipantCard({
@@ -332,6 +394,8 @@ function ChatDrawer({
   draft,
   onDraftChange,
   onSend,
+  onReact,
+  sendingReactionKey,
   sending,
   loading,
 }: {
@@ -341,6 +405,8 @@ function ChatDrawer({
   draft: string;
   onDraftChange: (value: string) => void;
   onSend: () => void;
+  onReact: (kind: "message" | "question", targetId: string, emoji: string) => void;
+  sendingReactionKey: string | null;
   sending: boolean;
   loading: boolean;
 }) {
@@ -368,6 +434,14 @@ function ChatDrawer({
                     <span className="text-[11px] text-[#8891A3]">{formatTime(message.createdAt)}</span>
                   </div>
                   <p className="mt-1 text-sm text-[#D7DCE4]">{message.body}</p>
+                  <ReactionBar
+                    kind="message"
+                    targetId={message.id}
+                    reactions={message.reactions}
+                    myReactions={message.myReactions}
+                    onToggleReaction={onReact}
+                    sendingReactionKey={sendingReactionKey}
+                  />
                 </div>
               ))
             )}
@@ -404,6 +478,8 @@ function QADrawer({
   onDraftChange,
   onAsk,
   onAnswer,
+  onReact,
+  sendingReactionKey,
   answerDrafts,
   onAnswerDraftChange,
   canModerate,
@@ -418,6 +494,8 @@ function QADrawer({
   onDraftChange: (value: string) => void;
   onAsk: () => void;
   onAnswer: (questionId: string) => void;
+  onReact: (kind: "message" | "question", targetId: string, emoji: string) => void;
+  sendingReactionKey: string | null;
   answerDrafts: Record<string, string>;
   onAnswerDraftChange: (questionId: string, value: string) => void;
   canModerate: boolean;
@@ -453,6 +531,14 @@ function QADrawer({
                     </span>
                   </div>
                   <p className="mt-1 text-sm text-[#D7DCE4]">{question.body}</p>
+                  <ReactionBar
+                    kind="question"
+                    targetId={question.id}
+                    reactions={question.reactions}
+                    myReactions={question.myReactions}
+                    onToggleReaction={onReact}
+                    sendingReactionKey={sendingReactionKey}
+                  />
                   {question.answered && question.answerBody && (
                     <div className="mt-3 rounded-xl border border-[#33D6A0]/20 bg-[#33D6A0]/8 p-3">
                       <p className="text-[10px] uppercase tracking-wide text-[#33D6A0]">Answer</p>
@@ -668,11 +754,13 @@ type LiveRoomScreenContentProps = LiveRoomScreenProps & {
   sendingChat: boolean;
   sendingQuestion: boolean;
   sendingAnswerId: string | null;
+  sendingReactionKey: string | null;
   answerDrafts: Record<string, string>;
   updateAnswerDraft: (questionId: string, value: string) => void;
   sendChat: () => void;
   askQuestion: () => void;
   answerQuestion: (questionId: string) => void;
+  sendReaction: (kind: "message" | "question", targetId: string, emoji: string) => void;
 };
 
 function LiveRoomScreenContent({
@@ -694,11 +782,13 @@ function LiveRoomScreenContent({
   sendingChat,
   sendingQuestion,
   sendingAnswerId,
+  sendingReactionKey,
   answerDrafts,
   updateAnswerDraft,
   sendChat,
   askQuestion,
   answerQuestion,
+  sendReaction,
 }: LiveRoomScreenContentProps) {
   const { useScreenShareState, useParticipants, useHasOngoingScreenShare, useCameraState, useMicrophoneState } =
     useCallStateHooks();
@@ -814,6 +904,8 @@ function LiveRoomScreenContent({
         draft={chatDraft}
         onDraftChange={setChatDraft}
         onSend={sendChat}
+        onReact={sendReaction}
+        sendingReactionKey={sendingReactionKey}
         sending={sendingChat}
         loading={discussionLoading}
       />
@@ -826,6 +918,8 @@ function LiveRoomScreenContent({
         onDraftChange={setQaDraft}
         onAsk={askQuestion}
         onAnswer={answerQuestion}
+        onReact={sendReaction}
+        sendingReactionKey={sendingReactionKey}
         answerDrafts={answerDrafts}
         onAnswerDraftChange={updateAnswerDraft}
         canModerate={canModerate}
@@ -848,6 +942,7 @@ export default function LiveRoomScreen({ call, onLeave, eventId, showDeviceContr
   const [sendingChat, setSendingChat] = useState(false);
   const [sendingQuestion, setSendingQuestion] = useState(false);
   const [sendingAnswerId, setSendingAnswerId] = useState<string | null>(null);
+  const [sendingReactionKey, setSendingReactionKey] = useState<string | null>(null);
   const [answerDrafts, setAnswerDrafts] = useState<Record<string, string>>({});
   const realtimeSocketRef = useRef<WebSocket | null>(null);
   const realtimeReconnectRef = useRef<number | null>(null);
@@ -873,6 +968,13 @@ export default function LiveRoomScreen({ call, onLeave, eventId, showDeviceContr
             role: String(item.authorRole ?? "attendee"),
             body: String(item.body ?? ""),
             createdAt: new Date(String(item.createdAt)).getTime(),
+            reactions: Array.isArray(item.reactions)
+              ? item.reactions.map((reaction) => ({
+                  emoji: String(reaction.emoji ?? ""),
+                  count: Number(reaction.count ?? 0),
+                }))
+              : [],
+            myReactions: Array.isArray(item.myReactions) ? item.myReactions.map(String) : [],
           }))
         : [];
 
@@ -887,6 +989,13 @@ export default function LiveRoomScreen({ call, onLeave, eventId, showDeviceContr
             answerBody: typeof item.answerBody === "string" ? item.answerBody : undefined,
             answeredAt: item.answeredAt ? new Date(String(item.answeredAt)).getTime() : undefined,
             answeredByClerkId: typeof item.answeredByClerkId === "string" ? item.answeredByClerkId : undefined,
+            reactions: Array.isArray(item.reactions)
+              ? item.reactions.map((reaction) => ({
+                  emoji: String(reaction.emoji ?? ""),
+                  count: Number(reaction.count ?? 0),
+                }))
+              : [],
+            myReactions: Array.isArray(item.myReactions) ? item.myReactions.map(String) : [],
           }))
         : [];
 
@@ -917,6 +1026,33 @@ export default function LiveRoomScreen({ call, onLeave, eventId, showDeviceContr
       window.clearInterval(intervalId);
     };
   }, [syncDiscussion]);
+
+  const sendReaction = useCallback(
+    async (targetKind: "message" | "question", targetId: string, emoji: string) => {
+      const key = reactionKey(targetKind, targetId, emoji);
+      setSendingReactionKey(key);
+      setDrawerError(null);
+
+      try {
+        const res = await fetch(`/api/rooms/${eventId}/discussion`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ kind: "reaction", targetKind, targetId, emoji }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data?.success) {
+          throw new Error(data?.message ?? "Failed to save reaction.");
+        }
+        await syncDiscussion();
+      } catch (err) {
+        console.error("[LiveRoomScreen] reaction failed", err);
+        setDrawerError("Could not save your reaction. Please try again.");
+      } finally {
+        setSendingReactionKey(null);
+      }
+    },
+    [eventId, syncDiscussion]
+  );
 
   useEffect(() => {
     let active = true;
@@ -1125,11 +1261,13 @@ export default function LiveRoomScreen({ call, onLeave, eventId, showDeviceContr
         sendingChat={sendingChat}
         sendingQuestion={sendingQuestion}
         sendingAnswerId={sendingAnswerId}
+        sendingReactionKey={sendingReactionKey}
         answerDrafts={answerDrafts}
         updateAnswerDraft={updateAnswerDraft}
         sendChat={sendChat}
         askQuestion={askQuestion}
         answerQuestion={answerQuestion}
+        sendReaction={sendReaction}
         eventId={eventId}
         />
     </StreamCall>

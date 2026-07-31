@@ -5,7 +5,7 @@ import { auth } from "@clerk/nextjs/server";
 import { isValidObjectId, type Types } from "mongoose";
 import connectToDatabase from "@/lib/mongodb";
 import { Room, RoomMember } from "@/database/Room.model";
-import { RoomMessage, RoomQuestion } from "@/database/room-discussion.model";
+import { RoomMessage, RoomQuestion, RoomReaction } from "@/database/room-discussion.model";
 import { User } from "@/database/User.model";
 import type { RoomMemberRole } from "@/database/Room.model";
 import * as roomRealtime from "@/lib/realtime/room-realtime";
@@ -16,6 +16,8 @@ export interface RoomDiscussionMessageItem {
   authorName: string;
   authorRole: RoomMemberRole;
   createdAt: string;
+  reactions: RoomReactionSummaryItem[];
+  myReactions: string[];
 }
 
 export interface RoomDiscussionQuestionItem {
@@ -28,6 +30,8 @@ export interface RoomDiscussionQuestionItem {
   answerBody?: string;
   answeredAt?: string;
   answeredByClerkId?: string;
+  reactions: RoomReactionSummaryItem[];
+  myReactions: string[];
 }
 
 export interface RoomDiscussionPayload {
@@ -36,10 +40,16 @@ export interface RoomDiscussionPayload {
   role: RoomMemberRole;
 }
 
+export interface RoomReactionSummaryItem {
+  emoji: string;
+  count: number;
+}
+
 export type RoomDiscussionMutationResult =
   | { success: true; message: RoomDiscussionMessageItem }
   | { success: true; question: RoomDiscussionQuestionItem }
   | { success: true; roomQuestion: RoomDiscussionQuestionItem }
+  | { success: true; reaction: { targetKind: "message" | "question"; targetId: string; emoji: string; active: boolean } }
   | { success: false; reason: "not_found" | "unauthorized" | "forbidden" | "invalid_input" | "server_error" };
 
 type RoomMemberDoc = {
@@ -56,6 +66,15 @@ type UserDoc = {
   username?: string;
 };
 
+type RoomReactionDoc = {
+  targetKind: "message" | "question";
+  targetId: Types.ObjectId;
+  clerkId: string;
+  emoji: string;
+};
+
+const ALLOWED_REACTIONS = new Set(["👍", "❤️", "🎉", "😂", "🙌"]);
+
 function normalizeText(value: string, maxLength: number) {
   const trimmed = value.trim().replace(/\s+/g, " ");
   if (!trimmed || trimmed.length > maxLength) return null;
@@ -68,6 +87,14 @@ async function resolveDisplayName(clerkId: string): Promise<string> {
 
   const name = [user.firstName?.trim(), user.lastName?.trim()].filter(Boolean).join(" ").trim();
   return name || user.username?.trim() || clerkId;
+}
+
+function normalizeEmoji(value: string) {
+  const emoji = value.trim();
+  if (!emoji || emoji.length > 12 || !ALLOWED_REACTIONS.has(emoji)) {
+    return null;
+  }
+  return emoji;
 }
 
 export async function getRoomContext(eventId: string): Promise<
@@ -98,13 +125,15 @@ function toMessageItem(doc: {
   authorName: string;
   authorRole: RoomMemberRole;
   createdAt: Date;
-}): RoomDiscussionMessageItem {
+}, reactions: RoomReactionSummaryItem[] = [], myReactions: string[] = []): RoomDiscussionMessageItem {
   return {
     id: doc._id.toString(),
     body: doc.body,
     authorName: doc.authorName,
     authorRole: doc.authorRole,
     createdAt: doc.createdAt.toISOString(),
+    reactions,
+    myReactions,
   };
 }
 
@@ -118,7 +147,7 @@ function toQuestionItem(doc: {
   answerBody?: string;
   answeredAt?: Date;
   answeredByClerkId?: string;
-}): RoomDiscussionQuestionItem {
+}, reactions: RoomReactionSummaryItem[] = [], myReactions: string[] = []): RoomDiscussionQuestionItem {
   return {
     id: doc._id.toString(),
     body: doc.body,
@@ -129,6 +158,54 @@ function toQuestionItem(doc: {
     answerBody: doc.answerBody,
     answeredAt: doc.answeredAt?.toISOString(),
     answeredByClerkId: doc.answeredByClerkId,
+    reactions,
+    myReactions,
+  };
+}
+
+function buildReactionState(reactions: RoomReactionDoc[], currentClerkId: string) {
+  const byTarget = new Map<string, Map<string, Set<string>>>();
+  const myByTarget = new Map<string, Set<string>>();
+
+  for (const reaction of reactions) {
+    const key = `${reaction.targetKind}:${reaction.targetId.toString()}`;
+    let emojiMap = byTarget.get(key);
+    if (!emojiMap) {
+      emojiMap = new Map();
+      byTarget.set(key, emojiMap);
+    }
+
+    let users = emojiMap.get(reaction.emoji);
+    if (!users) {
+      users = new Set();
+      emojiMap.set(reaction.emoji, users);
+    }
+    users.add(reaction.clerkId);
+
+    if (reaction.clerkId === currentClerkId) {
+      let mySet = myByTarget.get(key);
+      if (!mySet) {
+        mySet = new Set();
+        myByTarget.set(key, mySet);
+      }
+      mySet.add(reaction.emoji);
+    }
+  }
+
+  return {
+    reactionsFor(targetKind: "message" | "question", targetId: Types.ObjectId) {
+      const key = `${targetKind}:${targetId.toString()}`;
+      const emojiMap = byTarget.get(key);
+      if (!emojiMap) return [] as RoomReactionSummaryItem[];
+
+      return [...emojiMap.entries()]
+        .map(([emoji, users]) => ({ emoji, count: users.size }))
+        .sort((a, b) => b.count - a.count || a.emoji.localeCompare(b.emoji));
+    },
+    myReactionsFor(targetKind: "message" | "question", targetId: Types.ObjectId) {
+      const key = `${targetKind}:${targetId.toString()}`;
+      return [...(myByTarget.get(key) ?? new Set<string>())];
+    },
   };
 }
 
@@ -137,14 +214,25 @@ export async function getRoomDiscussion(eventId: string): Promise<RoomDiscussion
     const context = await getRoomContext(eventId);
     if (!context.ok) return null;
 
-    const [messages, questions] = await Promise.all([
+    const [messages, questions, reactions] = await Promise.all([
       RoomMessage.find({ roomId: context.roomId }).sort({ createdAt: 1 }).limit(50).lean(),
       RoomQuestion.find({ roomId: context.roomId }).sort({ createdAt: -1 }).limit(50).lean(),
+      RoomReaction.find({ roomId: context.roomId }).lean(),
     ]);
 
+    const reactionState = buildReactionState(reactions as RoomReactionDoc[], context.roomMember.clerkId);
+
     return {
-      messages: (messages as Array<Parameters<typeof toMessageItem>[0]>).map(toMessageItem),
-      questions: (questions as Array<Parameters<typeof toQuestionItem>[0]>).map(toQuestionItem),
+      messages: (messages as Array<Parameters<typeof toMessageItem>[0]>).map((item) =>
+        toMessageItem(item, reactionState.reactionsFor("message", item._id), reactionState.myReactionsFor("message", item._id))
+      ),
+      questions: (questions as Array<Parameters<typeof toQuestionItem>[0]>).map((item) =>
+        toQuestionItem(
+          item,
+          reactionState.reactionsFor("question", item._id),
+          reactionState.myReactionsFor("question", item._id)
+        )
+      ),
       role: context.roomMember.role,
     };
   } catch (error) {
@@ -280,6 +368,58 @@ export async function answerRoomQuestion(
     return { success: true, roomQuestion: toQuestionItem(updated as Parameters<typeof toQuestionItem>[0]) };
   } catch (error) {
     console.error("[answerRoomQuestion]", error);
+    return { success: false, reason: "server_error" };
+  }
+}
+
+export async function toggleRoomReaction(
+  eventId: string,
+  targetKind: "message" | "question",
+  targetId: string,
+  emojiValue: string
+): Promise<RoomDiscussionMutationResult> {
+  try {
+    const context = await getRoomContext(eventId);
+    if (!context.ok) return { success: false, reason: context.reason };
+
+    if (!isValidObjectId(targetId)) return { success: false, reason: "invalid_input" };
+    const emoji = normalizeEmoji(emojiValue);
+    if (!emoji) return { success: false, reason: "invalid_input" };
+
+    const model = targetKind === "message" ? RoomMessage : RoomQuestion;
+    const targetDoc = await model.findOne({ _id: targetId, roomId: context.roomId }).select("_id").lean();
+    if (!targetDoc) return { success: false, reason: "not_found" };
+
+    const filter = {
+      roomId: context.roomId,
+      targetKind,
+      targetId,
+      clerkId: context.roomMember.clerkId,
+      emoji,
+    } as const;
+
+    const existing = await RoomReaction.findOne(filter).select("_id").lean();
+    let active = false;
+
+    if (existing) {
+      await RoomReaction.deleteOne(filter);
+    } else {
+      await RoomReaction.create(filter);
+      active = true;
+    }
+
+    roomRealtime.broadcastRoomDiscussionUpdate(context.roomId.toString(), {
+      eventId,
+      kind: "reaction",
+      targetKind,
+      targetId,
+      emoji,
+      active,
+    });
+
+    return { success: true, reaction: { targetKind, targetId, emoji, active } };
+  } catch (error) {
+    console.error("[toggleRoomReaction]", error);
     return { success: false, reason: "server_error" };
   }
 }

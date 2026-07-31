@@ -77,3 +77,29 @@ roomQuestionSchema.index({ roomId: 1, answered: 1, createdAt: -1 });
 
 export const RoomMessage = models.RoomMessage || model<IRoomMessage>("RoomMessage", roomMessageSchema);
 export const RoomQuestion = models.RoomQuestion || model<IRoomQuestion>("RoomQuestion", roomQuestionSchema);
+
+export interface IRoomReaction extends Document {
+  roomId: Types.ObjectId;
+  targetKind: "message" | "question";
+  targetId: Types.ObjectId;
+  clerkId: string;
+  emoji: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const roomReactionSchema = new Schema<IRoomReaction>(
+  {
+    roomId: { type: Schema.Types.ObjectId, ref: "Room", required: true, index: true },
+    targetKind: { type: String, enum: ["message", "question"], required: true },
+    targetId: { type: Schema.Types.ObjectId, required: true, index: true },
+    clerkId: { type: String, required: true, trim: true },
+    emoji: { type: String, required: true, trim: true, maxlength: 12 },
+  },
+  { timestamps: true }
+);
+
+roomReactionSchema.index({ roomId: 1, targetKind: 1, targetId: 1, emoji: 1, clerkId: 1 }, { unique: true });
+roomReactionSchema.index({ roomId: 1, targetKind: 1, targetId: 1 });
+
+export const RoomReaction = models.RoomReaction || model<IRoomReaction>("RoomReaction", roomReactionSchema);
