@@ -5,7 +5,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import { useUser, UserButton, SignInButton } from "@clerk/nextjs";
-import FlowButtonV1 from './GetStartedBTN';
+import { cn } from "@/lib/utils";
+import FlowButtonV1 from "./GetStartedBTN";
 
 interface NavLink {
     label: string;
@@ -97,7 +98,7 @@ const Navbar = () => {
 
     return (
         <header className="navbar-wrapper">
-            <nav className={`navbar-floating ${scrolled ? "navbar-scrolled" : ""}`} aria-label="Primary">
+            <nav className={cn("navbar-floating", scrolled && "navbar-scrolled")} aria-label="Primary">
                 {/* Logo - Left */}
                 <Link href="/" className="logo">
                     <Image src="/icons/logo.png" alt="DevEvent" width={24} height={24} />
@@ -123,7 +124,7 @@ const Navbar = () => {
                                         if (el) linkRefs.current.set(link.href, el);
                                     }}
                                     aria-current={isActive ? "page" : undefined}
-                                    className={`navbar-link ${isActive ? "navbar-link-active" : ""}`}
+                                    className={cn("navbar-link", isActive && "navbar-link-active")}
                                 >
                                     {link.label}
                                 </Link>
@@ -210,7 +211,7 @@ const Navbar = () => {
                                             href={link.href}
                                             onClick={() => setMobileOpen(false)}
                                             aria-current={isActive ? "page" : undefined}
-                                            className={`navbar-mobile-link ${isActive ? "navbar-mobile-link-active" : ""}`}
+                                            className={cn("navbar-mobile-link", isActive && "navbar-mobile-link-active")}
                                         >
                                             {link.label}
                                         </Link>

@@ -50,7 +50,8 @@ export default function RoomGate({
   const callId = joinResult?.callId;
   const callType = joinResult?.callType ?? "event-room";
 
-  const joinFailed = joinFailedState || (joinResult?.status === "denied" && phase === "live");
+  const joinFailed =
+    joinFailedState || (joinResult?.status === "denied" && phase === "live" && joinResult.reason !== "not_started_yet");
 
   useEffect(() => {
     if (phase !== "live" || !client || !callId) return;

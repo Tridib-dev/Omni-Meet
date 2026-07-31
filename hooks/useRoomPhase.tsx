@@ -2,19 +2,21 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { RoomPhase, JoinRoomResult } from "@/lib/actions/room.actions";
+import type { RoomPhase, JoinRoomResult, RoomPublicMeta } from "@/lib/actions/room.actions";
 
 const POLL_MS = 15_000;
 
 export function useRoomPhase(eventId: string, initialPhase: RoomPhase) {
   const [phase, setPhase] = useState<RoomPhase>(initialPhase);
   const [joinResult, setJoinResult] = useState<JoinRoomResult | null>(null);
-  const inFlight = useRef(false);
+  const joinInFlight = useRef(false);
+  const joinSucceeded = useRef(false);
+  const joinBlocked = useRef(false);
   const phaseRef = useRef<RoomPhase>(initialPhase);
 
-  const refetch = useCallback(async () => {
-    if (inFlight.current) return;
-    inFlight.current = true;
+  const attemptJoin = useCallback(async () => {
+    if (joinInFlight.current || joinSucceeded.current || joinBlocked.current) return;
+    joinInFlight.current = true;
     try {
       const res = await fetch(`/api/rooms/${eventId}/join`, { method: "POST" });
       const data: JoinRoomResult = await res.json();
@@ -26,28 +28,53 @@ export function useRoomPhase(eventId: string, initialPhase: RoomPhase) {
         phaseRef.current = "live";
         setPhase("live");
       }
+      if (data.status === "ok") {
+        joinSucceeded.current = true;
+      } else if (data.reason && data.reason !== "not_started_yet") {
+        joinBlocked.current = true;
+      }
     } finally {
-      inFlight.current = false;
+      joinInFlight.current = false;
     }
   }, [eventId]);
+
+  const refreshPhase = useCallback(async () => {
+    const res = await fetch(`/api/rooms/${eventId}/meta`, { cache: "no-store" });
+    if (!res.ok) return;
+
+    const data = (await res.json()) as RoomPublicMeta;
+    if (!data?.phase) return;
+
+    phaseRef.current = data.phase;
+    setPhase(data.phase);
+
+    if (data.phase === "live" && !joinSucceeded.current && !joinBlocked.current) {
+      void attemptJoin();
+    }
+  }, [attemptJoin, eventId]);
 
   useEffect(() => {
     phaseRef.current = phase;
   }, [phase]);
 
   useEffect(() => {
-    refetch(); // initial join attempt on mount
+    const initialTimer = window.setTimeout(() => {
+      void attemptJoin(); // initial membership join on mount
+      void refreshPhase();
+    }, 0);
+
     const id = setInterval(() => {
-      // Only bother polling while phase could still change —
-      // no point polling once "ended".
       if (phaseRef.current !== "ended") {
-        refetch();
+        void refreshPhase();
       }
     }, POLL_MS);
-    return () => clearInterval(id);
-  }, [refetch]);
+    return () => {
+      window.clearTimeout(initialTimer);
+      clearInterval(id);
+    };
+  }, [attemptJoin, refreshPhase]);
 
-  return { phase, joinResult, refetch };
+  return { phase, joinResult, refetch: refreshPhase };
 }
 
 // TODO (post-MVP, cost-sensitive): poll faster (e.g. every 4s) specifically

@@ -207,7 +207,7 @@ export async function joinRoom(eventId: string): Promise<JoinRoomResult> {
         },
         $set: { joinedAt: new Date(), leftAt: null },
       },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: "after" }
     );
 
     const effectiveRole: RoomMemberRole = memberDoc.role;

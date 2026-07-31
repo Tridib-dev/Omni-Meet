@@ -180,7 +180,7 @@ export async function addRoomMessage(
           clientMessageId: normalizedClientId,
         },
       },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: "after" }
     ).lean();
 
     if (!doc) return { success: false, reason: "server_error" };
@@ -223,7 +223,7 @@ export async function askRoomQuestion(
           answered: false,
         },
       },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: "after" }
     ).lean();
 
     if (!doc) return { success: false, reason: "server_error" };
@@ -268,7 +268,7 @@ export async function answerRoomQuestion(
           clientAnswerId: normalizedClientId,
         },
       },
-      { new: true }
+      { returnDocument: "after" }
     ).lean();
 
     if (!updated) return { success: false, reason: "not_found" };

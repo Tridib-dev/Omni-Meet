@@ -276,6 +276,55 @@ function DrawerShell({
   );
 }
 
+function DeviceButtons({ setDeviceError }: { setDeviceError: (value: string | null) => void }) {
+  const { useCameraState, useMicrophoneState } = useCallStateHooks();
+  const { camera, isMute: camMuted, hasBrowserPermission: hasCamPermission } = useCameraState();
+  const { microphone, isMute: micMuted, hasBrowserPermission: hasMicPermission } = useMicrophoneState();
+
+  async function toggleCamera() {
+    setDeviceError(null);
+    try {
+      await camera.toggle();
+    } catch {
+      setDeviceError("Camera permission denied or unavailable. Check site permissions.");
+    }
+  }
+
+  async function toggleMicrophone() {
+    setDeviceError(null);
+    try {
+      await microphone.toggle();
+    } catch {
+      setDeviceError("Microphone permission denied or unavailable. Check site permissions.");
+    }
+  }
+
+  return (
+    <>
+      <button
+        onClick={toggleMicrophone}
+        className={`flex h-11 items-center gap-2 rounded-full px-4 text-sm font-medium ${
+          micMuted || !hasMicPermission ? "bg-[#262B35] text-[#8891A3]" : "bg-[#1B1F27] text-[#F3F5F8]"
+        }`}
+        aria-label={micMuted ? "Unmute microphone" : "Mute microphone"}
+      >
+        {micMuted || !hasMicPermission ? <MicOff size={17} /> : <Mic size={17} />}
+        <span className="hidden sm:inline">Mic</span>
+      </button>
+      <button
+        onClick={toggleCamera}
+        className={`flex h-11 items-center gap-2 rounded-full px-4 text-sm font-medium ${
+          camMuted || !hasCamPermission ? "bg-[#262B35] text-[#8891A3]" : "bg-[#1B1F27] text-[#F3F5F8]"
+        }`}
+        aria-label={camMuted ? "Turn on camera" : "Turn off camera"}
+      >
+        {camMuted || !hasCamPermission ? <VideoOff size={17} /> : <Video size={17} />}
+        <span className="hidden sm:inline">Camera</span>
+      </button>
+    </>
+  );
+}
+
 function ChatDrawer({
   open,
   onOpenChange,
@@ -470,56 +519,14 @@ function ControlsBar({
   canModerate?: boolean;
   screenShareActive?: boolean;
 }) {
-  const { useCameraState, useMicrophoneState } = useCallStateHooks();
-  const { camera, isMute: camMuted, hasBrowserPermission: hasCamPermission } = useCameraState();
-  const { microphone, isMute: micMuted, hasBrowserPermission: hasMicPermission } = useMicrophoneState();
   const [deviceError, setDeviceError] = useState<string | null>(null);
-
-  async function toggleCamera() {
-    setDeviceError(null);
-    try {
-      await camera.toggle();
-    } catch {
-      setDeviceError("Camera permission denied or unavailable. Check site permissions.");
-    }
-  }
-
-  async function toggleMicrophone() {
-    setDeviceError(null);
-    try {
-      await microphone.toggle();
-    } catch {
-      setDeviceError("Microphone permission denied or unavailable. Check site permissions.");
-    }
-  }
 
   return (
     <div className="flex flex-col gap-2 border-t border-[#262B35] bg-[#0A0C10] px-3 py-3">
       {deviceError && <p className="text-xs text-[#FF5468]">{deviceError}</p>}
       <div className="flex flex-wrap items-center justify-center gap-2">
         {showDeviceControls && (
-          <>
-            <button
-              onClick={toggleMicrophone}
-              className={`flex h-11 items-center gap-2 rounded-full px-4 text-sm font-medium ${
-                micMuted || !hasMicPermission ? "bg-[#262B35] text-[#8891A3]" : "bg-[#1B1F27] text-[#F3F5F8]"
-              }`}
-              aria-label={micMuted ? "Unmute microphone" : "Mute microphone"}
-            >
-              {micMuted || !hasMicPermission ? <MicOff size={17} /> : <Mic size={17} />}
-              <span className="hidden sm:inline">Mic</span>
-            </button>
-            <button
-              onClick={toggleCamera}
-              className={`flex h-11 items-center gap-2 rounded-full px-4 text-sm font-medium ${
-                camMuted || !hasCamPermission ? "bg-[#262B35] text-[#8891A3]" : "bg-[#1B1F27] text-[#F3F5F8]"
-              }`}
-              aria-label={camMuted ? "Turn on camera" : "Turn off camera"}
-            >
-              {camMuted || !hasCamPermission ? <VideoOff size={17} /> : <Video size={17} />}
-              <span className="hidden sm:inline">Camera</span>
-            </button>
-          </>
+          <DeviceButtons setDeviceError={setDeviceError} />
         )}
 
         {canModerate && (
@@ -608,6 +615,7 @@ function StagePanel({
 
   const label = participantLabel(focusParticipant);
   const role = participantRoleLabel(focusParticipant);
+  const isScreenSharing = hasScreenShare(focusParticipant);
 
   return (
     <div className="relative h-full min-h-[520px] overflow-hidden rounded-3xl border border-[#262B35] bg-[#0A0C10]">
@@ -621,7 +629,8 @@ function StagePanel({
       <div className="absolute inset-0">
         <ParticipantView
           participant={focusParticipant}
-          mirror={focusParticipant.isLocalParticipant}
+          trackType={isScreenSharing ? "screenShareTrack" : "videoTrack"}
+          mirror={focusParticipant.isLocalParticipant && !isScreenSharing}
           VideoPlaceholder={() => <InitialsAvatar name={label} />}
           ParticipantViewUI={null}
           className="absolute inset-0 h-full w-full overflow-hidden [&_video]:h-full [&_video]:w-full [&_video]:object-cover [&_video]:object-center [&_video]:bg-black"
