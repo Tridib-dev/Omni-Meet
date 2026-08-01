@@ -196,44 +196,61 @@ function VoteBar({
 }
 
 function StageReactionOverlay({ events }: { events: StageEvent[] }) {
+  const visibleEvents = events.slice(0, 6);
+
   return (
     <div className="pointer-events-none absolute inset-0 z-20 overflow-hidden">
-      {events.map((event, index) => {
-        const isHand = event.kind === "hand";
-        const label = isHand ? "raised hand" : event.emoji ?? "✨";
-        return (
-          <div
-            key={event.id}
-            className="absolute bottom-8"
-            style={
-              {
-                left: `${12 + ((index * 17) % 70)}%`,
-                animation: `room-float-up 2.8s ease-out forwards`,
-                animationDelay: `${(index % 3) * 120}ms`,
-              } as CSSProperties
-            }
-          >
-            <div className="flex -translate-x-1/2 flex-col items-center gap-2">
-              <div className="rounded-full border border-white/10 bg-black/55 px-3 py-1 text-sm font-medium text-white backdrop-blur">
-                <span className="mr-2">{isHand ? "✋" : event.emoji}</span>
-                <span className="text-white/90">{event.displayName}</span>
-                <span className="ml-2 text-white/60">{label}</span>
+      <div className="absolute bottom-8 right-4 flex justify-end sm:right-6 lg:right-8">
+        <div className="flex w-fit flex-col items-end gap-2">
+          {visibleEvents.map((event, index) => {
+            const isHand = event.kind === "hand";
+            const label = isHand ? "raised hand" : event.emoji ?? "✨";
+
+            return (
+              <div
+                key={event.id}
+                className="shrink-0 drop-shadow-[0_10px_25px_rgba(0,0,0,0.35)]"
+                style={
+                  {
+                    animation: "room-float-up 2.5s cubic-bezier(0.2, 0.9, 0.2, 1) forwards",
+                    animationDelay: `${index * 95}ms`,
+                  } as CSSProperties
+                }
+              >
+                <div className="flex items-center gap-2 rounded-full border border-[#4FD1FF]/35 bg-linear-to-r from-[#4FD1FF]/30 via-[#11161D]/90 to-[#33D6A0]/25 px-3.5 py-2.5 text-sm font-semibold text-white shadow-[0_16px_40px_rgba(0,0,0,0.45),0_0_0_1px_rgba(255,255,255,0.08)] ring-1 ring-white/10 backdrop-blur-md">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/15 text-base leading-none shadow-inner shadow-white/10">
+                    {isHand ? "✋" : event.emoji}
+                  </span>
+                  <span className="max-w-32 truncate text-white/95">{event.displayName}</span>
+                  <span className="rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-[#D9F7FF]">
+                    {label}
+                  </span>
+                </div>
               </div>
-            </div>
-          </div>
-        );
-      })}
+            );
+          })}
+        </div>
+      </div>
+
       <style jsx global>{`
         @keyframes room-float-up {
           0% {
-            transform: translate3d(0, 0, 0) scale(0.96);
+            transform: translate3d(0, 20px, 0) scale(0.9);
             opacity: 0;
           }
-          10% {
+          12% {
+            opacity: 1;
+            transform: translate3d(0, 6px, 0) scale(1.03);
+          }
+          24% {
+            transform: translate3d(0, -2px, 0) scale(1);
+          }
+          70% {
+            transform: translate3d(0, -28px, 0) scale(1);
             opacity: 1;
           }
           100% {
-            transform: translate3d(0, -34vh, 0) scale(1);
+            transform: translate3d(0, -76px, 0) scale(0.97);
             opacity: 0;
           }
         }
@@ -812,7 +829,7 @@ function StagePanel({
         />
       </div>
 
-      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/70 to-transparent p-4">
+      <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black via-black/70 to-transparent p-4">
         <div className="flex items-end justify-between gap-3">
           <div className="space-y-1">
             <p className="text-lg font-semibold text-white">{label}</p>
