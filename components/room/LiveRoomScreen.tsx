@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import {
   ParticipantView,
   StreamCall,
@@ -38,9 +38,21 @@ export interface LiveRoomScreenProps {
 
 type DrawerKind = "chat" | "qa" | null;
 
-type ReactionItem = {
-  emoji: string;
-  count: number;
+type VoteState = {
+  upvotes: number;
+  downvotes: number;
+  myVote: "up" | "down" | null;
+};
+
+type StageEventKind = "emoji" | "hand";
+
+type StageEvent = {
+  id: string;
+  kind: StageEventKind;
+  emoji?: string;
+  displayName: string;
+  role: string;
+  createdAt: number;
 };
 
 type MessageItem = {
@@ -49,8 +61,7 @@ type MessageItem = {
   role: string;
   body: string;
   createdAt: number;
-  reactions: ReactionItem[];
-  myReactions: string[];
+  votes: VoteState;
 };
 
 type QuestionItem = {
@@ -63,8 +74,7 @@ type QuestionItem = {
   answerBody?: string;
   answeredAt?: number;
   answeredByClerkId?: string;
-  reactions: ReactionItem[];
-  myReactions: string[];
+  votes: VoteState;
 };
 
 type DiscussionMessageApiItem = {
@@ -73,8 +83,9 @@ type DiscussionMessageApiItem = {
   authorRole?: string;
   body?: string;
   createdAt?: string;
-  reactions?: ReactionItem[];
-  myReactions?: string[];
+  upvotes?: number;
+  downvotes?: number;
+  myVote?: "up" | "down" | null;
 };
 
 type DiscussionQuestionApiItem = {
@@ -87,11 +98,12 @@ type DiscussionQuestionApiItem = {
   answerBody?: string;
   answeredAt?: string;
   answeredByClerkId?: string;
-  reactions?: ReactionItem[];
-  myReactions?: string[];
+  upvotes?: number;
+  downvotes?: number;
+  myVote?: "up" | "down" | null;
 };
 
-const REACTION_OPTIONS = ["👍", "❤️", "🎉", "😂", "🙌"] as const;
+const STAGE_REACTION_OPTIONS = ["👍", "❤️", "🎉", "😂", "🙌"] as const;
 
 function makeId() {
   return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -131,49 +143,101 @@ function participantRoleBadge(role: string) {
   return role;
 }
 
-function reactionKey(kind: "message" | "question", targetId: string, emoji: string) {
-  return `${kind}:${targetId}:${emoji}`;
+function voteKey(kind: "message" | "question", targetId: string, direction: "up" | "down") {
+  return `${kind}:${targetId}:${direction}`;
 }
 
-function ReactionBar({
+function VoteBar({
   kind,
   targetId,
-  reactions,
-  myReactions,
-  onToggleReaction,
-  sendingReactionKey,
+  votes,
+  onToggleVote,
+  sendingVoteKey,
 }: {
   kind: "message" | "question";
   targetId: string;
-  reactions: ReactionItem[];
-  myReactions: string[];
-  onToggleReaction: (kind: "message" | "question", targetId: string, emoji: string) => void;
-  sendingReactionKey: string | null;
+  votes: VoteState;
+  onToggleVote: (kind: "message" | "question", targetId: string, direction: "up" | "down") => void;
+  sendingVoteKey: string | null;
 }) {
+  const upKey = voteKey(kind, targetId, "up");
+  const downKey = voteKey(kind, targetId, "down");
+
   return (
     <div className="mt-3 flex flex-wrap gap-2">
-      {REACTION_OPTIONS.map((emoji) => {
-        const summary = reactions.find((item) => item.emoji === emoji);
-        const active = myReactions.includes(emoji);
-        const key = reactionKey(kind, targetId, emoji);
+      <button
+        type="button"
+        onClick={() => onToggleVote(kind, targetId, "up")}
+        disabled={sendingVoteKey !== null && sendingVoteKey !== upKey}
+        className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs transition ${
+          votes.myVote === "up"
+            ? "border-[#4FD1FF]/40 bg-[#4FD1FF]/15 text-[#F3F5F8]"
+            : "border-[#262B35] bg-[#0A0C10] text-[#8891A3] hover:border-[#4FD1FF]/40 hover:text-[#F3F5F8]"
+        }`}
+      >
+        <span>▲</span>
+        <span>{votes.upvotes}</span>
+      </button>
+      <button
+        type="button"
+        onClick={() => onToggleVote(kind, targetId, "down")}
+        disabled={sendingVoteKey !== null && sendingVoteKey !== downKey}
+        className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs transition ${
+          votes.myVote === "down"
+            ? "border-[#FF5468]/40 bg-[#FF5468]/15 text-[#F3F5F8]"
+            : "border-[#262B35] bg-[#0A0C10] text-[#8891A3] hover:border-[#FF5468]/40 hover:text-[#F3F5F8]"
+        }`}
+      >
+        <span>▼</span>
+        <span>{votes.downvotes}</span>
+      </button>
+    </div>
+  );
+}
 
+function StageReactionOverlay({ events }: { events: StageEvent[] }) {
+  return (
+    <div className="pointer-events-none absolute inset-0 z-20 overflow-hidden">
+      {events.map((event, index) => {
+        const isHand = event.kind === "hand";
+        const label = isHand ? "raised hand" : event.emoji ?? "✨";
         return (
-          <button
-            key={emoji}
-            type="button"
-            onClick={() => onToggleReaction(kind, targetId, emoji)}
-            disabled={sendingReactionKey !== null && sendingReactionKey !== key}
-            className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs transition ${
-              active
-                ? "border-[#4FD1FF]/40 bg-[#4FD1FF]/15 text-[#F3F5F8]"
-                : "border-[#262B35] bg-[#0A0C10] text-[#8891A3] hover:border-[#4FD1FF]/40 hover:text-[#F3F5F8]"
-            }`}
+          <div
+            key={event.id}
+            className="absolute bottom-8"
+            style={
+              {
+                left: `${12 + ((index * 17) % 70)}%`,
+                animation: `room-float-up 2.8s ease-out forwards`,
+                animationDelay: `${(index % 3) * 120}ms`,
+              } as CSSProperties
+            }
           >
-            <span>{emoji}</span>
-            <span>{summary?.count ?? 0}</span>
-          </button>
+            <div className="flex -translate-x-1/2 flex-col items-center gap-2">
+              <div className="rounded-full border border-white/10 bg-black/55 px-3 py-1 text-sm font-medium text-white backdrop-blur">
+                <span className="mr-2">{isHand ? "✋" : event.emoji}</span>
+                <span className="text-white/90">{event.displayName}</span>
+                <span className="ml-2 text-white/60">{label}</span>
+              </div>
+            </div>
+          </div>
         );
       })}
+      <style jsx global>{`
+        @keyframes room-float-up {
+          0% {
+            transform: translate3d(0, 0, 0) scale(0.96);
+            opacity: 0;
+          }
+          10% {
+            opacity: 1;
+          }
+          100% {
+            transform: translate3d(0, -34vh, 0) scale(1);
+            opacity: 0;
+          }
+        }
+      `}</style>
     </div>
   );
 }
@@ -394,8 +458,8 @@ function ChatDrawer({
   draft,
   onDraftChange,
   onSend,
-  onReact,
-  sendingReactionKey,
+  onVote,
+  sendingVoteKey,
   sending,
   loading,
 }: {
@@ -405,8 +469,8 @@ function ChatDrawer({
   draft: string;
   onDraftChange: (value: string) => void;
   onSend: () => void;
-  onReact: (kind: "message" | "question", targetId: string, emoji: string) => void;
-  sendingReactionKey: string | null;
+  onVote: (kind: "message" | "question", targetId: string, direction: "up" | "down") => void;
+  sendingVoteKey: string | null;
   sending: boolean;
   loading: boolean;
 }) {
@@ -434,13 +498,12 @@ function ChatDrawer({
                     <span className="text-[11px] text-[#8891A3]">{formatTime(message.createdAt)}</span>
                   </div>
                   <p className="mt-1 text-sm text-[#D7DCE4]">{message.body}</p>
-                  <ReactionBar
+                  <VoteBar
                     kind="message"
                     targetId={message.id}
-                    reactions={message.reactions}
-                    myReactions={message.myReactions}
-                    onToggleReaction={onReact}
-                    sendingReactionKey={sendingReactionKey}
+                    votes={message.votes}
+                    onToggleVote={onVote}
+                    sendingVoteKey={sendingVoteKey}
                   />
                 </div>
               ))
@@ -478,8 +541,8 @@ function QADrawer({
   onDraftChange,
   onAsk,
   onAnswer,
-  onReact,
-  sendingReactionKey,
+  onVote,
+  sendingVoteKey,
   answerDrafts,
   onAnswerDraftChange,
   canModerate,
@@ -494,8 +557,8 @@ function QADrawer({
   onDraftChange: (value: string) => void;
   onAsk: () => void;
   onAnswer: (questionId: string) => void;
-  onReact: (kind: "message" | "question", targetId: string, emoji: string) => void;
-  sendingReactionKey: string | null;
+  onVote: (kind: "message" | "question", targetId: string, direction: "up" | "down") => void;
+  sendingVoteKey: string | null;
   answerDrafts: Record<string, string>;
   onAnswerDraftChange: (questionId: string, value: string) => void;
   canModerate: boolean;
@@ -531,13 +594,12 @@ function QADrawer({
                     </span>
                   </div>
                   <p className="mt-1 text-sm text-[#D7DCE4]">{question.body}</p>
-                  <ReactionBar
+                  <VoteBar
                     kind="question"
                     targetId={question.id}
-                    reactions={question.reactions}
-                    myReactions={question.myReactions}
-                    onToggleReaction={onReact}
-                    sendingReactionKey={sendingReactionKey}
+                    votes={question.votes}
+                    onToggleVote={onVote}
+                    sendingVoteKey={sendingVoteKey}
                   />
                   {question.answered && question.answerBody && (
                     <div className="mt-3 rounded-xl border border-[#33D6A0]/20 bg-[#33D6A0]/8 p-3">
@@ -595,12 +657,16 @@ function QADrawer({
 function ControlsBar({
   onLeave,
   onToggleScreenShare,
+  onSendStageEmoji,
+  onRaiseHand,
   showDeviceControls = true,
   canModerate = false,
   screenShareActive = false,
 }: {
   onLeave: () => void;
   onToggleScreenShare: () => void;
+  onSendStageEmoji: (emoji: string) => void;
+  onRaiseHand: () => void;
   showDeviceControls?: boolean;
   canModerate?: boolean;
   screenShareActive?: boolean;
@@ -611,6 +677,29 @@ function ControlsBar({
     <div className="flex flex-col gap-2 border-t border-[#262B35] bg-[#0A0C10] px-3 py-3">
       {deviceError && <p className="text-xs text-[#FF5468]">{deviceError}</p>}
       <div className="flex flex-wrap items-center justify-center gap-2">
+        <div className="flex items-center gap-2 rounded-full border border-[#262B35] bg-[#14171D] px-2 py-1">
+          {STAGE_REACTION_OPTIONS.map((emoji) => (
+            <button
+              key={emoji}
+              type="button"
+              onClick={() => onSendStageEmoji(emoji)}
+              className="flex h-9 w-9 items-center justify-center rounded-full text-base transition hover:bg-white/10"
+              aria-label={`Send ${emoji} reaction`}
+            >
+              {emoji}
+            </button>
+          ))}
+          <span className="mx-1 h-5 w-px bg-[#262B35]" />
+          <button
+            type="button"
+            onClick={onRaiseHand}
+            className="flex h-9 items-center gap-2 rounded-full px-3 text-sm font-medium text-[#F3F5F8] transition hover:bg-white/10"
+          >
+            <span>✋</span>
+            <span className="hidden sm:inline">Raise hand</span>
+          </button>
+        </div>
+
         {showDeviceControls && (
           <DeviceButtons setDeviceError={setDeviceError} />
         )}
@@ -749,18 +838,21 @@ type LiveRoomScreenContentProps = LiveRoomScreenProps & {
   setQaDraft: (value: string) => void;
   chatMessages: MessageItem[];
   questions: QuestionItem[];
+  stageEvents: StageEvent[];
   drawerError: string | null;
   discussionLoading: boolean;
   sendingChat: boolean;
   sendingQuestion: boolean;
   sendingAnswerId: string | null;
-  sendingReactionKey: string | null;
+  sendingVoteKey: string | null;
   answerDrafts: Record<string, string>;
   updateAnswerDraft: (questionId: string, value: string) => void;
   sendChat: () => void;
   askQuestion: () => void;
   answerQuestion: (questionId: string) => void;
-  sendReaction: (kind: "message" | "question", targetId: string, emoji: string) => void;
+  sendVote: (kind: "message" | "question", targetId: string, direction: "up" | "down") => void;
+  sendStageEmoji: (emoji: string) => void;
+  raiseHand: () => void;
 };
 
 function LiveRoomScreenContent({
@@ -777,18 +869,21 @@ function LiveRoomScreenContent({
   setQaDraft,
   chatMessages,
   questions,
+  stageEvents,
   drawerError,
   discussionLoading,
   sendingChat,
   sendingQuestion,
   sendingAnswerId,
-  sendingReactionKey,
+  sendingVoteKey,
   answerDrafts,
   updateAnswerDraft,
   sendChat,
   askQuestion,
   answerQuestion,
-  sendReaction,
+  sendVote,
+  sendStageEmoji,
+  raiseHand,
 }: LiveRoomScreenContentProps) {
   const { useScreenShareState, useParticipants, useHasOngoingScreenShare, useCameraState, useMicrophoneState } =
     useCallStateHooks();
@@ -878,7 +973,10 @@ function LiveRoomScreenContent({
               </div>
             )}
 
-            <StagePanel call={call} canModerate={canModerate} />
+            <div className="relative">
+              <StagePanel call={call} canModerate={canModerate} />
+              <StageReactionOverlay events={stageEvents} />
+            </div>
 
             <div className="xl:hidden">
               <div className="rounded-2xl border border-[#262B35] bg-[#11161D] px-3 py-2 text-sm text-[#8891A3]">
@@ -891,6 +989,8 @@ function LiveRoomScreenContent({
         <ControlsBar
           onLeave={onLeave}
           onToggleScreenShare={handleToggleScreenShare}
+          onSendStageEmoji={sendStageEmoji}
+          onRaiseHand={raiseHand}
           showDeviceControls={showDeviceControls}
           canModerate={canModerate}
           screenShareActive={screenShareActive}
@@ -904,8 +1004,8 @@ function LiveRoomScreenContent({
         draft={chatDraft}
         onDraftChange={setChatDraft}
         onSend={sendChat}
-        onReact={sendReaction}
-        sendingReactionKey={sendingReactionKey}
+        onVote={sendVote}
+        sendingVoteKey={sendingVoteKey}
         sending={sendingChat}
         loading={discussionLoading}
       />
@@ -918,8 +1018,8 @@ function LiveRoomScreenContent({
         onDraftChange={setQaDraft}
         onAsk={askQuestion}
         onAnswer={answerQuestion}
-        onReact={sendReaction}
-        sendingReactionKey={sendingReactionKey}
+        onVote={sendVote}
+        sendingVoteKey={sendingVoteKey}
         answerDrafts={answerDrafts}
         onAnswerDraftChange={updateAnswerDraft}
         canModerate={canModerate}
@@ -942,11 +1042,37 @@ export default function LiveRoomScreen({ call, onLeave, eventId, showDeviceContr
   const [sendingChat, setSendingChat] = useState(false);
   const [sendingQuestion, setSendingQuestion] = useState(false);
   const [sendingAnswerId, setSendingAnswerId] = useState<string | null>(null);
-  const [sendingReactionKey, setSendingReactionKey] = useState<string | null>(null);
+  const [sendingVoteKey, setSendingVoteKey] = useState<string | null>(null);
+  const [stageEvents, setStageEvents] = useState<StageEvent[]>([]);
   const [answerDrafts, setAnswerDrafts] = useState<Record<string, string>>({});
   const realtimeSocketRef = useRef<WebSocket | null>(null);
   const realtimeReconnectRef = useRef<number | null>(null);
   const realtimeRetryRef = useRef(0);
+  const stageEventExpiryRef = useRef<Map<string, number>>(new Map());
+
+  const pushStageEvent = useCallback((nextEvent: StageEvent) => {
+    setStageEvents((current) => {
+      const existingIndex = current.findIndex((item) => item.id === nextEvent.id);
+      if (existingIndex >= 0) {
+        const next = [...current];
+        next[existingIndex] = nextEvent;
+        return next.slice(-12);
+      }
+      return [...current, nextEvent].slice(-12);
+    });
+
+    const existing = stageEventExpiryRef.current.get(nextEvent.id);
+    if (existing !== undefined) {
+      window.clearTimeout(existing);
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setStageEvents((current) => current.filter((item) => item.id !== nextEvent.id));
+      stageEventExpiryRef.current.delete(nextEvent.id);
+    }, 2800);
+
+    stageEventExpiryRef.current.set(nextEvent.id, timeoutId);
+  }, []);
 
   const syncDiscussion = useCallback(async (signal?: AbortSignal) => {
     try {
@@ -968,13 +1094,11 @@ export default function LiveRoomScreen({ call, onLeave, eventId, showDeviceContr
             role: String(item.authorRole ?? "attendee"),
             body: String(item.body ?? ""),
             createdAt: new Date(String(item.createdAt)).getTime(),
-            reactions: Array.isArray(item.reactions)
-              ? item.reactions.map((reaction) => ({
-                  emoji: String(reaction.emoji ?? ""),
-                  count: Number(reaction.count ?? 0),
-                }))
-              : [],
-            myReactions: Array.isArray(item.myReactions) ? item.myReactions.map(String) : [],
+            votes: {
+              upvotes: Number(item.upvotes ?? 0),
+              downvotes: Number(item.downvotes ?? 0),
+              myVote: item.myVote === "up" || item.myVote === "down" ? item.myVote : null,
+            },
           }))
         : [];
 
@@ -989,13 +1113,11 @@ export default function LiveRoomScreen({ call, onLeave, eventId, showDeviceContr
             answerBody: typeof item.answerBody === "string" ? item.answerBody : undefined,
             answeredAt: item.answeredAt ? new Date(String(item.answeredAt)).getTime() : undefined,
             answeredByClerkId: typeof item.answeredByClerkId === "string" ? item.answeredByClerkId : undefined,
-            reactions: Array.isArray(item.reactions)
-              ? item.reactions.map((reaction) => ({
-                  emoji: String(reaction.emoji ?? ""),
-                  count: Number(reaction.count ?? 0),
-                }))
-              : [],
-            myReactions: Array.isArray(item.myReactions) ? item.myReactions.map(String) : [],
+            votes: {
+              upvotes: Number(item.upvotes ?? 0),
+              downvotes: Number(item.downvotes ?? 0),
+              myVote: item.myVote === "up" || item.myVote === "down" ? item.myVote : null,
+            },
           }))
         : [];
 
@@ -1027,32 +1149,70 @@ export default function LiveRoomScreen({ call, onLeave, eventId, showDeviceContr
     };
   }, [syncDiscussion]);
 
-  const sendReaction = useCallback(
-    async (targetKind: "message" | "question", targetId: string, emoji: string) => {
-      const key = reactionKey(targetKind, targetId, emoji);
-      setSendingReactionKey(key);
+  const sendVote = useCallback(
+    async (targetKind: "message" | "question", targetId: string, direction: "up" | "down") => {
+      const key = voteKey(targetKind, targetId, direction);
+      setSendingVoteKey(key);
       setDrawerError(null);
 
       try {
         const res = await fetch(`/api/rooms/${eventId}/discussion`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ kind: "reaction", targetKind, targetId, emoji }),
+          body: JSON.stringify({ kind: "vote", targetKind, targetId, direction }),
         });
         const data = await res.json();
         if (!res.ok || !data?.success) {
-          throw new Error(data?.message ?? "Failed to save reaction.");
+          throw new Error(data?.message ?? "Failed to save vote.");
         }
         await syncDiscussion();
       } catch (err) {
-        console.error("[LiveRoomScreen] reaction failed", err);
-        setDrawerError("Could not save your reaction. Please try again.");
+        console.error("[LiveRoomScreen] vote failed", err);
+        setDrawerError("Could not save your vote. Please try again.");
       } finally {
-        setSendingReactionKey(null);
+        setSendingVoteKey(null);
       }
     },
     [eventId, syncDiscussion]
   );
+
+  const sendStageEvent = useCallback(
+    async (payload: { kind: "emoji" | "hand"; emoji?: string }) => {
+      setDrawerError(null);
+      const clientEventId = makeId();
+
+      try {
+        const optimistic: StageEvent = {
+          id: clientEventId,
+          kind: payload.kind,
+          emoji: payload.emoji,
+          displayName: "You",
+          role: canModerate ? "organizer" : "attendee",
+          createdAt: Date.now(),
+        };
+        pushStageEvent(optimistic);
+
+        const res = await fetch(`/api/rooms/${eventId}/stage-events`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...payload, clientEventId }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data?.success) {
+          throw new Error(data?.message ?? "Failed to send stage event.");
+        }
+      } catch (err) {
+        setStageEvents((current) => current.filter((item) => item.id !== clientEventId));
+        console.error("[LiveRoomScreen] stage event failed", err);
+        setDrawerError("Could not send the reaction. Please try again.");
+      }
+    },
+    [canModerate, eventId, pushStageEvent]
+  );
+
+  const raiseHand = useCallback(() => {
+    void sendStageEvent({ kind: "hand" });
+  }, [sendStageEvent]);
 
   useEffect(() => {
     let active = true;
@@ -1101,6 +1261,15 @@ export default function LiveRoomScreen({ call, onLeave, eventId, showDeviceContr
             const data = JSON.parse(String(event.data));
             if (data?.type === "room.discussion.updated" && data?.roomId) {
               void syncDiscussion();
+            } else if (data?.type === "room.stage.event" && data?.roomId) {
+              pushStageEvent({
+                id: String(data.id ?? data.clientEventId ?? makeId()),
+                kind: data.kind === "hand" ? "hand" : "emoji",
+                emoji: typeof data.emoji === "string" ? data.emoji : undefined,
+                displayName: String(data.displayName ?? "Someone"),
+                role: String(data.role ?? "attendee"),
+                createdAt: new Date(String(data.createdAt ?? Date.now())).getTime(),
+              });
             }
           } catch {
             // Ignore malformed control frames.
@@ -1133,8 +1302,10 @@ export default function LiveRoomScreen({ call, onLeave, eventId, showDeviceContr
       clearReconnectTimer();
       realtimeSocketRef.current?.close();
       realtimeSocketRef.current = null;
+      stageEventExpiryRef.current.forEach((timeoutId) => window.clearTimeout(timeoutId));
+      stageEventExpiryRef.current.clear();
     };
-  }, [eventId, syncDiscussion]);
+  }, [eventId, pushStageEvent, syncDiscussion]);
 
   function sendChat() {
     const body = chatDraft.trim();
@@ -1256,18 +1427,23 @@ export default function LiveRoomScreen({ call, onLeave, eventId, showDeviceContr
         setQaDraft={setQaDraft}
         chatMessages={chatMessages}
         questions={questions}
+        stageEvents={stageEvents}
         drawerError={drawerError}
         discussionLoading={discussionLoading}
         sendingChat={sendingChat}
         sendingQuestion={sendingQuestion}
         sendingAnswerId={sendingAnswerId}
-        sendingReactionKey={sendingReactionKey}
+        sendingVoteKey={sendingVoteKey}
         answerDrafts={answerDrafts}
         updateAnswerDraft={updateAnswerDraft}
         sendChat={sendChat}
         askQuestion={askQuestion}
         answerQuestion={answerQuestion}
-        sendReaction={sendReaction}
+        sendVote={sendVote}
+        sendStageEmoji={(emoji) => {
+          void sendStageEvent({ kind: "emoji", emoji });
+        }}
+        raiseHand={raiseHand}
         eventId={eventId}
         />
     </StreamCall>

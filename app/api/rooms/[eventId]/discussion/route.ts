@@ -5,7 +5,7 @@ import {
   answerRoomQuestion,
   askRoomQuestion,
   getRoomDiscussion,
-  toggleRoomReaction,
+  toggleRoomVote,
 } from "@/lib/actions/room.discussion.actions";
 
 type RouteParams = Promise<{ eventId?: string }>;
@@ -14,7 +14,7 @@ type DiscussionBody =
   | { kind: "message"; body: string; clientMutationId?: string }
   | { kind: "question"; body: string; clientMutationId?: string }
   | { kind: "answer"; questionId: string; body: string; clientMutationId?: string }
-  | { kind: "reaction"; targetKind: "message" | "question"; targetId: string; emoji: string };
+  | { kind: "vote"; targetKind: "message" | "question"; targetId: string; direction: "up" | "down" };
 
 function readString(value: unknown): string | null {
   return typeof value === "string" ? value : null;
@@ -38,12 +38,12 @@ function parseBody(payload: unknown): DiscussionBody | null {
     return { kind, questionId, body: text, clientMutationId: clientMutationId ?? undefined };
   }
 
-  if (kind === "reaction") {
+  if (kind === "vote") {
     const targetKind = readString(body.targetKind);
     const targetId = readString(body.targetId);
-    const emoji = readString(body.emoji);
-    if ((targetKind === "message" || targetKind === "question") && targetId && emoji) {
-      return { kind, targetKind, targetId, emoji };
+    const direction = readString(body.direction);
+    if ((targetKind === "message" || targetKind === "question") && targetId && (direction === "up" || direction === "down")) {
+      return { kind, targetKind, targetId, direction };
     }
   }
 
@@ -99,11 +99,11 @@ export async function POST(request: Request, { params }: { params: RouteParams }
       return NextResponse.json(result, { status: 201 });
     }
 
-    if (parsed.kind === "reaction") {
-      const result = await toggleRoomReaction(eventId.trim(), parsed.targetKind, parsed.targetId, parsed.emoji);
+    if (parsed.kind === "vote") {
+      const result = await toggleRoomVote(eventId.trim(), parsed.targetKind, parsed.targetId, parsed.direction);
       if (!result.success) {
         const status = result.reason === "forbidden" ? 403 : result.reason === "not_found" ? 404 : 400;
-        return NextResponse.json({ message: "Unable to save reaction.", reason: result.reason }, { status });
+        return NextResponse.json({ message: "Unable to save vote.", reason: result.reason }, { status });
       }
 
       return NextResponse.json(result, { status: 200 });
