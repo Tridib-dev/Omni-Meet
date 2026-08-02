@@ -19,6 +19,7 @@ import {
   MessageSquare,
   MonitorUp,
   PhoneOff,
+  PictureInPicture2,
   Pin,
   Shield,
   Users,
@@ -65,7 +66,7 @@ type StageEvent = {
   participantId?: string;
 };
 
-type StageViewMode = "normal" | "fit" | "tabs";
+type StageViewMode = "normal" | "fit";
 
 type MessageItem = {
   id: string;
@@ -839,25 +840,66 @@ function StagePanel({
   }, [participants, pinnedParticipants, localParticipant]);
 
   const autoPinnedRef = useRef(false);
-  const [selectedTabParticipantId, setSelectedTabParticipantId] = useState<string | null>(null);
-  const tabParticipants = useMemo(() => {
-    return [...participants].sort((a, b) => {
-      const aPinned = isPinned(a) ? 1 : 0;
-      const bPinned = isPinned(b) ? 1 : 0;
-      if (aPinned !== bPinned) return bPinned - aPinned;
-      if (a.isLocalParticipant !== b.isLocalParticipant) return a.isLocalParticipant ? -1 : 1;
-      return participantLabel(a).localeCompare(participantLabel(b));
-    });
-  }, [participants]);
 
-  const pipParticipant = useMemo(() => {
-    if (viewMode !== "tabs") return null;
+  // mainIsScreenSharing has to be computed here (before the effects below) rather
+  // than after the early-return, because the PIP effect's dependency array needs
+  // it and all hooks must run unconditionally, in the same order, every render.
+  const mainIsScreenSharing = focusParticipant ? hasScreenShare(focusParticipant) : false;
 
-    const selected = participants.find((participant) => participant.sessionId === selectedTabParticipantId);
-    if (selected && selected.sessionId !== focusParticipant?.sessionId) return selected;
+  // Real browser Picture-in-Picture. Bound to the actual <video> element Stream
+  // renders for the focused participant, so it pops the video out of the browser
+  // tab entirely for multitasking.
+  const stageVideoContainerRef = useRef<HTMLDivElement>(null);
+  const [isPipActive, setIsPipActive] = useState(false);
+  const [pipSupported] = useState(() => typeof document !== "undefined" && document.pictureInPictureEnabled);
 
-    return participants.find((participant) => participant.sessionId !== focusParticipant?.sessionId) ?? null;
-  }, [focusParticipant, participants, selectedTabParticipantId, viewMode]);
+  useEffect(() => {
+    const videoEl = stageVideoContainerRef.current?.querySelector("video");
+    if (!videoEl) return;
+
+    const handleEnter = () => setIsPipActive(true);
+    const handleLeave = () => setIsPipActive(false);
+
+    videoEl.addEventListener("enterpictureinpicture", handleEnter);
+    videoEl.addEventListener("leavepictureinpicture", handleLeave);
+
+    return () => {
+      videoEl.removeEventListener("enterpictureinpicture", handleEnter);
+      videoEl.removeEventListener("leavepictureinpicture", handleLeave);
+    };
+    // Re-bind whenever the underlying <video> element could have been swapped out
+    // (new focus participant, or same participant flipping to/from screen share).
+  }, [focusParticipant?.sessionId, mainIsScreenSharing]);
+
+  useEffect(() => {
+    // Exit PIP whenever this stage unmounts (e.g. leaving the call). Deliberately
+    // exits whatever is currently in PIP rather than re-querying our own ref —
+    // by the time a cleanup runs on unmount, React has already nulled the ref.
+    return () => {
+      if (document.pictureInPictureElement) {
+        document.exitPictureInPicture().catch(() => {});
+      }
+    };
+  }, []);
+
+  const handleTogglePip = useCallback(async () => {
+    const videoEl = stageVideoContainerRef.current?.querySelector("video");
+    if (!videoEl) return;
+
+    try {
+      if (document.pictureInPictureElement === videoEl) {
+        await document.exitPictureInPicture();
+        return;
+      }
+      if (document.pictureInPictureElement) {
+        await document.exitPictureInPicture();
+      }
+      videoEl.disablePictureInPicture = false;
+      await videoEl.requestPictureInPicture();
+    } catch (err) {
+      console.error("[LiveRoomScreen] picture-in-picture failed", err);
+    }
+  }, []);
 
   useEffect(() => {
     if (!canModerate || !localParticipant) return;
@@ -892,26 +934,23 @@ function StagePanel({
 
   const label = participantLabel(focusParticipant);
   const role = participantRoleLabel(focusParticipant);
-  const mainIsScreenSharing = hasScreenShare(focusParticipant);
-  const stageLabel = participantLabel(focusParticipant);
-  const stageRole = participantRoleLabel(focusParticipant);
 
   return (
     <div className="relative h-full min-h-105 overflow-hidden rounded-3xl border border-[#262B35] bg-[#0A0C10] lg:min-h-140">
       <div className="absolute left-4 top-4 z-10 flex items-center gap-2 rounded-full border border-white/10 bg-black/50 px-3 py-1 text-xs text-white backdrop-blur">
         <Shield size={14} className={hasOngoingScreenShare ? "text-[#33D6A0]" : "text-[#4FD1FF]"} />
-        <span className="font-medium">{viewMode === "tabs" ? stageRole : role}</span>
+        <span className="font-medium">{role}</span>
         <span className="text-white/70">•</span>
-        <span>{viewMode === "tabs" ? stageLabel : label}</span>
+        <span>{label}</span>
       </div>
 
-      <div className="absolute inset-0 flex items-center justify-center bg-black">
+      <div className="absolute inset-0 flex items-center justify-center bg-black" ref={stageVideoContainerRef}>
         <div className={`flex h-full w-full items-center justify-center ${viewMode === "fit" ? "p-3" : "p-0"}`}>
           <ParticipantView
             participant={focusParticipant}
             trackType={mainIsScreenSharing ? "screenShareTrack" : "videoTrack"}
             mirror={focusParticipant.isLocalParticipant && !mainIsScreenSharing}
-            VideoPlaceholder={() => <InitialsAvatar name={stageLabel} />}
+            VideoPlaceholder={() => <InitialsAvatar name={label} />}
             ParticipantViewUI={null}
             className={`h-full w-full overflow-hidden bg-black [&_video]:h-full [&_video]:w-full [&_video]:bg-black [&_video]:object-center ${
               viewMode === "fit" ? "[&_video]:object-contain" : "[&_video]:object-cover"
@@ -919,46 +958,6 @@ function StagePanel({
           />
         </div>
       </div>
-
-      {viewMode === "tabs" && pipParticipant && (
-        <div className="absolute bottom-24 right-4 z-20 h-32 w-44 overflow-hidden rounded-2xl border border-white/15 bg-[#0A0C10]/90 shadow-[0_16px_40px_rgba(0,0,0,0.5)] backdrop-blur">
-          <ParticipantView
-            participant={pipParticipant}
-            trackType={hasScreenShare(pipParticipant) ? "screenShareTrack" : "videoTrack"}
-            mirror={pipParticipant.isLocalParticipant && !hasScreenShare(pipParticipant)}
-            VideoPlaceholder={() => <InitialsAvatar name={participantLabel(pipParticipant)} />}
-            ParticipantViewUI={null}
-            className="h-full w-full bg-black [&_video]:h-full [&_video]:w-full [&_video]:object-cover [&_video]:object-center"
-          />
-          <div className="absolute left-2 top-2 rounded-full bg-black/60 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white/90">
-            {participantLabel(pipParticipant)}
-          </div>
-        </div>
-      )}
-
-      {viewMode === "tabs" && tabParticipants.length > 0 && (
-        <div className="absolute inset-x-0 bottom-20 z-20 flex justify-center px-4">
-          <div className="flex max-w-full flex-wrap justify-center gap-2 rounded-full border border-white/10 bg-[#0A0C10]/85 px-3 py-2 backdrop-blur">
-            {tabParticipants.map((participant) => {
-              const participantName = participantLabel(participant);
-              const selected = participant.sessionId === selectedTabParticipantId;
-
-              return (
-                <button
-                  key={participant.sessionId}
-                  type="button"
-                  onClick={() => setSelectedTabParticipantId(participant.sessionId)}
-                  className={`rounded-full px-3 py-1.5 text-sm transition ${
-                    selected ? "bg-[#4FD1FF] text-[#081018]" : "bg-white/10 text-white/80 hover:bg-white/15"
-                  }`}
-                >
-                  {participantName}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
       <div className="absolute inset-x-0 bottom-4 z-20 flex justify-center px-4">
         <div className="flex flex-wrap items-center justify-center gap-2 rounded-full border border-white/10 bg-[#0A0C10]/85 px-2 py-2 shadow-[0_16px_40px_rgba(0,0,0,0.45)] backdrop-blur">
@@ -988,32 +987,36 @@ function StagePanel({
               </svg>
             }
           />
-          <StageViewModeButton
-            mode="tabs"
-            label="PIP"
-            active={viewMode === "tabs"}
-            onClick={onViewModeChange}
-            icon={
-              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="4" y="5" width="16" height="14" rx="2" />
-                <path d="M4 10h16" />
-                <path d="M8 5v14" />
-              </svg>
-            }
-          />
+          <span className="mx-1 h-5 w-px bg-[#262B35]" />
+
+          <button
+            type="button"
+            onClick={handleTogglePip}
+            disabled={!pipSupported}
+            title={pipSupported ? undefined : "Picture-in-picture isn't supported in this browser"}
+            className={`flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-40 ${
+              isPipActive
+                ? "border-[#4FD1FF]/40 bg-[#4FD1FF]/20 text-[#F3F5F8] shadow-[0_0_0_1px_rgba(255,255,255,0.08)]"
+                : "border-white/10 bg-[#11161D]/80 text-[#8891A3] hover:border-[#4FD1FF]/30 hover:text-[#F3F5F8]"
+            }`}
+            aria-label={isPipActive ? "Exit picture-in-picture" : "Pop out video (picture-in-picture)"}
+          >
+            <PictureInPicture2 size={16} />
+            <span>{isPipActive ? "Exit pop-out" : "Pop out"}</span>
+          </button>
         </div>
       </div>
 
       <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black via-black/70 to-transparent p-4">
         <div className="flex items-end justify-between gap-3">
           <div className="space-y-1">
-            <p className="text-lg font-semibold text-white">{viewMode === "tabs" ? stageLabel : label}</p>
+            <p className="text-lg font-semibold text-white">{label}</p>
             <p className="text-sm text-white/70">
-              {hasOngoingScreenShare ? "Screen share active" : viewMode === "fit" ? "Fit content to stage" : viewMode === "tabs" ? "Picture-in-picture view" : "Pinned stage view"}
+              {hasOngoingScreenShare ? "Screen share active" : viewMode === "fit" ? "Fit content to stage" : "Pinned stage view"}
             </p>
           </div>
           <div className="rounded-full bg-white/10 px-3 py-1 text-xs text-white/80">
-            {viewMode === "tabs" ? "pip view" : viewMode === "fit" ? "fit view" : "normal view"}
+            {viewMode === "fit" ? "fit view" : "normal view"}
           </div>
         </div>
       </div>
