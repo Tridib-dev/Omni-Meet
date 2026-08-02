@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import {
   ParticipantView,
   StreamCall,
@@ -46,6 +46,14 @@ type VoteState = {
 
 type StageEventKind = "emoji" | "hand";
 
+type StageEventPayload = {
+  kind: StageEventKind;
+  emoji?: string;
+  isRaised?: boolean;
+  participantId?: string;
+  clientEventId?: string;
+};
+
 type StageEvent = {
   id: string;
   kind: StageEventKind;
@@ -53,7 +61,11 @@ type StageEvent = {
   displayName: string;
   role: string;
   createdAt: number;
+  isRaised?: boolean;
+  participantId?: string;
 };
+
+type StageViewMode = "normal" | "fit" | "tabs";
 
 type MessageItem = {
   id: string;
@@ -143,6 +155,10 @@ function participantRoleBadge(role: string) {
   return role;
 }
 
+function participantKey(participant: StreamVideoParticipant) {
+  return participant.userId || participant.sessionId || participant.name || "";
+}
+
 function voteKey(kind: "message" | "question", targetId: string, direction: "up" | "down") {
   return `${kind}:${targetId}:${direction}`;
 }
@@ -204,7 +220,7 @@ function StageReactionOverlay({ events }: { events: StageEvent[] }) {
         <div className="flex w-fit flex-col items-end gap-2">
           {visibleEvents.map((event, index) => {
             const isHand = event.kind === "hand";
-            const label = isHand ? "raised hand" : event.emoji ?? "✨";
+            const label = isHand ? (event.isRaised === false ? "lowered hand" : "raised hand") : event.emoji ?? "✨";
 
             return (
               <div
@@ -259,14 +275,46 @@ function StageReactionOverlay({ events }: { events: StageEvent[] }) {
   );
 }
 
+function StageViewModeButton({
+  mode,
+  label,
+  active,
+  onClick,
+  icon,
+}: {
+  mode: StageViewMode;
+  label: string;
+  active: boolean;
+  onClick: (mode: StageViewMode) => void;
+  icon: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onClick(mode)}
+      className={`flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-medium transition ${
+        active
+          ? "border-[#4FD1FF]/40 bg-[#4FD1FF]/20 text-[#F3F5F8] shadow-[0_0_0_1px_rgba(255,255,255,0.08)]"
+          : "border-white/10 bg-[#11161D]/80 text-[#8891A3] hover:border-[#4FD1FF]/30 hover:text-[#F3F5F8]"
+      }`}
+      aria-label={`Switch stage view to ${label.toLowerCase()}`}
+    >
+      {icon}
+      <span>{label}</span>
+    </button>
+  );
+}
+
 function ParticipantCard({
   participant,
   canModerate,
   onTogglePin,
+  handRaised,
 }: {
   participant: StreamVideoParticipant;
   canModerate: boolean;
   onTogglePin: (participant: StreamVideoParticipant) => void;
+  handRaised: boolean;
 }) {
   const pinned = isPinned(participant);
   const label = participantLabel(participant);
@@ -297,6 +345,11 @@ function ParticipantCard({
           <p className="text-[11px] uppercase tracking-wide text-[#8891A3]">{role}</p>
         </div>
         <div className="flex items-center gap-1.5 text-[#8891A3]">
+          {handRaised && (
+            <span className="rounded-full border border-[#F5A623]/25 bg-[#F5A623]/12 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-[#F5A623]">
+              ✋ raised
+            </span>
+          )}
           {pinned && <Pin size={13} className="text-[#4FD1FF]" />}
           {participant.isLocalParticipant && (
             <span className="rounded-full bg-[#1B1F27] px-2 py-0.5 text-[10px] uppercase tracking-wide text-[#4FD1FF]">
@@ -318,10 +371,12 @@ function ParticipantRail({
   canModerate,
   onTogglePin,
   eventTitle,
+  raisedHands,
 }: {
   canModerate: boolean;
   onTogglePin: (participant: StreamVideoParticipant) => void;
   eventTitle?: string;
+  raisedHands: Record<string, boolean>;
 }) {
   const { useParticipants, usePinnedParticipants, useLocalParticipant, useHasOngoingScreenShare } =
     useCallStateHooks();
@@ -372,6 +427,7 @@ function ParticipantRail({
             participant={participant}
             canModerate={canModerate}
             onTogglePin={onTogglePin}
+            handRaised={Boolean(raisedHands[participantKey(participant)])}
           />
         ))}
       </div>
@@ -679,6 +735,7 @@ function ControlsBar({
   showDeviceControls = true,
   canModerate = false,
   screenShareActive = false,
+  handRaised = false,
 }: {
   onLeave: () => void;
   onToggleScreenShare: () => void;
@@ -687,6 +744,7 @@ function ControlsBar({
   showDeviceControls?: boolean;
   canModerate?: boolean;
   screenShareActive?: boolean;
+  handRaised?: boolean;
 }) {
   const [deviceError, setDeviceError] = useState<string | null>(null);
 
@@ -710,10 +768,14 @@ function ControlsBar({
           <button
             type="button"
             onClick={onRaiseHand}
-            className="flex h-9 items-center gap-2 rounded-full px-3 text-sm font-medium text-[#F3F5F8] transition hover:bg-white/10"
+            className={`flex h-9 items-center gap-2 rounded-full px-3 text-sm font-medium transition ${
+              handRaised
+                ? "bg-[#F5A623]/20 text-[#FFD685]"
+                : "bg-transparent text-[#F3F5F8] hover:bg-white/10"
+            }`}
           >
-            <span>✋</span>
-            <span className="hidden sm:inline">Raise hand</span>
+            <span>{handRaised ? "✋" : "✋"}</span>
+            <span className="hidden sm:inline">{handRaised ? "Lower hand" : "Raise hand"}</span>
           </button>
         </div>
 
@@ -750,9 +812,13 @@ function ControlsBar({
 function StagePanel({
   call,
   canModerate,
+  viewMode,
+  onViewModeChange,
 }: {
   call: Call;
   canModerate: boolean;
+  viewMode: StageViewMode;
+  onViewModeChange: (value: StageViewMode) => void;
 }) {
   const { useParticipants, usePinnedParticipants, useLocalParticipant, useHasOngoingScreenShare } =
     useCallStateHooks();
@@ -773,6 +839,25 @@ function StagePanel({
   }, [participants, pinnedParticipants, localParticipant]);
 
   const autoPinnedRef = useRef(false);
+  const [selectedTabParticipantId, setSelectedTabParticipantId] = useState<string | null>(null);
+  const tabParticipants = useMemo(() => {
+    return [...participants].sort((a, b) => {
+      const aPinned = isPinned(a) ? 1 : 0;
+      const bPinned = isPinned(b) ? 1 : 0;
+      if (aPinned !== bPinned) return bPinned - aPinned;
+      if (a.isLocalParticipant !== b.isLocalParticipant) return a.isLocalParticipant ? -1 : 1;
+      return participantLabel(a).localeCompare(participantLabel(b));
+    });
+  }, [participants]);
+
+  const pipParticipant = useMemo(() => {
+    if (viewMode !== "tabs") return null;
+
+    const selected = participants.find((participant) => participant.sessionId === selectedTabParticipantId);
+    if (selected && selected.sessionId !== focusParticipant?.sessionId) return selected;
+
+    return participants.find((participant) => participant.sessionId !== focusParticipant?.sessionId) ?? null;
+  }, [focusParticipant, participants, selectedTabParticipantId, viewMode]);
 
   useEffect(() => {
     if (!canModerate || !localParticipant) return;
@@ -793,7 +878,7 @@ function StagePanel({
 
   if (!focusParticipant) {
     return (
-      <div className="flex h-full min-h-[520px] items-center justify-center rounded-3xl border border-[#262B35] bg-[#11161D] px-6 text-center">
+      <div className="flex h-full min-h-130 items-center justify-center rounded-3xl border border-[#262B35] bg-[#11161D] px-6 text-center">
         <div className="space-y-3">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#1B1F27] text-[#4FD1FF]">
             <Users size={22} />
@@ -807,38 +892,128 @@ function StagePanel({
 
   const label = participantLabel(focusParticipant);
   const role = participantRoleLabel(focusParticipant);
-  const isScreenSharing = hasScreenShare(focusParticipant);
+  const mainIsScreenSharing = hasScreenShare(focusParticipant);
+  const stageLabel = participantLabel(focusParticipant);
+  const stageRole = participantRoleLabel(focusParticipant);
 
   return (
-    <div className="relative h-full min-h-[520px] overflow-hidden rounded-3xl border border-[#262B35] bg-[#0A0C10]">
+    <div className="relative h-full min-h-105 overflow-hidden rounded-3xl border border-[#262B35] bg-[#0A0C10] lg:min-h-140">
       <div className="absolute left-4 top-4 z-10 flex items-center gap-2 rounded-full border border-white/10 bg-black/50 px-3 py-1 text-xs text-white backdrop-blur">
         <Shield size={14} className={hasOngoingScreenShare ? "text-[#33D6A0]" : "text-[#4FD1FF]"} />
-        <span className="font-medium">{role}</span>
+        <span className="font-medium">{viewMode === "tabs" ? stageRole : role}</span>
         <span className="text-white/70">•</span>
-        <span>{label}</span>
+        <span>{viewMode === "tabs" ? stageLabel : label}</span>
       </div>
 
-      <div className="absolute inset-0">
-        <ParticipantView
-          participant={focusParticipant}
-          trackType={isScreenSharing ? "screenShareTrack" : "videoTrack"}
-          mirror={focusParticipant.isLocalParticipant && !isScreenSharing}
-          VideoPlaceholder={() => <InitialsAvatar name={label} />}
-          ParticipantViewUI={null}
-          className="absolute inset-0 h-full w-full overflow-hidden [&_video]:h-full [&_video]:w-full [&_video]:object-cover [&_video]:object-center [&_video]:bg-black"
-        />
+      <div className="absolute inset-0 flex items-center justify-center bg-black">
+        <div className={`flex h-full w-full items-center justify-center ${viewMode === "fit" ? "p-3" : "p-0"}`}>
+          <ParticipantView
+            participant={focusParticipant}
+            trackType={mainIsScreenSharing ? "screenShareTrack" : "videoTrack"}
+            mirror={focusParticipant.isLocalParticipant && !mainIsScreenSharing}
+            VideoPlaceholder={() => <InitialsAvatar name={stageLabel} />}
+            ParticipantViewUI={null}
+            className={`h-full w-full overflow-hidden bg-black [&_video]:h-full [&_video]:w-full [&_video]:bg-black [&_video]:object-center ${
+              viewMode === "fit" ? "[&_video]:object-contain" : "[&_video]:object-cover"
+            }`}
+          />
+        </div>
+      </div>
+
+      {viewMode === "tabs" && pipParticipant && (
+        <div className="absolute bottom-24 right-4 z-20 h-32 w-44 overflow-hidden rounded-2xl border border-white/15 bg-[#0A0C10]/90 shadow-[0_16px_40px_rgba(0,0,0,0.5)] backdrop-blur">
+          <ParticipantView
+            participant={pipParticipant}
+            trackType={hasScreenShare(pipParticipant) ? "screenShareTrack" : "videoTrack"}
+            mirror={pipParticipant.isLocalParticipant && !hasScreenShare(pipParticipant)}
+            VideoPlaceholder={() => <InitialsAvatar name={participantLabel(pipParticipant)} />}
+            ParticipantViewUI={null}
+            className="h-full w-full bg-black [&_video]:h-full [&_video]:w-full [&_video]:object-cover [&_video]:object-center"
+          />
+          <div className="absolute left-2 top-2 rounded-full bg-black/60 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white/90">
+            {participantLabel(pipParticipant)}
+          </div>
+        </div>
+      )}
+
+      {viewMode === "tabs" && tabParticipants.length > 0 && (
+        <div className="absolute inset-x-0 bottom-20 z-20 flex justify-center px-4">
+          <div className="flex max-w-full flex-wrap justify-center gap-2 rounded-full border border-white/10 bg-[#0A0C10]/85 px-3 py-2 backdrop-blur">
+            {tabParticipants.map((participant) => {
+              const participantName = participantLabel(participant);
+              const selected = participant.sessionId === selectedTabParticipantId;
+
+              return (
+                <button
+                  key={participant.sessionId}
+                  type="button"
+                  onClick={() => setSelectedTabParticipantId(participant.sessionId)}
+                  className={`rounded-full px-3 py-1.5 text-sm transition ${
+                    selected ? "bg-[#4FD1FF] text-[#081018]" : "bg-white/10 text-white/80 hover:bg-white/15"
+                  }`}
+                >
+                  {participantName}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <div className="absolute inset-x-0 bottom-4 z-20 flex justify-center px-4">
+        <div className="flex flex-wrap items-center justify-center gap-2 rounded-full border border-white/10 bg-[#0A0C10]/85 px-2 py-2 shadow-[0_16px_40px_rgba(0,0,0,0.45)] backdrop-blur">
+          <StageViewModeButton
+            mode="normal"
+            label="Normal"
+            active={viewMode === "normal"}
+            onClick={onViewModeChange}
+            icon={
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="4" y="4" width="16" height="16" rx="3" />
+                <path d="M4 12h16" />
+              </svg>
+            }
+          />
+          <StageViewModeButton
+            mode="fit"
+            label="Fit"
+            active={viewMode === "fit"}
+            onClick={onViewModeChange}
+            icon={
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M10 5H5v5" />
+                <path d="M14 19h5v-5" />
+                <path d="M5 19l5-5" />
+                <path d="M19 5l-5 5" />
+              </svg>
+            }
+          />
+          <StageViewModeButton
+            mode="tabs"
+            label="PIP"
+            active={viewMode === "tabs"}
+            onClick={onViewModeChange}
+            icon={
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="4" y="5" width="16" height="14" rx="2" />
+                <path d="M4 10h16" />
+                <path d="M8 5v14" />
+              </svg>
+            }
+          />
+        </div>
       </div>
 
       <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black via-black/70 to-transparent p-4">
         <div className="flex items-end justify-between gap-3">
           <div className="space-y-1">
-            <p className="text-lg font-semibold text-white">{label}</p>
+            <p className="text-lg font-semibold text-white">{viewMode === "tabs" ? stageLabel : label}</p>
             <p className="text-sm text-white/70">
-              {hasOngoingScreenShare ? "Screen share active" : "Pinned stage view"}
+              {hasOngoingScreenShare ? "Screen share active" : viewMode === "fit" ? "Fit content to stage" : viewMode === "tabs" ? "Picture-in-picture view" : "Pinned stage view"}
             </p>
           </div>
           <div className="rounded-full bg-white/10 px-3 py-1 text-xs text-white/80">
-            {focusParticipant.isLocalParticipant ? "your view" : "stage"}
+            {viewMode === "tabs" ? "pip view" : viewMode === "fit" ? "fit view" : "normal view"}
           </div>
         </div>
       </div>
@@ -869,7 +1044,8 @@ type LiveRoomScreenContentProps = LiveRoomScreenProps & {
   answerQuestion: (questionId: string) => void;
   sendVote: (kind: "message" | "question", targetId: string, direction: "up" | "down") => void;
   sendStageEmoji: (emoji: string) => void;
-  raiseHand: () => void;
+  raisedHands: Record<string, boolean>;
+  sendStageEvent: (payload: StageEventPayload) => Promise<void> | void;
 };
 
 function LiveRoomScreenContent({
@@ -900,19 +1076,24 @@ function LiveRoomScreenContent({
   answerQuestion,
   sendVote,
   sendStageEmoji,
-  raiseHand,
+  raisedHands,
+  sendStageEvent,
 }: LiveRoomScreenContentProps) {
-  const { useScreenShareState, useParticipants, useHasOngoingScreenShare, useCameraState, useMicrophoneState } =
+  const { useScreenShareState, useParticipants, useHasOngoingScreenShare, useCameraState, useMicrophoneState, useLocalParticipant } =
     useCallStateHooks();
   const { screenShare } = useScreenShareState();
   const { camera } = useCameraState();
   const { microphone } = useMicrophoneState();
   const participants = useParticipants();
+  const localParticipant = useLocalParticipant();
   const hasOngoingScreenShare = useHasOngoingScreenShare();
   const autoStartDevicesRef = useRef(false);
+  const [stageViewMode, setStageViewMode] = useState<StageViewMode>("normal");
 
   const screenShareActive = hasOngoingScreenShare;
   const participantCount = participants.length;
+  const localParticipantKey = useMemo(() => (localParticipant ? participantKey(localParticipant) : ""), [localParticipant]);
+  const handRaised = Boolean(localParticipantKey && raisedHands[localParticipantKey]);
 
   useEffect(() => {
     if (!canModerate || autoStartDevicesRef.current) return;
@@ -981,17 +1162,22 @@ function LiveRoomScreenContent({
         </header>
 
         <div className="grid min-h-0 flex-1 gap-3 px-3 py-3 xl:grid-cols-[300px_minmax(0,1fr)]">
-          <ParticipantRail eventTitle={eventTitle} canModerate={canModerate} onTogglePin={togglePin} />
+          <ParticipantRail eventTitle={eventTitle} canModerate={canModerate} onTogglePin={togglePin} raisedHands={raisedHands} />
 
-          <div className="flex min-h-0 flex-col gap-3">
+          <div className="flex min-h-0 flex-1 flex-col gap-3">
             {drawerError && (
               <div className="rounded-2xl border border-[#FF5468]/25 bg-[#FF5468]/10 px-4 py-3 text-sm text-[#FFB9C2]">
                 {drawerError}
               </div>
             )}
 
-            <div className="relative">
-              <StagePanel call={call} canModerate={canModerate} />
+            <div className="relative flex-1">
+              <StagePanel
+                call={call}
+                canModerate={canModerate}
+                viewMode={stageViewMode}
+                onViewModeChange={setStageViewMode}
+              />
               <StageReactionOverlay events={stageEvents} />
             </div>
 
@@ -1007,10 +1193,15 @@ function LiveRoomScreenContent({
           onLeave={onLeave}
           onToggleScreenShare={handleToggleScreenShare}
           onSendStageEmoji={sendStageEmoji}
-          onRaiseHand={raiseHand}
+          onRaiseHand={() => {
+            if (!localParticipantKey) return;
+            const nextValue = !handRaised;
+            void sendStageEvent({ kind: "hand", isRaised: nextValue, participantId: localParticipantKey });
+          }}
           showDeviceControls={showDeviceControls}
           canModerate={canModerate}
           screenShareActive={screenShareActive}
+          handRaised={handRaised}
         />
       </div>
 
@@ -1061,6 +1252,7 @@ export default function LiveRoomScreen({ call, onLeave, eventId, showDeviceContr
   const [sendingAnswerId, setSendingAnswerId] = useState<string | null>(null);
   const [sendingVoteKey, setSendingVoteKey] = useState<string | null>(null);
   const [stageEvents, setStageEvents] = useState<StageEvent[]>([]);
+  const [raisedHands, setRaisedHands] = useState<Record<string, boolean>>({});
   const [answerDrafts, setAnswerDrafts] = useState<Record<string, string>>({});
   const realtimeSocketRef = useRef<WebSocket | null>(null);
   const realtimeReconnectRef = useRef<number | null>(null);
@@ -1194,11 +1386,28 @@ export default function LiveRoomScreen({ call, onLeave, eventId, showDeviceContr
   );
 
   const sendStageEvent = useCallback(
-    async (payload: { kind: "emoji" | "hand"; emoji?: string }) => {
+    async (payload: StageEventPayload) => {
       setDrawerError(null);
       const clientEventId = makeId();
+      const participantId = payload.participantId;
+      const nextRaised = payload.kind === "hand" ? Boolean(payload.isRaised ?? true) : undefined;
+      const previousRaised = participantId && payload.kind === "hand"
+        ? Boolean(raisedHands[participantId])
+        : undefined;
 
       try {
+        if (payload.kind === "hand" && participantId) {
+          setRaisedHands((current) => {
+            const next = { ...current };
+            if (nextRaised) {
+              next[participantId] = true;
+            } else {
+              delete next[participantId];
+            }
+            return next;
+          });
+        }
+
         const optimistic: StageEvent = {
           id: clientEventId,
           kind: payload.kind,
@@ -1206,6 +1415,8 @@ export default function LiveRoomScreen({ call, onLeave, eventId, showDeviceContr
           displayName: "You",
           role: canModerate ? "organizer" : "attendee",
           createdAt: Date.now(),
+          isRaised: nextRaised,
+          participantId,
         };
         pushStageEvent(optimistic);
 
@@ -1219,19 +1430,27 @@ export default function LiveRoomScreen({ call, onLeave, eventId, showDeviceContr
           throw new Error(data?.message ?? "Failed to send stage event.");
         }
       } catch (err) {
+        if (payload.kind === "hand" && participantId) {
+          setRaisedHands((current) => {
+            const next = { ...current };
+            if (previousRaised) {
+              next[participantId] = true;
+            } else {
+              delete next[participantId];
+            }
+            return next;
+          });
+        }
         setStageEvents((current) => current.filter((item) => item.id !== clientEventId));
         console.error("[LiveRoomScreen] stage event failed", err);
         setDrawerError("Could not send the reaction. Please try again.");
       }
     },
-    [canModerate, eventId, pushStageEvent]
+    [canModerate, eventId, pushStageEvent, raisedHands]
   );
 
-  const raiseHand = useCallback(() => {
-    void sendStageEvent({ kind: "hand" });
-  }, [sendStageEvent]);
-
   useEffect(() => {
+    const stageEventExpiryMap = stageEventExpiryRef.current;
     let active = true;
 
     function clearReconnectTimer() {
@@ -1279,6 +1498,18 @@ export default function LiveRoomScreen({ call, onLeave, eventId, showDeviceContr
             if (data?.type === "room.discussion.updated" && data?.roomId) {
               void syncDiscussion();
             } else if (data?.type === "room.stage.event" && data?.roomId) {
+              const participantId = typeof data.participantId === "string" ? data.participantId : undefined;
+              if (data.kind === "hand" && participantId) {
+                setRaisedHands((current) => {
+                  const next = { ...current };
+                  if (data.isRaised === false) {
+                    delete next[participantId];
+                  } else {
+                    next[participantId] = true;
+                  }
+                  return next;
+                });
+              }
               pushStageEvent({
                 id: String(data.id ?? data.clientEventId ?? makeId()),
                 kind: data.kind === "hand" ? "hand" : "emoji",
@@ -1286,6 +1517,8 @@ export default function LiveRoomScreen({ call, onLeave, eventId, showDeviceContr
                 displayName: String(data.displayName ?? "Someone"),
                 role: String(data.role ?? "attendee"),
                 createdAt: new Date(String(data.createdAt ?? Date.now())).getTime(),
+                isRaised: typeof data.isRaised === "boolean" ? data.isRaised : undefined,
+                participantId,
               });
             }
           } catch {
@@ -1319,8 +1552,8 @@ export default function LiveRoomScreen({ call, onLeave, eventId, showDeviceContr
       clearReconnectTimer();
       realtimeSocketRef.current?.close();
       realtimeSocketRef.current = null;
-      stageEventExpiryRef.current.forEach((timeoutId) => window.clearTimeout(timeoutId));
-      stageEventExpiryRef.current.clear();
+      stageEventExpiryMap.forEach((timeoutId) => window.clearTimeout(timeoutId));
+      stageEventExpiryMap.clear();
     };
   }, [eventId, pushStageEvent, syncDiscussion]);
 
@@ -1460,7 +1693,8 @@ export default function LiveRoomScreen({ call, onLeave, eventId, showDeviceContr
         sendStageEmoji={(emoji) => {
           void sendStageEvent({ kind: "emoji", emoji });
         }}
-        raiseHand={raiseHand}
+        raisedHands={raisedHands}
+        sendStageEvent={sendStageEvent}
         eventId={eventId}
         />
     </StreamCall>

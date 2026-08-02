@@ -3,7 +3,7 @@ import { sendRoomStageEvent } from "@/lib/actions/room.stage.actions";
 
 type RouteParams = Promise<{ eventId?: string }>;
 
-type StageEventBody = { kind: "emoji" | "hand"; emoji?: string; clientEventId?: string };
+type StageEventBody = { kind: "emoji" | "hand"; emoji?: string; clientEventId?: string; isRaised?: boolean; participantId?: string };
 
 function parseBody(payload: unknown): StageEventBody | null {
   if (!payload || typeof payload !== "object") return null;
@@ -12,9 +12,11 @@ function parseBody(payload: unknown): StageEventBody | null {
   const kind = typeof body.kind === "string" ? body.kind : null;
   const emoji = typeof body.emoji === "string" ? body.emoji : undefined;
   const clientEventId = typeof body.clientEventId === "string" ? body.clientEventId : undefined;
+  const isRaised = typeof body.isRaised === "boolean" ? body.isRaised : undefined;
+  const participantId = typeof body.participantId === "string" ? body.participantId : undefined;
 
   if (kind === "emoji" || kind === "hand") {
-    return { kind, emoji, clientEventId };
+    return { kind, emoji, clientEventId, isRaised, participantId };
   }
 
   return null;

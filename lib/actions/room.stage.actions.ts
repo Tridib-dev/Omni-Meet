@@ -1,7 +1,7 @@
 "use server";
 
 import { randomUUID } from "node:crypto";
-import type { RoomMemberRole } from "@/database/Room.model";
+import { RoomMember, type RoomMemberRole } from "@/database/Room.model";
 import * as roomRealtime from "@/lib/realtime/room-realtime";
 import { getRoomContext, resolveDisplayName } from "@/lib/actions/room.discussion.actions";
 
@@ -16,12 +16,14 @@ export interface RoomStageEventResult {
     displayName: string;
     role: RoomMemberRole;
     createdAt: string;
+    isRaised?: boolean;
+    participantId?: string;
   };
 }
 
 export async function sendRoomStageEvent(
   eventId: string,
-  payload: { kind: "emoji" | "hand"; emoji?: string; clientEventId?: string }
+  payload: { kind: "emoji" | "hand"; emoji?: string; clientEventId?: string; isRaised?: boolean; participantId?: string }
 ): Promise<RoomStageEventResult | { success: false; reason: "not_found" | "unauthorized" | "invalid_input" | "server_error" }> {
   try {
     const context = await getRoomContext(eventId);
@@ -40,6 +42,20 @@ export async function sendRoomStageEvent(
       emoji = candidate;
     }
 
+    let isRaised: boolean | undefined;
+    let participantId: string | undefined;
+    if (payload.kind === "hand") {
+      isRaised = typeof payload.isRaised === "boolean" ? payload.isRaised : true;
+      participantId = typeof payload.participantId === "string" && payload.participantId.trim()
+        ? payload.participantId.trim()
+        : undefined;
+
+      await RoomMember.updateOne(
+        { roomId: context.roomId, clerkId: context.roomMember.clerkId },
+        { $set: { handRaised: isRaised } }
+      );
+    }
+
     const displayName = await resolveDisplayName(context.roomMember.clerkId);
     const id = typeof payload.clientEventId === "string" && payload.clientEventId.trim()
       ? payload.clientEventId.trim()
@@ -52,6 +68,8 @@ export async function sendRoomStageEvent(
       displayName,
       role: context.roomMember.role,
       createdAt: new Date().toISOString(),
+      isRaised,
+      participantId,
     } as const;
 
     roomRealtime.broadcastRoomStageEvent(context.roomId.toString(), {

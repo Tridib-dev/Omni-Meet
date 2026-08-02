@@ -53,6 +53,7 @@ type RoomMemberDoc = {
   roomId: Types.ObjectId;
   clerkId: string;
   role: RoomMemberRole;
+  handRaised?: boolean;
   leftAt?: Date | null;
   bannedAt?: Date | null;
 };
