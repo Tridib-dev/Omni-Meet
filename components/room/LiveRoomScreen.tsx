@@ -5,6 +5,7 @@ import {
   ParticipantView,
   StreamCall,
   StreamTheme,
+  hasAudio,
   hasScreenShare,
   hasVideo,
   isPinned,
@@ -35,6 +36,7 @@ export interface LiveRoomScreenProps {
   showDeviceControls?: boolean;
   canModerate?: boolean;
   eventTitle?: string;
+  bannerUrl?: string;
 }
 
 type DrawerKind = "chat" | "qa" | null;
@@ -158,6 +160,14 @@ function participantRoleBadge(role: string) {
 
 function participantKey(participant: StreamVideoParticipant) {
   return participant.userId || participant.sessionId || participant.name || "";
+}
+
+// "Admin tier" = organizers and co-organizers. Stream's call-level "admin" role
+// maps to organizer; "host" is used as the co-organizer tier elsewhere in this
+// file (see participantRoleBadge), so it's treated as admin tier here too.
+function isAdminParticipant(participant: StreamVideoParticipant) {
+  const role = participantRoleLabel(participant);
+  return role === "organizer" || role === "host";
 }
 
 function voteKey(kind: "message" | "question", targetId: string, direction: "up" | "down") {
@@ -368,6 +378,77 @@ function ParticipantCard({
   );
 }
 
+function AdminParticipantCard({
+  participant,
+  canModerate,
+  onTogglePin,
+  handRaised,
+}: {
+  participant: StreamVideoParticipant;
+  canModerate: boolean;
+  onTogglePin: (participant: StreamVideoParticipant) => void;
+  handRaised: boolean;
+}) {
+  const pinned = isPinned(participant);
+  const label = participantLabel(participant);
+  const role = participantRoleLabel(participant);
+  const micOn = hasAudio(participant);
+  const cameraOn = hasVideo(participant);
+
+  return (
+    <button
+      type="button"
+      onClick={() => canModerate && onTogglePin(participant)}
+      className={`group flex w-full items-center gap-3 rounded-2xl border px-3 py-2.5 text-left transition-colors ${
+        pinned
+          ? "border-[#4FD1FF]/70 bg-[#14171D]"
+          : "border-[#262B35] bg-[#14171D]/90 hover:border-[#4FD1FF]/50"
+      } ${canModerate ? "cursor-pointer" : "cursor-default"}`}
+    >
+      {/* Deliberately no <ParticipantView> here — admin cards never show live
+          video, even when the camera is on. Camera state is a badge, not a feed. */}
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1B1F27] text-sm font-semibold text-[#8891A3]">
+        {(label.trim()[0] ?? "?").toUpperCase()}
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium text-[#F3F5F8]">{label}</p>
+        <p className="text-[11px] uppercase tracking-wide text-[#8891A3]">{participantRoleBadge(role)}</p>
+      </div>
+
+      <div className="flex shrink-0 items-center gap-1.5">
+        {handRaised && (
+          <span className="rounded-full border border-[#F5A623]/25 bg-[#F5A623]/12 px-1.5 py-0.5 text-[10px] font-medium text-[#F5A623]">
+            ✋
+          </span>
+        )}
+        <span
+          className={`flex h-6 w-6 items-center justify-center rounded-full ${
+            micOn ? "bg-[#33D6A0]/15 text-[#33D6A0]" : "bg-[#262B35] text-[#8891A3]"
+          }`}
+          aria-label={micOn ? "Mic on" : "Mic off"}
+        >
+          {micOn ? <Mic size={12} /> : <MicOff size={12} />}
+        </span>
+        <span
+          className={`flex h-6 w-6 items-center justify-center rounded-full ${
+            cameraOn ? "bg-[#33D6A0]/15 text-[#33D6A0]" : "bg-[#262B35] text-[#8891A3]"
+          }`}
+          aria-label={cameraOn ? "Camera on" : "Camera off"}
+        >
+          {cameraOn ? <Video size={12} /> : <VideoOff size={12} />}
+        </span>
+        {pinned && <Pin size={13} className="text-[#4FD1FF]" />}
+        {participant.isLocalParticipant && (
+          <span className="rounded-full bg-[#1B1F27] px-1.5 py-0.5 text-[9px] uppercase tracking-wide text-[#4FD1FF]">
+            you
+          </span>
+        )}
+      </div>
+    </button>
+  );
+}
+
 function ParticipantRail({
   canModerate,
   onTogglePin,
@@ -379,24 +460,32 @@ function ParticipantRail({
   eventTitle?: string;
   raisedHands: Record<string, boolean>;
 }) {
-  const { useParticipants, usePinnedParticipants, useLocalParticipant, useHasOngoingScreenShare } =
-    useCallStateHooks();
+  const { useParticipants, usePinnedParticipants, useLocalParticipant } = useCallStateHooks();
   const participants = useParticipants();
   const pinnedParticipants = usePinnedParticipants();
   const localParticipant = useLocalParticipant();
-  const hasOngoingScreenShare = useHasOngoingScreenShare();
 
-  const orderedParticipants = useMemo(() => {
-    return [...participants].sort((a, b) => {
+  const orderParticipants = (list: StreamVideoParticipant[]) =>
+    [...list].sort((a, b) => {
       const aPinned = isPinned(a) ? 1 : 0;
       const bPinned = isPinned(b) ? 1 : 0;
       if (aPinned !== bPinned) return bPinned - aPinned;
       if (a.isLocalParticipant !== b.isLocalParticipant) return a.isLocalParticipant ? -1 : 1;
       return participantLabel(a).localeCompare(participantLabel(b));
     });
-  }, [participants]);
 
-  const showingEmptyState = orderedParticipants.length === 0;
+  const adminParticipants = useMemo(
+    () => orderParticipants(participants.filter((participant) => isAdminParticipant(participant))),
+    [participants]
+  );
+  const attendeeParticipants = useMemo(
+    () => orderParticipants(participants.filter((participant) => !isAdminParticipant(participant))),
+    [participants]
+  );
+
+  const [activeTab, setActiveTab] = useState<"admins" | "attendees">("admins");
+  const visibleParticipants = activeTab === "admins" ? adminParticipants : attendeeParticipants;
+  const showingEmptyState = visibleParticipants.length === 0;
 
   return (
     <aside className="flex h-full flex-col gap-3 rounded-3xl border border-[#262B35] bg-[#11161D] p-3">
@@ -410,27 +499,53 @@ function ParticipantRail({
         <Users size={16} className="text-[#4FD1FF]" />
       </div>
 
-      <div className="flex items-center justify-between rounded-2xl border border-[#262B35] bg-[#14171D] px-3 py-2 text-[11px] uppercase tracking-wide text-[#8891A3]">
-        <span>participant rail</span>
-        <span>{hasOngoingScreenShare ? "screen share live" : "video room"}</span>
+      <div className="flex items-center gap-1 rounded-2xl border border-[#262B35] bg-[#14171D] p-1">
+        <button
+          type="button"
+          onClick={() => setActiveTab("admins")}
+          className={`flex-1 rounded-xl px-3 py-1.5 text-[11px] font-medium uppercase tracking-wide transition ${
+            activeTab === "admins" ? "bg-[#4FD1FF] text-[#081018]" : "text-[#8891A3] hover:text-[#F3F5F8]"
+          }`}
+        >
+          Admins ({adminParticipants.length})
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("attendees")}
+          className={`flex-1 rounded-xl px-3 py-1.5 text-[11px] font-medium uppercase tracking-wide transition ${
+            activeTab === "attendees" ? "bg-[#4FD1FF] text-[#081018]" : "text-[#8891A3] hover:text-[#F3F5F8]"
+          }`}
+        >
+          Attendees ({attendeeParticipants.length})
+        </button>
       </div>
 
       <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
         {showingEmptyState && (
           <div className="rounded-2xl border border-dashed border-[#262B35] bg-[#0A0C10] px-4 py-8 text-center text-sm text-[#8891A3]">
-            Waiting for participants to join.
+            {activeTab === "admins" ? "No organizers or co-organizers in the room yet." : "No attendees in the room yet."}
           </div>
         )}
 
-        {orderedParticipants.map((participant) => (
-          <ParticipantCard
-            key={participant.sessionId}
-            participant={participant}
-            canModerate={canModerate}
-            onTogglePin={onTogglePin}
-            handRaised={Boolean(raisedHands[participantKey(participant)])}
-          />
-        ))}
+        {activeTab === "admins"
+          ? adminParticipants.map((participant) => (
+              <AdminParticipantCard
+                key={participant.sessionId}
+                participant={participant}
+                canModerate={canModerate}
+                onTogglePin={onTogglePin}
+                handRaised={Boolean(raisedHands[participantKey(participant)])}
+              />
+            ))
+          : attendeeParticipants.map((participant) => (
+              <ParticipantCard
+                key={participant.sessionId}
+                participant={participant}
+                canModerate={canModerate}
+                onTogglePin={onTogglePin}
+                handRaised={Boolean(raisedHands[participantKey(participant)])}
+              />
+            ))}
       </div>
 
       <div className="rounded-2xl border border-[#262B35] bg-[#14171D] px-3 py-2 text-xs text-[#8891A3]">
@@ -815,11 +930,15 @@ function StagePanel({
   canModerate,
   viewMode,
   onViewModeChange,
+  bannerUrl,
+  eventTitle,
 }: {
   call: Call;
   canModerate: boolean;
   viewMode: StageViewMode;
   onViewModeChange: (value: StageViewMode) => void;
+  bannerUrl?: string;
+  eventTitle?: string;
 }) {
   const { useParticipants, usePinnedParticipants, useLocalParticipant, useHasOngoingScreenShare } =
     useCallStateHooks();
@@ -828,16 +947,23 @@ function StagePanel({
   const localParticipant = useLocalParticipant();
   const hasOngoingScreenShare = useHasOngoingScreenShare();
 
+  const remoteParticipantsWithVideo = useMemo(
+    () => participants.filter((participant) => !participant.isLocalParticipant && hasVideo(participant)),
+    [participants]
+  );
+
+  const hasAdminParticipant = participants.some((participant) => isAdminParticipant(participant));
+
   const focusParticipant = useMemo(() => {
     const screenShareParticipant = participants.find((participant) => hasScreenShare(participant));
     if (screenShareParticipant) return screenShareParticipant;
     if (pinnedParticipants.length > 0) return pinnedParticipants[0];
 
-    const visibleParticipant = participants.find((participant) => !participant.isLocalParticipant && hasVideo(participant));
-    if (visibleParticipant) return visibleParticipant;
+    const visibleRemoteParticipant = remoteParticipantsWithVideo[0];
+    if (visibleRemoteParticipant) return visibleRemoteParticipant;
 
-    return localParticipant ?? participants[0] ?? null;
-  }, [participants, pinnedParticipants, localParticipant]);
+    return null;
+  }, [participants, pinnedParticipants, remoteParticipantsWithVideo]);
 
   const autoPinnedRef = useRef(false);
 
@@ -920,13 +1046,25 @@ function StagePanel({
 
   if (!focusParticipant) {
     return (
-      <div className="flex h-full min-h-130 items-center justify-center rounded-3xl border border-[#262B35] bg-[#11161D] px-6 text-center">
-        <div className="space-y-3">
+      <div className="relative flex h-full min-h-130 items-center justify-center overflow-hidden rounded-3xl border border-[#262B35] bg-[#11161D] px-6 text-center">
+        {bannerUrl ? (
+          <img src={bannerUrl} alt={eventTitle ?? "Event"} className="absolute inset-0 h-full w-full object-cover opacity-35" />
+        ) : (
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(79,209,255,0.2),_transparent_60%)]" />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0A0C10] via-[#0A0C10]/70 to-transparent" />
+        <div className="relative z-10 max-w-md space-y-3">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#1B1F27] text-[#4FD1FF]">
             <Users size={22} />
           </div>
-          <p className="text-lg font-semibold text-[#F3F5F8]">Waiting for the room to populate</p>
-          <p className="max-w-sm text-sm text-[#8891A3]">Once someone joins, the stage will appear here.</p>
+          <p className="text-lg font-semibold text-[#F3F5F8]">
+            {hasAdminParticipant ? "Waiting for the room to populate" : "Waiting for the admins to join"}
+          </p>
+          <p className="max-w-sm text-sm text-[#8891A3]">
+            {hasAdminParticipant
+              ? "Once someone joins with video, the stage will appear here."
+              : "The room is live, but no organizer or co-organizer is here yet. You can still chat, ask questions, react, and raise your hand."}
+          </p>
         </div>
       </div>
     );
@@ -1057,6 +1195,7 @@ function LiveRoomScreenContent({
   showDeviceControls = true,
   canModerate = false,
   eventTitle,
+  bannerUrl,
   activeDrawer,
   setActiveDrawer,
   chatDraft,
@@ -1091,6 +1230,7 @@ function LiveRoomScreenContent({
   const localParticipant = useLocalParticipant();
   const hasOngoingScreenShare = useHasOngoingScreenShare();
   const autoStartDevicesRef = useRef(false);
+  const autoStopDevicesRef = useRef(false);
   const [stageViewMode, setStageViewMode] = useState<StageViewMode>("normal");
 
   const screenShareActive = hasOngoingScreenShare;
@@ -1099,15 +1239,32 @@ function LiveRoomScreenContent({
   const handRaised = Boolean(localParticipantKey && raisedHands[localParticipantKey]);
 
   useEffect(() => {
-    if (!canModerate || autoStartDevicesRef.current) return;
-    autoStartDevicesRef.current = true;
+    if (canModerate) {
+      if (autoStartDevicesRef.current) return;
+      autoStartDevicesRef.current = true;
 
-    camera.enable().catch((err: unknown) => {
-      console.warn("[LiveRoomScreen] auto camera enable failed", err);
+      camera.enable().catch((err: unknown) => {
+        console.warn("[LiveRoomScreen] auto camera enable failed", err);
+      });
+
+      microphone.enable().catch((err: unknown) => {
+        console.warn("[LiveRoomScreen] auto microphone enable failed", err);
+      });
+      return;
+    }
+
+    // Attendees are view-only. Explicitly force devices off — this is the real
+    // enforcement point. `call.join()` has no audio/video option to prevent
+    // publishing at join time, so this is the only client-side guarantee.
+    if (autoStopDevicesRef.current) return;
+    autoStopDevicesRef.current = true;
+
+    camera.disable().catch((err: unknown) => {
+      console.warn("[LiveRoomScreen] attendee camera disable failed", err);
     });
 
-    microphone.enable().catch((err: unknown) => {
-      console.warn("[LiveRoomScreen] auto microphone enable failed", err);
+    microphone.disable().catch((err: unknown) => {
+      console.warn("[LiveRoomScreen] attendee microphone disable failed", err);
     });
   }, [canModerate, camera, microphone]);
 
@@ -1180,6 +1337,8 @@ function LiveRoomScreenContent({
                 canModerate={canModerate}
                 viewMode={stageViewMode}
                 onViewModeChange={setStageViewMode}
+                bannerUrl={bannerUrl}
+                eventTitle={eventTitle}
               />
               <StageReactionOverlay events={stageEvents} />
             </div>
@@ -1242,7 +1401,7 @@ function LiveRoomScreenContent({
   );
 }
 
-export default function LiveRoomScreen({ call, onLeave, eventId, showDeviceControls = true, canModerate = false, eventTitle }: LiveRoomScreenProps) {
+export default function LiveRoomScreen({ call, onLeave, eventId, showDeviceControls = true, canModerate = false, eventTitle, bannerUrl }: LiveRoomScreenProps) {
   const [activeDrawer, setActiveDrawer] = useState<DrawerKind>(null);
   const [chatDraft, setChatDraft] = useState("");
   const [qaDraft, setQaDraft] = useState("");
@@ -1672,6 +1831,7 @@ export default function LiveRoomScreen({ call, onLeave, eventId, showDeviceContr
         showDeviceControls={showDeviceControls}
         canModerate={canModerate}
         eventTitle={eventTitle}
+        bannerUrl={bannerUrl}
         activeDrawer={activeDrawer}
         setActiveDrawer={setActiveDrawer}
         chatDraft={chatDraft}

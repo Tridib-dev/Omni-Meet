@@ -73,6 +73,9 @@ export default function RoomGate({
       joinedCallRef.current = null;
     }, JOIN_TIMEOUT_MS);
 
+    // NOTE: JoinCallRequest has no `audio`/`video` fields — passing them here
+    // would silently be dropped at runtime. Muting is enforced later in
+    // LiveRoomScreenContent via camera.disable()/microphone.disable().
     c.join({ create: false })
       .then(() => {
         if (cancelled) {
@@ -164,6 +167,7 @@ export default function RoomGate({
         showDeviceControls={isOrganizerTier}
         canModerate={isOrganizerTier}
         eventTitle={eventTitle}
+        bannerUrl={bannerUrl}
       />
     ) : (
       <ConnectingScreen eventTitle={eventTitle} />
