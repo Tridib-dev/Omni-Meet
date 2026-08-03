@@ -1008,6 +1008,14 @@ function StagePanel({
     };
   }, []);
 
+  const [pipNotice, setPipNotice] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!pipNotice) return;
+    const timeoutId = window.setTimeout(() => setPipNotice(null), 2500);
+    return () => window.clearTimeout(timeoutId);
+  }, [pipNotice]);
+
   const handleTogglePip = useCallback(async () => {
     const videoEl = stageVideoContainerRef.current?.querySelector("video");
     if (!videoEl) return;
@@ -1020,10 +1028,20 @@ function StagePanel({
       if (document.pictureInPictureElement) {
         await document.exitPictureInPicture();
       }
+
+      // requestPictureInPicture() throws InvalidStateError if the video hasn't
+      // loaded metadata yet (e.g. stage still black while a stream connects).
+      // Check readiness up front instead of attempting a doomed call.
+      if (videoEl.readyState < HTMLMediaElement.HAVE_METADATA) {
+        setPipNotice("Video isn't loaded yet — try again in a moment.");
+        return;
+      }
+
       videoEl.disablePictureInPicture = false;
       await videoEl.requestPictureInPicture();
     } catch (err) {
       console.error("[LiveRoomScreen] picture-in-picture failed", err);
+      setPipNotice("Couldn't pop out the video.");
     }
   }, []);
 
@@ -1142,6 +1160,12 @@ function StagePanel({
             <PictureInPicture2 size={16} />
             <span>{isPipActive ? "Exit pop-out" : "Pop out"}</span>
           </button>
+
+          {pipNotice && (
+            <span className="rounded-full border border-[#F5A623]/30 bg-[#F5A623]/10 px-2.5 py-1 text-xs text-[#F5A623]">
+              {pipNotice}
+            </span>
+          )}
         </div>
       </div>
 
@@ -1445,6 +1469,8 @@ export default function LiveRoomScreen({ call, onLeave, eventId, showDeviceContr
     stageEventExpiryRef.current.set(nextEvent.id, timeoutId);
   }, []);
 
+  const discussionAccessRevokedRef = useRef(false);
+
   const syncDiscussion = useCallback(async (signal?: AbortSignal) => {
     try {
       const res = await fetch(`/api/rooms/${eventId}/discussion`, {
@@ -1452,6 +1478,15 @@ export default function LiveRoomScreen({ call, onLeave, eventId, showDeviceContr
         cache: "no-store",
         signal,
       });
+
+      if (res.status === 401 || res.status === 403) {
+        // Access to this room's discussion has ended — the user left, was
+        // removed, or the room no longer exists. This is an expected terminal
+        // state (especially during the leave flow's brief unmount race), not
+        // an app error, so stop polling quietly instead of logging/surfacing it.
+        discussionAccessRevokedRef.current = true;
+        return;
+      }
 
       const data = await res.json();
       if (!res.ok) {
@@ -1506,12 +1541,17 @@ export default function LiveRoomScreen({ call, onLeave, eventId, showDeviceContr
 
   useEffect(() => {
     const controller = new AbortController();
+    discussionAccessRevokedRef.current = false;
     // The initial fetch kicks off the first discussion load.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     syncDiscussion(controller.signal);
 
     const intervalId = window.setInterval(() => {
-      syncDiscussion();
+      if (discussionAccessRevokedRef.current) {
+        window.clearInterval(intervalId);
+        return;
+      }
+      syncDiscussion(controller.signal);
     }, 5_000);
 
     return () => {
