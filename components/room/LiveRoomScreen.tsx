@@ -286,6 +286,18 @@ function StageReactionOverlay({ events }: { events: StageEvent[] }) {
   );
 }
 
+function NotifyDot({ show, pulsing }: { show: boolean; pulsing: boolean }) {
+  if (!show) return null;
+  return (
+    <span className="absolute -right-1 -top-1 flex h-2.5 w-2.5">
+      {pulsing && (
+        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#33D6A0] opacity-75" />
+      )}
+      <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[#33D6A0] ring-2 ring-[#0A0C10]" />
+    </span>
+  );
+}
+
 function StageViewModeButton({
   mode,
   label,
@@ -1068,9 +1080,9 @@ function StagePanel({
         {bannerUrl ? (
           <img src={bannerUrl} alt={eventTitle ?? "Event"} className="absolute inset-0 h-full w-full object-cover opacity-35" />
         ) : (
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(79,209,255,0.2),_transparent_60%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(79,209,255,0.2),transparent_60%)]" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0A0C10] via-[#0A0C10]/70 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-[#0A0C10] via-[#0A0C10]/70 to-transparent" />
         <div className="relative z-10 max-w-md space-y-3">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#1B1F27] text-[#4FD1FF]">
             <Users size={22} />
@@ -1211,6 +1223,10 @@ type LiveRoomScreenContentProps = LiveRoomScreenProps & {
   sendStageEmoji: (emoji: string) => void;
   raisedHands: Record<string, boolean>;
   sendStageEvent: (payload: StageEventPayload) => Promise<void> | void;
+  chatUnseen: boolean;
+  qaUnseen: boolean;
+  chatPulsing: boolean;
+  qaPulsing: boolean;
 };
 
 function LiveRoomScreenContent({
@@ -1244,6 +1260,10 @@ function LiveRoomScreenContent({
   sendStageEmoji,
   raisedHands,
   sendStageEvent,
+  chatUnseen,
+  qaUnseen,
+  chatPulsing,
+  qaPulsing,
 }: LiveRoomScreenContentProps) {
   const { useScreenShareState, useParticipants, useHasOngoingScreenShare, useCameraState, useMicrophoneState, useLocalParticipant } =
     useCallStateHooks();
@@ -1325,22 +1345,24 @@ function LiveRoomScreenContent({
             <button
               type="button"
               onClick={() => setActiveDrawer("chat")}
-              className={`flex items-center gap-2 rounded-full px-3 py-2 text-sm ${
+              className={`relative flex items-center gap-2 rounded-full px-3 py-2 text-sm ${
                 activeDrawer === "chat" ? "bg-[#4FD1FF] text-[#0A0C10]" : "bg-[#1B1F27] text-[#F3F5F8]"
               }`}
             >
               <MessageSquare size={16} />
               Chat
+              <NotifyDot show={chatUnseen || chatPulsing} pulsing={chatPulsing} />
             </button>
             <button
               type="button"
               onClick={() => setActiveDrawer("qa")}
-              className={`flex items-center gap-2 rounded-full px-3 py-2 text-sm ${
+              className={`relative flex items-center gap-2 rounded-full px-3 py-2 text-sm ${
                 activeDrawer === "qa" ? "bg-[#4FD1FF] text-[#0A0C10]" : "bg-[#1B1F27] text-[#F3F5F8]"
               }`}
             >
               <HelpCircle size={16} />
               Q&A
+              <NotifyDot show={qaUnseen || qaPulsing} pulsing={qaPulsing} />
             </button>
           </div>
         </header>
@@ -1445,6 +1467,57 @@ export default function LiveRoomScreen({ call, onLeave, eventId, showDeviceContr
   const realtimeRetryRef = useRef(0);
   const stageEventExpiryRef = useRef<Map<string, number>>(new Map());
 
+  // --- New chat/Q&A notification dot ---
+  // `Unseen` = persistent dot, cleared once that drawer is opened.
+  // `Pulsing` = transient ~1.5s blink, fires on arrival regardless of
+  // whether the drawer is open or closed.
+  const [chatUnseen, setChatUnseen] = useState(false);
+  const [qaUnseen, setQaUnseen] = useState(false);
+  const [chatPulsing, setChatPulsing] = useState(false);
+  const [qaPulsing, setQaPulsing] = useState(false);
+  const activeDrawerRef = useRef<DrawerKind>(null);
+  const lastSeenChatIdRef = useRef<string | null>(null);
+  const lastSeenQaIdRef = useRef<string | null>(null);
+  const hasLoadedDiscussionRef = useRef(false);
+  const chatPulseTimeoutRef = useRef<number | null>(null);
+  const qaPulseTimeoutRef = useRef<number | null>(null);
+
+  const firePulse = useCallback((kind: "chat" | "qa") => {
+    const timeoutRef = kind === "chat" ? chatPulseTimeoutRef : qaPulseTimeoutRef;
+    const setPulsing = kind === "chat" ? setChatPulsing : setQaPulsing;
+
+    if (timeoutRef.current !== null) window.clearTimeout(timeoutRef.current);
+    setPulsing(true);
+    timeoutRef.current = window.setTimeout(() => {
+      setPulsing(false);
+      timeoutRef.current = null;
+    }, 1500);
+  }, []);
+
+  // Clearing the "unseen" dot is a response to the user opening a drawer —
+  // an explicit action, not something to derive via an effect. Wrapping the
+  // setter here (instead of watching `activeDrawer` in a useEffect) avoids
+  // setState-in-effect and keeps activeDrawerRef in sync at the same time.
+  const openDrawer = useCallback((kind: DrawerKind) => {
+    setActiveDrawer(kind);
+    activeDrawerRef.current = kind;
+    if (kind === "chat") setChatUnseen(false);
+    if (kind === "qa") setQaUnseen(false);
+  }, []);
+
+  useEffect(() => {
+    // These refs hold mutable timeout ids (not DOM nodes), so reading
+    // `.current` at unmount time is intentional — we want whichever timeout
+    // is pending *then*, not whatever was pending at mount. exhaustive-deps
+    // assumes ref-in-cleanup means a stale DOM ref, which doesn't apply here.
+    return () => {
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      if (chatPulseTimeoutRef.current !== null) window.clearTimeout(chatPulseTimeoutRef.current);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      if (qaPulseTimeoutRef.current !== null) window.clearTimeout(qaPulseTimeoutRef.current);
+    };
+  }, []);
+
   const pushStageEvent = useCallback((nextEvent: StageEvent) => {
     setStageEvents((current) => {
       const existingIndex = current.findIndex((item) => item.id === nextEvent.id);
@@ -1527,6 +1600,26 @@ export default function LiveRoomScreen({ call, onLeave, eventId, showDeviceContr
           }))
         : [];
 
+      const latestChatId = nextMessages.length ? nextMessages[nextMessages.length - 1].id : null;
+      // room.discussion.actions sorts questions createdAt: -1, so index 0 is newest.
+      const latestQaId = nextQuestions.length ? nextQuestions[0].id : null;
+
+      if (!hasLoadedDiscussionRef.current) {
+        // First load just establishes the baseline — nothing to notify about yet.
+        hasLoadedDiscussionRef.current = true;
+      } else {
+        if (latestChatId && latestChatId !== lastSeenChatIdRef.current) {
+          firePulse("chat");
+          if (activeDrawerRef.current !== "chat") setChatUnseen(true);
+        }
+        if (latestQaId && latestQaId !== lastSeenQaIdRef.current) {
+          firePulse("qa");
+          if (activeDrawerRef.current !== "qa") setQaUnseen(true);
+        }
+      }
+      lastSeenChatIdRef.current = latestChatId;
+      lastSeenQaIdRef.current = latestQaId;
+
       setChatMessages(nextMessages);
       setQuestions(nextQuestions);
       setDrawerError(null);
@@ -1537,7 +1630,7 @@ export default function LiveRoomScreen({ call, onLeave, eventId, showDeviceContr
     } finally {
       if (!signal?.aborted) setDiscussionLoading(false);
     }
-  }, [eventId]);
+  }, [eventId, firePulse]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -1873,7 +1966,7 @@ export default function LiveRoomScreen({ call, onLeave, eventId, showDeviceContr
         eventTitle={eventTitle}
         bannerUrl={bannerUrl}
         activeDrawer={activeDrawer}
-        setActiveDrawer={setActiveDrawer}
+        setActiveDrawer={openDrawer}
         chatDraft={chatDraft}
         setChatDraft={setChatDraft}
         qaDraft={qaDraft}
@@ -1899,6 +1992,10 @@ export default function LiveRoomScreen({ call, onLeave, eventId, showDeviceContr
         raisedHands={raisedHands}
         sendStageEvent={sendStageEvent}
         eventId={eventId}
+        chatUnseen={chatUnseen}
+        qaUnseen={qaUnseen}
+        chatPulsing={chatPulsing}
+        qaPulsing={qaPulsing}
         />
     </StreamCall>
   );
