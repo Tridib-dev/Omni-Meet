@@ -116,6 +116,29 @@ export async function createRoom(
         created_by_id: userId,
         members: [{ user_id: userId, role: "admin" }],
         custom: { eventId },
+        // Nobody should be auto-prompted for camera/mic just by joining —
+        // attendees can't publish anyway (call_member's Send audio/video is
+        // "Not allowed" in the permissions matrix), and organizers get their
+        // devices turned on explicitly client-side once they're actually in
+        // the room. Without this override the call type's defaults trigger
+        // a getUserMedia() prompt for every participant on join, regardless
+        // of publish permission.
+        //
+        // NOTE: settings_override.audio/video aren't merged with the call
+        // type's defaults — Stream validates each sub-object as a whole, so
+        // touching one field means supplying the others it requires too
+        // (default_device, target_resolution w/ a 240px floor) or getOrCreate
+        // rejects the request outright.
+        settings_override: {
+          audio: {
+            mic_default_on: false,
+            default_device: "speaker",
+          },
+          video: {
+            camera_default_on: false,
+            target_resolution: { width: 1280, height: 720 },
+          },
+        },
       },
     });
 

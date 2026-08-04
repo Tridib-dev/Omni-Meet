@@ -73,10 +73,30 @@ export default function RoomGate({
       joinedCallRef.current = null;
     }, JOIN_TIMEOUT_MS);
 
+    // Devices must be disabled BEFORE join(), not after. Whether the SDK
+    // auto-requests camera/mic on join is driven by the call type's
+    // camera_default_on/mic_default_on settings, independent of the
+    // "Send audio/video" permission — so an attendee who genuinely can't
+    // publish would still get the browser's getUserMedia prompt (and a
+    // "[devices]: Failed to get video/audio stream" error on denial) if we
+    // wait until after join to call disable(). Doing it first heads that
+    // prompt off entirely for anyone who isn't organizer tier.
+    const devicePrep = isOrganizerTier
+      ? Promise.resolve()
+      : Promise.all([
+          c.camera.disable().catch((err: unknown) => {
+            console.warn("[RoomGate] pre-join camera disable failed", err);
+          }),
+          c.microphone.disable().catch((err: unknown) => {
+            console.warn("[RoomGate] pre-join microphone disable failed", err);
+          }),
+        ]).then(() => undefined);
+
     // NOTE: JoinCallRequest has no `audio`/`video` fields — passing them here
     // would silently be dropped at runtime. Muting is enforced later in
     // LiveRoomScreenContent via camera.disable()/microphone.disable().
-    c.join({ create: false })
+    devicePrep
+      .then(() => c.join({ create: false }))
       .then(() => {
         if (cancelled) {
           c.leave().catch(() => {});
@@ -113,7 +133,7 @@ export default function RoomGate({
         fetch(`/api/rooms/${eventId}/leave`, { method: "POST", keepalive: true }).catch(() => {});
       }
     };
-  }, [phase, client, callId, callType, eventId, joinAttemptKey]);
+  }, [phase, client, callId, callType, eventId, joinAttemptKey, isOrganizerTier]);
 
   async function handleLeave() {
     if (leaving) return;

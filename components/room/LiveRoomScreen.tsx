@@ -1,7 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import {
+  ParticipantsAudio,
   ParticipantView,
   StreamCall,
   StreamTheme,
@@ -26,6 +28,8 @@ import {
   Users,
   Video,
   VideoOff,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 
@@ -864,6 +868,8 @@ function ControlsBar({
   canModerate = false,
   screenShareActive = false,
   handRaised = false,
+  roomAudioMuted = false,
+  onToggleRoomAudio,
 }: {
   onLeave: () => void;
   onToggleScreenShare: () => void;
@@ -873,6 +879,8 @@ function ControlsBar({
   canModerate?: boolean;
   screenShareActive?: boolean;
   handRaised?: boolean;
+  roomAudioMuted?: boolean;
+  onToggleRoomAudio?: () => void;
 }) {
   const [deviceError, setDeviceError] = useState<string | null>(null);
 
@@ -923,6 +931,19 @@ function ControlsBar({
             <span className="hidden sm:inline">{screenShareActive ? "Stop share" : "Share screen"}</span>
           </button>
         )}
+
+        <button
+          type="button"
+          onClick={onToggleRoomAudio}
+          className={`flex h-11 items-center gap-2 rounded-full px-4 text-sm font-medium ${
+            roomAudioMuted ? "bg-[#FF5468] text-[#0A0C10]" : "bg-[#1B1F27] text-[#F3F5F8]"
+          }`}
+          aria-pressed={roomAudioMuted}
+          aria-label={roomAudioMuted ? "Unmute room audio" : "Mute room audio"}
+        >
+          {roomAudioMuted ? <VolumeX size={17} /> : <Volume2 size={17} />}
+          <span className="hidden sm:inline">{roomAudioMuted ? "Room muted" : "Mute room"}</span>
+        </button>
 
         <button
           onClick={onLeave}
@@ -1078,11 +1099,17 @@ function StagePanel({
     return (
       <div className="relative flex h-full min-h-130 items-center justify-center overflow-hidden rounded-3xl border border-[#262B35] bg-[#11161D] px-6 text-center">
         {bannerUrl ? (
-          <img src={bannerUrl} alt={eventTitle ?? "Event"} className="absolute inset-0 h-full w-full object-cover opacity-35" />
+          <Image
+            src={bannerUrl}
+            alt={eventTitle ?? "Event"}
+            fill
+            unoptimized
+            className="object-cover opacity-35"
+          />
         ) : (
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(79,209,255,0.2),transparent_60%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(79,209,255,0.2),_transparent_60%)]" />
         )}
-        <div className="absolute inset-0 bg-linear-to-t from-[#0A0C10] via-[#0A0C10]/70 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0A0C10] via-[#0A0C10]/70 to-transparent" />
         <div className="relative z-10 max-w-md space-y-3">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#1B1F27] text-[#4FD1FF]">
             <Users size={22} />
@@ -1118,6 +1145,7 @@ function StagePanel({
             participant={focusParticipant}
             trackType={mainIsScreenSharing ? "screenShareTrack" : "videoTrack"}
             mirror={focusParticipant.isLocalParticipant && !mainIsScreenSharing}
+            muteAudio
             VideoPlaceholder={() => <InitialsAvatar name={label} />}
             ParticipantViewUI={null}
             className={`h-full w-full overflow-hidden bg-black [&_video]:h-full [&_video]:w-full [&_video]:bg-black [&_video]:object-center ${
@@ -1279,6 +1307,38 @@ function LiveRoomScreenContent({
 
   const screenShareActive = hasOngoingScreenShare;
   const participantCount = participants.length;
+
+  // --- Mute this tab's incoming audio ---
+  // Deliberately browser-only: toggles the `.muted` flag on whatever <audio>
+  // elements the SDK has rendered inside this container. Doesn't touch the
+  // call, the SDK's participant/volume state, or anyone else's mic — it's
+  // scoped to this one tab and nothing else.
+  const audioContainerRef = useRef<HTMLDivElement>(null);
+  const [roomAudioMuted, setRoomAudioMuted] = useState(false);
+  const roomAudioMutedRef = useRef(roomAudioMuted);
+
+  useEffect(() => {
+    roomAudioMutedRef.current = roomAudioMuted;
+    audioContainerRef.current?.querySelectorAll("audio").forEach((el) => {
+      el.muted = roomAudioMuted;
+    });
+  }, [roomAudioMuted]);
+
+  useEffect(() => {
+    const container = audioContainerRef.current;
+    if (!container) return;
+
+    // Late joiners get their own <audio> element mounted after the fact —
+    // catch those too, so the tab stays muted for anyone who arrives later.
+    const observer = new MutationObserver(() => {
+      if (!roomAudioMutedRef.current) return;
+      container.querySelectorAll("audio").forEach((el) => {
+        el.muted = true;
+      });
+    });
+    observer.observe(container, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, []);
   const localParticipantKey = useMemo(() => (localParticipant ? participantKey(localParticipant) : ""), [localParticipant]);
   const handRaised = Boolean(localParticipantKey && raisedHands[localParticipantKey]);
 
@@ -1335,7 +1395,15 @@ function LiveRoomScreenContent({
 
   return (
     <StreamTheme className="flex min-h-screen flex-col bg-[#0A0C10] text-[#F3F5F8]">
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div ref={audioContainerRef} className="flex flex-1 flex-col overflow-hidden">
+        {/* Audio playback is intentionally decoupled from who's visually
+            focused on the stage — otherwise nobody hears anyone unless that
+            person happens to have their camera on/pinned/screen-sharing.
+            ParticipantsAudio plays every remote participant's audio track
+            regardless of the video layout. The stage ParticipantView below
+            is set to muteAudio so this is the single source of playback
+            (no doubled/echoed audio for whoever's currently focused). */}
+        <ParticipantsAudio participants={participants.filter((p) => !p.isLocalParticipant)} />
         <header className="flex items-center justify-between gap-3 border-b border-[#262B35] bg-[#0A0C10] px-4 py-3">
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-[#F3F5F8]">{eventTitle ?? "Live room"}</p>
@@ -1410,6 +1478,8 @@ function LiveRoomScreenContent({
           canModerate={canModerate}
           screenShareActive={screenShareActive}
           handRaised={handRaised}
+          roomAudioMuted={roomAudioMuted}
+          onToggleRoomAudio={() => setRoomAudioMuted((current) => !current)}
         />
       </div>
 
