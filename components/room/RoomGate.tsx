@@ -11,7 +11,7 @@ import LobbyScreen from "./LobbyScreen";
 import LiveRoomScreen from "./LiveRoomScreen";
 import EndedScreen from "./EndedScreen";
 import OrganizerControls from "./OrganizerControl";
-import ConnectingScreen from "./ConnectingScreen";
+import PreJoinScreen from "./PreJoinScreen";
 
 
 export interface RoomGateProps {
@@ -36,8 +36,15 @@ export default function RoomGate({
   const router = useRouter();
   const { phase, joinResult, refetch } = useRoomPhase(eventId, initialPhase);
   const isOrganizerTier = joinResult?.role === "organizer" || joinResult?.role === "co-organizer";
+
+  // `call` exists as soon as we've created the Call object — this happens
+  // well before it's actually joined, so PreJoinScreen can show a device
+  // preview/toggle against the real call. `hasJoined` is what gates
+  // rendering the full LiveRoomScreen.
   const [call, setCall] = useState<Call | null>(null);
-  const joinedCallRef = useRef<Call | null>(null);
+  const [hasJoined, setHasJoined] = useState(false);
+  const [joining, setJoining] = useState(false);
+  const callRef = useRef<Call | null>(null);
   const hasJoinedCallRef = useRef(false);
   const [joinFailedState, setJoinFailedState] = useState(false);
   const [joinAttemptKey, setJoinAttemptKey] = useState(0);
@@ -53,25 +60,20 @@ export default function RoomGate({
   const joinFailed =
     joinFailedState || (joinResult?.status === "denied" && phase === "live" && joinResult.reason !== "not_started_yet");
 
+  // Create the call object as soon as we're allowed to — but do NOT join it
+  // yet. Joining is deferred to an explicit click on PreJoinScreen, both so
+  // people can set their devices first and so the browser gets a real user
+  // gesture before any audio tries to play.
   useEffect(() => {
     if (phase !== "live" || !client || !callId) return;
-    if (joinedCallRef.current) return;
+    if (callRef.current) return;
 
-    let cancelled = false;
     const c = client.call(callType, callId);
-    joinedCallRef.current = c;
+    callRef.current = c;
     hasJoinedCallRef.current = false;
     setJoinFailedState(false);
-
-    if (joinTimeoutRef.current !== null) {
-      window.clearTimeout(joinTimeoutRef.current);
-    }
-
-    joinTimeoutRef.current = window.setTimeout(() => {
-      console.error("[RoomGate] join timed out");
-      setJoinFailedState(true);
-      joinedCallRef.current = null;
-    }, JOIN_TIMEOUT_MS);
+    setHasJoined(false);
+    setCall(c);
 
     // Devices must be disabled BEFORE join(), not after. Whether the SDK
     // auto-requests camera/mic on join is driven by the call type's
@@ -79,61 +81,69 @@ export default function RoomGate({
     // "Send audio/video" permission — so an attendee who genuinely can't
     // publish would still get the browser's getUserMedia prompt (and a
     // "[devices]: Failed to get video/audio stream" error on denial) if we
-    // wait until after join to call disable(). Doing it first heads that
-    // prompt off entirely for anyone who isn't organizer tier.
-    const devicePrep = isOrganizerTier
-      ? Promise.resolve()
-      : Promise.all([
-          c.camera.disable().catch((err: unknown) => {
-            console.warn("[RoomGate] pre-join camera disable failed", err);
-          }),
-          c.microphone.disable().catch((err: unknown) => {
-            console.warn("[RoomGate] pre-join microphone disable failed", err);
-          }),
-        ]).then(() => undefined);
-
-    // NOTE: JoinCallRequest has no `audio`/`video` fields — passing them here
-    // would silently be dropped at runtime. Muting is enforced later in
-    // LiveRoomScreenContent via camera.disable()/microphone.disable().
-    devicePrep
-      .then(() => c.join({ create: false }))
-      .then(() => {
-        if (cancelled) {
-          c.leave().catch(() => {});
-          return;
-        }
-        hasJoinedCallRef.current = true;
-        setCall(c);
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        console.error("[RoomGate] join failed", err);
-        setJoinFailedState(true);
-        joinedCallRef.current = null;
-        hasJoinedCallRef.current = false;
-      })
-      .finally(() => {
-        if (joinTimeoutRef.current !== null) {
-          window.clearTimeout(joinTimeoutRef.current);
-          joinTimeoutRef.current = null;
-        }
+    // don't head it off. PreJoinScreen handles the organizer-tier device
+    // choices instead.
+    if (!isOrganizerTier) {
+      c.camera.disable().catch((err: unknown) => {
+        console.warn("[RoomGate] pre-join camera disable failed", err);
       });
+      c.microphone.disable().catch((err: unknown) => {
+        console.warn("[RoomGate] pre-join microphone disable failed", err);
+      });
+    }
 
     return () => {
-      cancelled = true;
-      if (joinTimeoutRef.current !== null) {
-        window.clearTimeout(joinTimeoutRef.current);
-        joinTimeoutRef.current = null;
-      }
-      if (joinedCallRef.current === c) {
-        joinedCallRef.current = null;
+      if (callRef.current === c) {
+        callRef.current = null;
       }
       if (hasJoinedCallRef.current) {
         c.leave().catch(() => {});
         fetch(`/api/rooms/${eventId}/leave`, { method: "POST", keepalive: true }).catch(() => {});
       }
     };
-  }, [phase, client, callId, callType, eventId, joinAttemptKey, isOrganizerTier]);
+  }, [phase, client, callId, callType, eventId, isOrganizerTier, joinAttemptKey]);
+
+  async function handleJoinClick() {
+    const c = callRef.current;
+    if (!c || joining || hasJoinedCallRef.current) return;
+
+    setJoining(true);
+    setJoinFailedState(false);
+
+    if (joinTimeoutRef.current !== null) {
+      window.clearTimeout(joinTimeoutRef.current);
+    }
+    joinTimeoutRef.current = window.setTimeout(() => {
+      console.error("[RoomGate] join timed out");
+      setJoinFailedState(true);
+      setJoining(false);
+    }, JOIN_TIMEOUT_MS);
+
+    try {
+      await c.join({ create: false });
+      hasJoinedCallRef.current = true;
+      setHasJoined(true);
+    } catch (err) {
+      console.error("[RoomGate] join failed", err);
+      setJoinFailedState(true);
+    } finally {
+      setJoining(false);
+      if (joinTimeoutRef.current !== null) {
+        window.clearTimeout(joinTimeoutRef.current);
+        joinTimeoutRef.current = null;
+      }
+    }
+  }
+
+  function handleRetry() {
+    setJoinFailedState(false);
+    setCall(null);
+    setHasJoined(false);
+    callRef.current = null;
+    hasJoinedCallRef.current = false;
+    setJoinAttemptKey((current) => current + 1);
+    refetch();
+  }
 
   async function handleLeave() {
     if (leaving) return;
@@ -143,8 +153,10 @@ export default function RoomGate({
       await call?.leave().catch(() => {});
       await fetch(`/api/rooms/${eventId}/leave`, { method: "POST" }).catch(() => {});
     } finally {
-      joinedCallRef.current = null;
+      callRef.current = null;
+      hasJoinedCallRef.current = false;
       setCall(null);
+      setHasJoined(false);
       setLeaving(false);
       router.push(`/events/${eventSlug}`);
     }
@@ -158,40 +170,58 @@ export default function RoomGate({
       <LobbyScreen eventTitle={eventTitle} bannerUrl={bannerUrl} scheduledStart={start} onCountdownComplete={refetch} />
     );
   } else if (phase === "live") {
-    screen = joinFailed ? (
-      <div className="space-y-4">
+    if (joinFailed && !call) {
+      // Call object itself never got created (e.g. denied before we even
+      // had a callId) — nothing for PreJoinScreen to attach to, so fall
+      // back to a plain retry screen.
+      screen = (
         <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-[#0A0C10] px-6 text-center text-[#F3F5F8]">
           <p className="text-sm text-[#8891A3]">Couldn&apos;t connect to the meeting.</p>
           <p className="max-w-sm text-xs text-[#8891A3]">
             Check your network connection and try again. If it still fails, the room may not be ready yet.
           </p>
           <button
-            onClick={() => {
-              setJoinFailedState(false);
-              setCall(null);
-              joinedCallRef.current = null;
-              setJoinAttemptKey((current) => current + 1);
-              refetch();
-            }}
+            onClick={handleRetry}
             className="rounded-full bg-[#4FD1FF] px-4 py-2 text-sm font-semibold text-[#0A0C10]"
           >
             Try again
           </button>
         </div>
-      </div>
-    ) : call ? (
-      <LiveRoomScreen
-        call={call}
-        onLeave={handleLeave}
-        eventId={eventId}
-        showDeviceControls={isOrganizerTier}
-        canModerate={isOrganizerTier}
-        eventTitle={eventTitle}
-        bannerUrl={bannerUrl}
-      />
-    ) : (
-      <ConnectingScreen eventTitle={eventTitle} />
-    );
+      );
+    } else if (hasJoined && call) {
+      screen = (
+        <LiveRoomScreen
+          call={call}
+          onLeave={handleLeave}
+          eventId={eventId}
+          showDeviceControls={isOrganizerTier}
+          canModerate={isOrganizerTier}
+          eventTitle={eventTitle}
+          bannerUrl={bannerUrl}
+        />
+      );
+    } else if (call) {
+      screen = (
+        <PreJoinScreen
+          call={call}
+          eventTitle={eventTitle}
+          bannerUrl={bannerUrl}
+          isOrganizerTier={isOrganizerTier}
+          joining={joining}
+          joinError={joinFailed}
+          onJoin={joinFailed ? handleRetry : handleJoinClick}
+        />
+      );
+    } else {
+      // Call object not created yet (brief moment right as phase flips to
+      // "live") — genuinely nothing to show a device preview against yet.
+      screen = (
+        <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-[#0A0C10] px-6 text-center text-[#F3F5F8]">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#4FD1FF] border-t-transparent" />
+          <h1 className="text-lg font-semibold">{eventTitle}</h1>
+        </div>
+      );
+    }
   } else {
     screen = <EndedScreen eventTitle={eventTitle} />;
   }
