@@ -30,9 +30,10 @@ import {
   VideoOff,
   Volume2,
   VolumeX,
+  Smile,
 } from "lucide-react";
 import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
-
+import { Dock, DockIcon, DockItem, DockLabel } from "@/components/ui/dock";
 export interface LiveRoomScreenProps {
   call: Call;
   onLeave: () => void;
@@ -319,7 +320,8 @@ function StageViewModeButton({
     <button
       type="button"
       onClick={() => onClick(mode)}
-      className={`flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-medium transition ${
+      title={label}
+      className={`flex items-center justify-center gap-2 rounded-full border p-2.5 text-sm font-medium transition sm:px-3 sm:py-2 ${
         active
           ? "border-[#4FD1FF]/40 bg-[#4FD1FF]/20 text-[#F3F5F8] shadow-[0_0_0_1px_rgba(255,255,255,0.08)]"
           : "border-white/10 bg-[#11161D]/80 text-[#8891A3] hover:border-[#4FD1FF]/30 hover:text-[#F3F5F8]"
@@ -327,7 +329,7 @@ function StageViewModeButton({
       aria-label={`Switch stage view to ${label.toLowerCase()}`}
     >
       {icon}
-      <span>{label}</span>
+      <span className="hidden sm:inline">{label}</span>
     </button>
   );
 }
@@ -883,41 +885,103 @@ function ControlsBar({
   onToggleRoomAudio?: () => void;
 }) {
   const [deviceError, setDeviceError] = useState<string | null>(null);
+  const [reactionsOpen, setReactionsOpen] = useState(false);
+  const reactionsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!reactionsOpen) return;
+
+    function handlePointerDown(event: MouseEvent | TouchEvent) {
+      const target = event.target as Node | null;
+      if (reactionsRef.current && target && !reactionsRef.current.contains(target)) {
+        setReactionsOpen(false);
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setReactionsOpen(false);
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("touchstart", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("touchstart", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [reactionsOpen]);
+
+  function handlePickEmoji(emoji: string) {
+    onSendStageEmoji(emoji);
+    setReactionsOpen(false);
+  }
 
   return (
-    <div className="flex flex-col gap-2 border-t border-[#262B35] bg-[#0A0C10] px-3 py-3">
+    <div className="relative flex flex-col gap-2 border-t border-[#262B35] bg-[#0A0C10] px-3 py-3">
       {deviceError && <p className="text-xs text-[#FF5468]">{deviceError}</p>}
+
       <div className="flex flex-wrap items-center justify-center gap-2">
-        <div className="flex items-center gap-2 rounded-full border border-[#262B35] bg-[#14171D] px-2 py-1">
-          {STAGE_REACTION_OPTIONS.map((emoji) => (
-            <button
-              key={emoji}
-              type="button"
-              onClick={() => onSendStageEmoji(emoji)}
-              className="flex h-9 w-9 items-center justify-center rounded-full text-base transition hover:bg-white/10"
-              aria-label={`Send ${emoji} reaction`}
+        <div ref={reactionsRef} className="relative">
+          {reactionsOpen && (
+            <div
+              className="
+                fixed inset-x-0 bottom-24 z-50 flex justify-center px-3
+                sm:absolute sm:inset-x-auto sm:bottom-full sm:left-1/2 sm:mb-3
+                sm:w-max sm:-translate-x-1/2 sm:px-0
+              "
             >
-              {emoji}
-            </button>
-          ))}
-          <span className="mx-1 h-5 w-px bg-[#262B35]" />
+              <Dock
+                className="max-w-[calc(100vw-1.5rem)] items-end"
+                panelHeight={52}
+                magnification={56}
+                distance={90}
+              >
+                {STAGE_REACTION_OPTIONS.map((emoji) => (
+                  <DockItem
+                    key={emoji}
+                    className="aspect-square rounded-full bg-[#1B1F27]"
+                    onClick={() => handlePickEmoji(emoji)}
+                  >
+                    <DockLabel>{emoji}</DockLabel>
+                    <DockIcon>
+                      <span className="select-none">{emoji}</span>
+                    </DockIcon>
+                  </DockItem>
+                ))}
+              </Dock>
+            </div>
+          )}
+
           <button
             type="button"
-            onClick={onRaiseHand}
-            className={`flex h-9 items-center gap-2 rounded-full px-3 text-sm font-medium transition ${
-              handRaised
-                ? "bg-[#F5A623]/20 text-[#FFD685]"
-                : "bg-transparent text-[#F3F5F8] hover:bg-white/10"
+            onClick={() => setReactionsOpen((open) => !open)}
+            className={`flex h-11 w-11 items-center justify-center rounded-full border border-[#262B35] bg-[#14171D] text-[#F3F5F8] transition hover:bg-white/10 ${
+              reactionsOpen ? "border-[#4FD1FF]/40 bg-[#4FD1FF]/20 text-[#4FD1FF]" : ""
             }`}
+            aria-label="Open reactions"
+            aria-expanded={reactionsOpen}
+            aria-haspopup="true"
           >
-            <span>{handRaised ? "✋" : "✋"}</span>
-            <span className="hidden sm:inline">{handRaised ? "Lower hand" : "Raise hand"}</span>
+            <Smile size={18} />
           </button>
         </div>
 
-        {showDeviceControls && (
-          <DeviceButtons setDeviceError={setDeviceError} />
-        )}
+        {/* Raise hand — own button, not inside the emoji pill */}
+        <button
+          type="button"
+          onClick={onRaiseHand}
+          className={`flex h-11 items-center gap-2 rounded-full border border-[#262B35] px-3 text-sm font-medium transition sm:px-4 ${
+            handRaised
+              ? "border-[#F5A623]/40 bg-[#F5A623]/20 text-[#FFD685]"
+              : "bg-[#14171D] text-[#F3F5F8] hover:bg-white/10"
+          }`}
+        >
+          <span>✋</span>
+          <span className="hidden sm:inline">{handRaised ? "Lower hand" : "Raise hand"}</span>
+        </button>
+
+        {showDeviceControls && <DeviceButtons setDeviceError={setDeviceError} />}
 
         {canModerate && (
           <button
@@ -1155,8 +1219,8 @@ function StagePanel({
         </div>
       </div>
 
-      <div className="absolute inset-x-0 bottom-4 z-20 flex justify-center px-4">
-        <div className="flex flex-wrap items-center justify-center gap-2 rounded-full border border-white/10 bg-[#0A0C10]/85 px-2 py-2 shadow-[0_16px_40px_rgba(0,0,0,0.45)] backdrop-blur">
+      <div className="absolute inset-x-0 bottom-4 z-20 flex justify-center px-4 sm:bottom-10">
+        <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
           <StageViewModeButton
             mode="normal"
             label="Normal"
@@ -1183,14 +1247,19 @@ function StagePanel({
               </svg>
             }
           />
-          <span className="mx-1 h-5 w-px bg-[#262B35]" />
 
           <button
             type="button"
             onClick={handleTogglePip}
             disabled={!pipSupported}
-            title={pipSupported ? undefined : "Picture-in-picture isn't supported in this browser"}
-            className={`flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-40 ${
+            title={
+              !pipSupported
+                ? "Picture-in-picture isn't supported in this browser"
+                : isPipActive
+                  ? "Exit pop-out"
+                  : "Pop out"
+            }
+            className={`flex items-center justify-center gap-2 rounded-full border p-2.5 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-40 sm:px-3 sm:py-2 ${
               isPipActive
                 ? "border-[#4FD1FF]/40 bg-[#4FD1FF]/20 text-[#F3F5F8] shadow-[0_0_0_1px_rgba(255,255,255,0.08)]"
                 : "border-white/10 bg-[#11161D]/80 text-[#8891A3] hover:border-[#4FD1FF]/30 hover:text-[#F3F5F8]"
@@ -1198,11 +1267,11 @@ function StagePanel({
             aria-label={isPipActive ? "Exit picture-in-picture" : "Pop out video (picture-in-picture)"}
           >
             <PictureInPicture2 size={16} />
-            <span>{isPipActive ? "Exit pop-out" : "Pop out"}</span>
+            <span className="hidden sm:inline">{isPipActive ? "Exit pop-out" : "Pop out"}</span>
           </button>
 
           {pipNotice && (
-            <span className="rounded-full border border-[#F5A623]/30 bg-[#F5A623]/10 px-2.5 py-1 text-xs text-[#F5A623]">
+            <span className="hidden max-w-[12rem] truncate rounded-full border border-[#F5A623]/30 bg-[#F5A623]/10 px-2.5 py-1 text-xs text-[#F5A623] sm:inline">
               {pipNotice}
             </span>
           )}

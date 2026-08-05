@@ -1,3 +1,6 @@
+
+// app/api/rooms/[eventId]/stage-events/route.ts
+
 import { NextResponse } from "next/server";
 import { sendRoomStageEvent } from "@/lib/actions/room.stage.actions";
 

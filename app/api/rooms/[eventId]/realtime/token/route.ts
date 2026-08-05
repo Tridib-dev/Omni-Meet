@@ -1,3 +1,6 @@
+
+// app/api/rooms/[eventId]/realtime/token/route.ts
+
 import { NextResponse } from "next/server";
 import { getRoomContext } from "@/lib/actions/room.discussion.actions";
 import { createRoomRealtimeToken } from "@/lib/realtime/room-realtime";
