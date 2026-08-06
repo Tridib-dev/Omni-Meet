@@ -336,29 +336,18 @@ function StageViewModeButton({
 
 function ParticipantCard({
   participant,
-  canModerate,
-  onTogglePin,
   handRaised,
 }: {
   participant: StreamVideoParticipant;
-  canModerate: boolean;
-  onTogglePin: (participant: StreamVideoParticipant) => void;
   handRaised: boolean;
 }) {
-  const pinned = isPinned(participant);
   const label = participantLabel(participant);
   const role = participantRoleLabel(participant);
 
+  // Attendees are never a valid pin target (see togglePin) — this card is
+  // deliberately non-interactive, no pin affordance at all.
   return (
-    <button
-      type="button"
-      onClick={() => canModerate && onTogglePin(participant)}
-      className={`group relative overflow-hidden rounded-2xl border text-left transition-colors ${
-        pinned
-          ? "border-[#4FD1FF]/70 bg-[#14171D]"
-          : "border-[#262B35] bg-[#14171D]/90 hover:border-[#4FD1FF]/50"
-      } ${canModerate ? "cursor-pointer" : "cursor-default"}`}
-    >
+    <div className="group relative overflow-hidden rounded-2xl border border-[#262B35] bg-[#14171D]/90 text-left">
       <div className="relative h-24">
         <ParticipantView
           participant={participant}
@@ -379,7 +368,6 @@ function ParticipantCard({
               ✋ raised
             </span>
           )}
-          {pinned && <Pin size={13} className="text-[#4FD1FF]" />}
           {participant.isLocalParticipant && (
             <span className="rounded-full bg-[#1B1F27] px-2 py-0.5 text-[10px] uppercase tracking-wide text-[#4FD1FF]">
               you
@@ -387,12 +375,7 @@ function ParticipantCard({
           )}
         </div>
       </div>
-      {canModerate && !participant.isLocalParticipant && (
-        <span className="absolute right-2 top-2 rounded-full bg-black/55 px-2 py-0.5 text-[10px] uppercase tracking-wide text-white/85 opacity-0 transition-opacity group-hover:opacity-100">
-          {pinned ? "Unpin" : "Pin"}
-        </span>
-      )}
-    </button>
+    </div>
   );
 }
 
@@ -559,8 +542,6 @@ function ParticipantRail({
               <ParticipantCard
                 key={participant.sessionId}
                 participant={participant}
-                canModerate={canModerate}
-                onTogglePin={onTogglePin}
                 handRaised={Boolean(raisedHands[participantKey(participant)])}
               />
             ))}
@@ -861,7 +842,91 @@ function QADrawer({
   );
 }
 
+function LeaveMeetingModal({
+  open,
+  onClose,
+  onLeave,
+  onEndMeeting,
+  canModerate,
+  ending,
+  endError,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onLeave: () => void;
+  onEndMeeting: () => void;
+  canModerate: boolean;
+  ending: boolean;
+  endError: string | null;
+}) {
+  useEffect(() => {
+    if (!open) return;
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape" && !ending) onClose();
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [open, onClose, ending]);
+
+  if (!open) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex items-end justify-center bg-black/60 px-3 pb-3 backdrop-blur-sm sm:items-center sm:pb-0"
+      onClick={() => !ending && onClose()}
+    >
+      <div
+        className="w-full max-w-sm space-y-4 rounded-3xl border border-[#262B35] bg-[#11161D] p-5 shadow-[0_24px_60px_rgba(0,0,0,0.5)]"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="text-center">
+          <p className="text-base font-semibold text-[#F3F5F8]">Leave meeting?</p>
+          <p className="mt-1 text-sm text-[#8891A3]">
+            {canModerate
+              ? "You can leave and let others continue, or end the meeting for everyone."
+              : "You can rejoin anytime while the meeting is live."}
+          </p>
+        </div>
+
+        {endError && <p className="text-center text-xs text-[#FF5468]">{endError}</p>}
+
+        <div className="flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={onLeave}
+            disabled={ending}
+            className="flex h-11 items-center justify-center rounded-full bg-[#1B1F27] text-sm font-semibold text-[#F3F5F8] transition hover:bg-white/10 disabled:opacity-60"
+          >
+            Leave meeting
+          </button>
+
+          {canModerate && (
+            <button
+              type="button"
+              onClick={onEndMeeting}
+              disabled={ending}
+              className="flex h-11 items-center justify-center rounded-full bg-[#FF5468] text-sm font-semibold text-[#0A0C10] transition hover:bg-[#FF5468]/90 disabled:opacity-60"
+            >
+              {ending ? "Ending…" : "End meeting for everyone"}
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={ending}
+            className="flex h-11 items-center justify-center rounded-full border border-[#262B35] text-sm font-medium text-[#8891A3] transition hover:text-[#F3F5F8] disabled:opacity-60"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ControlsBar({
+  eventId,
   onLeave,
   onToggleScreenShare,
   onSendStageEmoji,
@@ -873,6 +938,7 @@ function ControlsBar({
   roomAudioMuted = false,
   onToggleRoomAudio,
 }: {
+  eventId: string;
   onLeave: () => void;
   onToggleScreenShare: () => void;
   onSendStageEmoji: (emoji: string) => void;
@@ -886,7 +952,29 @@ function ControlsBar({
 }) {
   const [deviceError, setDeviceError] = useState<string | null>(null);
   const [reactionsOpen, setReactionsOpen] = useState(false);
+  const [leaveModalOpen, setLeaveModalOpen] = useState(false);
+  const [ending, setEnding] = useState(false);
+  const [endError, setEndError] = useState<string | null>(null);
   const reactionsRef = useRef<HTMLDivElement>(null);
+
+  async function handleEndMeeting() {
+    if (ending) return;
+    setEnding(true);
+    setEndError(null);
+    try {
+      const res = await fetch(`/api/rooms/${eventId}/end`, { method: "POST" });
+      if (!res.ok) {
+        setEndError("Couldn't end the meeting — try again.");
+        return;
+      }
+      // Ending the meeting also leaves this client's own call.
+      onLeave();
+    } catch {
+      setEndError("Network error — try again.");
+    } finally {
+      setEnding(false);
+    }
+  }
 
   useEffect(() => {
     if (!reactionsOpen) return;
@@ -1010,7 +1098,7 @@ function ControlsBar({
         </button>
 
         <button
-          onClick={onLeave}
+          onClick={() => setLeaveModalOpen(true)}
           className="flex h-11 items-center gap-2 rounded-full bg-[#FF5468] px-4 text-sm font-semibold text-[#0A0C10]"
           aria-label="Leave meeting"
         >
@@ -1018,6 +1106,19 @@ function ControlsBar({
           <span className="hidden sm:inline">Leave</span>
         </button>
       </div>
+
+      <LeaveMeetingModal
+        open={leaveModalOpen}
+        onClose={() => {
+          setLeaveModalOpen(false);
+          setEndError(null);
+        }}
+        onLeave={onLeave}
+        onEndMeeting={handleEndMeeting}
+        canModerate={canModerate}
+        ending={ending}
+        endError={endError}
+      />
     </div>
   );
 }
@@ -1146,17 +1247,19 @@ function StagePanel({
     if (!canModerate || !localParticipant) return;
     if (autoPinnedRef.current) return;
     if (pinnedParticipants.length > 0) {
+      // Someone's already pinned room-wide (possibly by a co-organizer who
+      // beat us to it) — leave it alone rather than stealing the pin.
       autoPinnedRef.current = true;
       return;
     }
 
     autoPinnedRef.current = true;
-    try {
-      call.pin(localParticipant.sessionId);
-    } catch (err) {
-      console.error("[LiveRoomScreen] auto pin failed", err);
-      autoPinnedRef.current = false;
-    }
+    call
+      .pinForEveryone({ session_id: localParticipant.sessionId, user_id: localParticipant.userId })
+      .catch((err: unknown) => {
+        console.error("[LiveRoomScreen] auto pin failed", err);
+        autoPinnedRef.current = false;
+      });
   }, [canModerate, localParticipant, pinnedParticipants.length, call]);
 
   if (!focusParticipant) {
@@ -1329,6 +1432,7 @@ type LiveRoomScreenContentProps = LiveRoomScreenProps & {
 function LiveRoomScreenContent({
   call,
   onLeave,
+  eventId,
   showDeviceControls = true,
   canModerate = false,
   eventTitle,
@@ -1362,12 +1466,13 @@ function LiveRoomScreenContent({
   chatPulsing,
   qaPulsing,
 }: LiveRoomScreenContentProps) {
-  const { useScreenShareState, useParticipants, useHasOngoingScreenShare, useCameraState, useMicrophoneState, useLocalParticipant } =
+  const { useScreenShareState, useParticipants, usePinnedParticipants, useHasOngoingScreenShare, useCameraState, useMicrophoneState, useLocalParticipant } =
     useCallStateHooks();
   const { screenShare } = useScreenShareState();
   const { camera } = useCameraState();
   const { microphone } = useMicrophoneState();
   const participants = useParticipants();
+  const pinnedParticipants = usePinnedParticipants();
   const localParticipant = useLocalParticipant();
   const hasOngoingScreenShare = useHasOngoingScreenShare();
   const autoStartDevicesRef = useRef(false);
@@ -1449,14 +1554,44 @@ function LiveRoomScreenContent({
       });
   }
 
-  function togglePin(participant: StreamVideoParticipant) {
+  // Pinning must be visible to everyone in the room, not just the person who
+  // clicked — call.pin()/unpin() are LOCAL to the caller's own view only.
+  // pinForEveryone()/unpinForEveryone() are the room-wide equivalents, and
+  // require the "pin-for-everyone" capability to be granted to the
+  // organizer/co-organizer role on this call type in the Stream dashboard.
+  async function togglePin(participant: StreamVideoParticipant) {
     if (!canModerate) return;
+
+    const alreadyPinned = isPinned(participant);
+
+    // Attendees are never a valid pin target — they can't publish video, so
+    // pinning one would just spotlight a blank tile. (Unpinning is always
+    // safe regardless of role, in case this is ever reached in a stale state.)
+    if (!alreadyPinned && !isAdminParticipant(participant)) {
+      console.warn("[LiveRoomScreen] refusing to pin a non-admin participant", participant.userId);
+      return;
+    }
+
     try {
-      if (isPinned(participant)) {
-        call.unpin(participant.sessionId);
-      } else {
-        call.pin(participant.sessionId);
+      if (alreadyPinned) {
+        await call.unpinForEveryone({ session_id: participant.sessionId, user_id: participant.userId });
+        return;
       }
+
+      // Enforce single-pin exclusivity: release whoever's currently pinned
+      // before pinning the new target, so ownership transfers cleanly
+      // instead of stacking multiple simultaneous room-wide pins.
+      await Promise.all(
+        pinnedParticipants
+          .filter((p) => p.sessionId !== participant.sessionId)
+          .map((p) =>
+            call.unpinForEveryone({ session_id: p.sessionId, user_id: p.userId }).catch((err: unknown) => {
+              console.warn("[LiveRoomScreen] failed to release previous pin", err);
+            })
+          )
+      );
+
+      await call.pinForEveryone({ session_id: participant.sessionId, user_id: participant.userId });
     } catch (err) {
       console.error("[LiveRoomScreen] pin toggle failed", err);
     }
@@ -1535,6 +1670,7 @@ function LiveRoomScreenContent({
         </div>
 
         <ControlsBar
+          eventId={eventId}
           onLeave={onLeave}
           onToggleScreenShare={handleToggleScreenShare}
           onSendStageEmoji={sendStageEmoji}
