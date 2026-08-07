@@ -12,6 +12,7 @@ import LiveRoomScreen from "./LiveRoomScreen";
 import EndedScreen from "./EndedScreen";
 import OrganizerControls from "./OrganizerControl";
 import PreJoinScreen from "./PreJoinScreen";
+import PreMeetingUpdates from "./PreMeetingUpdates";
 
 
 export interface RoomGateProps {
@@ -164,10 +165,22 @@ export default function RoomGate({
 
   let screen: React.ReactNode;
   if (phase === "locked") {
-    screen = <LockedScreen eventTitle={eventTitle} bannerUrl={bannerUrl} lobbyOpensAt={lobbyOpensAt} />;
+    screen = (
+      <>
+        <LockedScreen eventTitle={eventTitle} bannerUrl={bannerUrl} lobbyOpensAt={lobbyOpensAt} />
+        <PreMeetingUpdates eventId={eventId} canModerate={isOrganizerTier} />
+      </>
+    );
   } else if (phase === "lobby") {
     screen = (
-      <LobbyScreen eventTitle={eventTitle} bannerUrl={bannerUrl} scheduledStart={start} onCountdownComplete={refetch} />
+      <LobbyScreen
+        eventId={eventId}
+        eventTitle={eventTitle}
+        bannerUrl={bannerUrl}
+        scheduledStart={start}
+        onCountdownComplete={refetch}
+        canModerate={isOrganizerTier}
+      />
     );
   } else if (phase === "live") {
     if (joinFailed && !call) {

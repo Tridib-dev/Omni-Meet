@@ -5,7 +5,7 @@ import { auth } from "@clerk/nextjs/server";
 import { isValidObjectId, type Types } from "mongoose";
 import connectToDatabase from "@/lib/mongodb";
 import { Room, RoomMember } from "@/database/Room.model";
-import { RoomDiscussionVote, RoomMessage, RoomQuestion } from "@/database/room-discussion.model";
+import { RoomDiscussionVote, RoomMessage, RoomQuestion, RoomUpdate } from "@/database/room-discussion.model";
 import { User } from "@/database/User.model";
 import type { RoomMemberRole } from "@/database/Room.model";
 import * as roomRealtime from "@/lib/realtime/room-realtime";
@@ -36,9 +36,18 @@ export interface RoomDiscussionQuestionItem {
   myVote: "up" | "down" | null;
 }
 
+export interface RoomDiscussionUpdateItem {
+  id: string;
+  body: string;
+  authorName: string;
+  authorRole: RoomMemberRole;
+  createdAt: string;
+}
+
 export interface RoomDiscussionPayload {
   messages: RoomDiscussionMessageItem[];
   questions: RoomDiscussionQuestionItem[];
+  updates: RoomDiscussionUpdateItem[];
   role: RoomMemberRole;
 }
 
@@ -46,6 +55,7 @@ export type RoomDiscussionMutationResult =
   | { success: true; message: RoomDiscussionMessageItem }
   | { success: true; question: RoomDiscussionQuestionItem }
   | { success: true; roomQuestion: RoomDiscussionQuestionItem }
+  | { success: true; update: RoomDiscussionUpdateItem }
   | { success: true; vote: { targetKind: "message" | "question"; targetId: string; direction: "up" | "down"; active: boolean } }
   | { success: false; reason: "not_found" | "unauthorized" | "forbidden" | "invalid_input" | "server_error" };
 
@@ -69,6 +79,18 @@ type RoomDiscussionVoteDoc = {
   targetId: Types.ObjectId;
   clerkId: string;
   value: 1 | -1;
+};
+
+type RoomDiscussionUpdateDoc = {
+  _id: Types.ObjectId;
+  roomId: Types.ObjectId;
+  clerkId: string;
+  authorName: string;
+  authorRole: RoomMemberRole;
+  body: string;
+  clientUpdateId: string;
+  createdAt: Date;
+  updatedAt: Date;
 };
 
 function normalizeText(value: string, maxLength: number) {
@@ -153,6 +175,22 @@ function toQuestionItem(doc: {
   };
 }
 
+function toUpdateItem(doc: {
+  _id: Types.ObjectId;
+  body: string;
+  authorName: string;
+  authorRole: RoomMemberRole;
+  createdAt: Date;
+}): RoomDiscussionUpdateItem {
+  return {
+    id: doc._id.toString(),
+    body: doc.body,
+    authorName: doc.authorName,
+    authorRole: doc.authorRole,
+    createdAt: doc.createdAt.toISOString(),
+  };
+}
+
 function buildVoteState(votes: RoomDiscussionVoteDoc[], currentClerkId: string) {
   const byTarget = new Map<
     string,
@@ -192,9 +230,10 @@ export async function getRoomDiscussion(eventId: string): Promise<RoomDiscussion
     const context = await getRoomContext(eventId);
     if (!context.ok) return null;
 
-    const [messages, questions, votes] = await Promise.all([
+    const [messages, questions, updates, votes] = await Promise.all([
       RoomMessage.find({ roomId: context.roomId }).sort({ createdAt: 1 }).limit(50).lean(),
       RoomQuestion.find({ roomId: context.roomId }).sort({ createdAt: -1 }).limit(50).lean(),
+      RoomUpdate.find({ roomId: context.roomId }).sort({ createdAt: -1 }).limit(50).lean(),
       RoomDiscussionVote.find({ roomId: context.roomId }).lean(),
     ]);
 
@@ -207,6 +246,7 @@ export async function getRoomDiscussion(eventId: string): Promise<RoomDiscussion
       questions: (questions as Array<Parameters<typeof toQuestionItem>[0]>).map((item) =>
         toQuestionItem(item, voteState.forTarget("question", item._id))
       ),
+      updates: (updates as RoomDiscussionUpdateDoc[]).map((item) => toUpdateItem(item)),
       role: context.roomMember.role,
     };
   } catch (error) {
@@ -253,6 +293,51 @@ export async function addRoomMessage(
     return { success: true, message: toMessageItem(doc as Parameters<typeof toMessageItem>[0]) };
   } catch (error) {
     console.error("[addRoomMessage]", error);
+    return { success: false, reason: "server_error" };
+  }
+}
+
+export async function addRoomUpdate(
+  eventId: string,
+  body: string,
+  clientUpdateId: string
+): Promise<RoomDiscussionMutationResult> {
+  try {
+    const context = await getRoomContext(eventId);
+    if (!context.ok) return { success: false, reason: context.reason };
+    if (!["organizer", "co-organizer"].includes(context.roomMember.role)) {
+      return { success: false, reason: "forbidden" };
+    }
+
+    const normalizedBody = normalizeText(body, 500);
+    const normalizedClientId = normalizeText(clientUpdateId, 120);
+    if (!normalizedBody || !normalizedClientId) return { success: false, reason: "invalid_input" };
+
+    const authorName = await resolveDisplayName(context.roomMember.clerkId);
+
+    const doc = await RoomUpdate.findOneAndUpdate(
+      { roomId: context.roomId, clientUpdateId: normalizedClientId },
+      {
+        $setOnInsert: {
+          roomId: context.roomId,
+          clerkId: context.roomMember.clerkId,
+          authorName,
+          authorRole: context.roomMember.role,
+          body: normalizedBody,
+          clientUpdateId: normalizedClientId,
+        },
+      },
+      { upsert: true, returnDocument: "after" }
+    ).lean();
+
+    if (!doc) return { success: false, reason: "server_error" };
+    roomRealtime.broadcastRoomDiscussionUpdate(context.roomId.toString(), {
+      eventId,
+      kind: "update",
+    });
+    return { success: true, update: toUpdateItem(doc as RoomDiscussionUpdateDoc) };
+  } catch (error) {
+    console.error("[addRoomUpdate]", error);
     return { success: false, reason: "server_error" };
   }
 }

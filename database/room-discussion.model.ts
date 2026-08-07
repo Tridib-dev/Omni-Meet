@@ -78,6 +78,39 @@ roomQuestionSchema.index({ roomId: 1, answered: 1, createdAt: -1 });
 export const RoomMessage = models.RoomMessage || model<IRoomMessage>("RoomMessage", roomMessageSchema);
 export const RoomQuestion = models.RoomQuestion || model<IRoomQuestion>("RoomQuestion", roomQuestionSchema);
 
+export interface IRoomUpdate extends Document {
+  roomId: Types.ObjectId;
+  clerkId: string;
+  authorName: string;
+  authorRole: RoomMemberRole;
+  body: string;
+  clientUpdateId: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const roomUpdateSchema = new Schema<IRoomUpdate>(
+  {
+    roomId: { type: Schema.Types.ObjectId, ref: "Room", required: true, index: true },
+    clerkId: { type: String, required: true, trim: true },
+    authorName: { type: String, required: true, trim: true },
+    authorRole: {
+      type: String,
+      enum: ["organizer", "co-organizer", "attendee"],
+      required: true,
+      default: "attendee",
+    },
+    body: { type: String, required: true, trim: true, maxlength: 500 },
+    clientUpdateId: { type: String, required: true, trim: true },
+  },
+  { timestamps: true }
+);
+
+roomUpdateSchema.index({ roomId: 1, clientUpdateId: 1 }, { unique: true });
+roomUpdateSchema.index({ roomId: 1, createdAt: -1 });
+
+export const RoomUpdate = models.RoomUpdate || model<IRoomUpdate>("RoomUpdate", roomUpdateSchema);
+
 export interface IRoomDiscussionVote extends Document {
   roomId: Types.ObjectId;
   targetKind: "message" | "question";

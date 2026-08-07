@@ -3,15 +3,25 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import CountdownTimer from "./CountDownTimer";
+import PreMeetingUpdates from "./PreMeetingUpdates";
 
 export interface LobbyScreenProps {
+  eventId: string;
   eventTitle: string;
   bannerUrl?: string;
   scheduledStart: Date;
   onCountdownComplete: () => void;
+  canModerate: boolean;  
 }
 
-export default function LobbyScreen({ eventTitle, bannerUrl, scheduledStart, onCountdownComplete }: LobbyScreenProps) {
+export default function LobbyScreen({
+  eventId,
+  eventTitle,
+  bannerUrl,
+  scheduledStart,
+  onCountdownComplete,
+  canModerate, 
+}: LobbyScreenProps) {
   return (
     <AnimatePresence>
       <motion.div
@@ -21,21 +31,23 @@ export default function LobbyScreen({ eventTitle, bannerUrl, scheduledStart, onC
         exit={{ opacity: 0 }}
         className="flex min-h-screen flex-col bg-[#0A0C10] text-[#F3F5F8]"
       >
-        <div className="flex flex-col items-center gap-3 border-b border-[#262B35] px-6 py-8 text-center">
+        <div className="flex flex-col items-center gap-4 border-b border-[#262B35] px-6 pb-8 pt-10 text-center sm:pt-14">
           {bannerUrl && (
-            <img src={bannerUrl} alt={eventTitle} className="h-40 w-full max-w-md rounded-xl object-cover" />
+            <img src={bannerUrl} alt={eventTitle} className="h-48 w-full max-w-lg rounded-2xl object-cover shadow-[0_14px_30px_rgba(0,0,0,0.35)] sm:h-52" />
           )}
-          <h1 className="text-xl font-semibold">{eventTitle}</h1>
-          <p className="text-sm text-[#8891A3]">Meeting starts in</p>
+          <h1 className="text-xl font-semibold sm:text-2xl">{eventTitle}</h1>
+          <p className="text-sm text-[#8891A3]">The meeting will start from</p>
           <CountdownTimer
             target={scheduledStart}
             onComplete={onCountdownComplete}
-            className="text-3xl font-bold text-[#4FD1FF]"
+            className="text-3xl font-bold text-[#4FD1FF] sm:text-4xl"
           />
           <p className="text-xs text-[#8891A3]">
             The organizer hasn&apos;t started the meeting yet — chat and Q&amp;A are open below.
           </p>
         </div>
+
+        <PreMeetingUpdates eventId={eventId} canModerate={canModerate} />
 
         {/* Chat + Q&A slots — wired up in Phase 3/4 */}
         <div className="grid flex-1 grid-cols-1 gap-3 p-4 sm:grid-cols-2">

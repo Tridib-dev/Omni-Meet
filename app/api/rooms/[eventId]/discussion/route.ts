@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import {
   addRoomMessage,
+  addRoomUpdate,
   answerRoomQuestion,
   askRoomQuestion,
   getRoomDiscussion,
@@ -12,6 +13,7 @@ type RouteParams = Promise<{ eventId?: string }>;
 
 type DiscussionBody =
   | { kind: "message"; body: string; clientMutationId?: string }
+  | { kind: "update"; body: string; clientMutationId?: string }
   | { kind: "question"; body: string; clientMutationId?: string }
   | { kind: "answer"; questionId: string; body: string; clientMutationId?: string }
   | { kind: "vote"; targetKind: "message" | "question"; targetId: string; direction: "up" | "down" };
@@ -28,7 +30,7 @@ function parseBody(payload: unknown): DiscussionBody | null {
   const text = readString(body.body);
   const clientMutationId = readString(body.clientMutationId);
 
-  if (kind === "message" || kind === "question") {
+  if (kind === "message" || kind === "question" || kind === "update") {
     return text ? { kind, body: text, clientMutationId: clientMutationId ?? undefined } : null;
   }
 
@@ -85,6 +87,16 @@ export async function POST(request: Request, { params }: { params: RouteParams }
       const result = await addRoomMessage(eventId.trim(), parsed.body, parsed.clientMutationId ?? "");
       if (!result.success) {
         return NextResponse.json({ message: "Unable to send message.", reason: result.reason }, { status: 400 });
+      }
+
+      return NextResponse.json(result, { status: 201 });
+    }
+
+    if (parsed.kind === "update") {
+      const result = await addRoomUpdate(eventId.trim(), parsed.body, parsed.clientMutationId ?? "");
+      if (!result.success) {
+        const status = result.reason === "forbidden" ? 403 : 400;
+        return NextResponse.json({ message: "Unable to post update.", reason: result.reason }, { status });
       }
 
       return NextResponse.json(result, { status: 201 });

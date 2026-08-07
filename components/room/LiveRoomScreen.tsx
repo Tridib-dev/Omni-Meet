@@ -32,8 +32,10 @@ import {
   VolumeX,
   Smile,
 } from "lucide-react";
-import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Dock, DockIcon, DockItem, DockLabel } from "@/components/ui/dock";
+import { RoomMorphStage } from "./morph-nav/RoomMorphStage";
+import type { MorphNavItem } from "./morph-nav/MorphNav";
+
 export interface LiveRoomScreenProps {
   call: Call;
   onLeave: () => void;
@@ -44,7 +46,7 @@ export interface LiveRoomScreenProps {
   bannerUrl?: string;
 }
 
-type DrawerKind = "chat" | "qa" | null;
+type RoomTab = "participants" | "chat" | "qa" | null;
 
 type VoteState = {
   upvotes: number;
@@ -291,18 +293,6 @@ function StageReactionOverlay({ events }: { events: StageEvent[] }) {
   );
 }
 
-function NotifyDot({ show, pulsing }: { show: boolean; pulsing: boolean }) {
-  if (!show) return null;
-  return (
-    <span className="absolute -right-1 -top-1 flex h-2.5 w-2.5">
-      {pulsing && (
-        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#33D6A0] opacity-75" />
-      )}
-      <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[#33D6A0] ring-2 ring-[#0A0C10]" />
-    </span>
-  );
-}
-
 function StageViewModeButton({
   mode,
   label,
@@ -450,15 +440,13 @@ function AdminParticipantCard({
   );
 }
 
-function ParticipantRail({
+function ParticipantsPanel({
   canModerate,
   onTogglePin,
-  eventTitle,
   raisedHands,
 }: {
   canModerate: boolean;
   onTogglePin: (participant: StreamVideoParticipant) => void;
-  eventTitle?: string;
   raisedHands: Record<string, boolean>;
 }) {
   const { useParticipants, usePinnedParticipants, useLocalParticipant } = useCallStateHooks();
@@ -484,37 +472,32 @@ function ParticipantRail({
     [participants]
   );
 
-  const [activeTab, setActiveTab] = useState<"admins" | "attendees">("admins");
-  const visibleParticipants = activeTab === "admins" ? adminParticipants : attendeeParticipants;
+  const [tab, setTab] = useState<"admins" | "attendees">("admins");
+  const visibleParticipants = tab === "admins" ? adminParticipants : attendeeParticipants;
   const showingEmptyState = visibleParticipants.length === 0;
 
   return (
-    <aside className="flex h-full flex-col gap-3 rounded-3xl border border-[#262B35] bg-[#11161D] p-3">
+    <div className="flex h-full flex-col gap-3">
       <div className="flex items-center justify-between gap-2 rounded-2xl border border-[#262B35] bg-[#14171D] px-3 py-2">
-        <div className="min-w-0">
-          <p className="text-sm font-medium text-[#F3F5F8]">{eventTitle ?? "Live room"}</p>
-          <p className="text-[11px] uppercase tracking-wide text-[#8891A3]">
-            {participants.length} in room
-          </p>
-        </div>
+        <p className="text-[11px] uppercase tracking-wide text-[#8891A3]">{participants.length} in room</p>
         <Users size={16} className="text-[#4FD1FF]" />
       </div>
 
       <div className="flex items-center gap-1 rounded-2xl border border-[#262B35] bg-[#14171D] p-1">
         <button
           type="button"
-          onClick={() => setActiveTab("admins")}
+          onClick={() => setTab("admins")}
           className={`flex-1 rounded-xl px-3 py-1.5 text-[11px] font-medium uppercase tracking-wide transition ${
-            activeTab === "admins" ? "bg-[#4FD1FF] text-[#081018]" : "text-[#8891A3] hover:text-[#F3F5F8]"
+            tab === "admins" ? "bg-[#4FD1FF] text-[#081018]" : "text-[#8891A3] hover:text-[#F3F5F8]"
           }`}
         >
           Admins ({adminParticipants.length})
         </button>
         <button
           type="button"
-          onClick={() => setActiveTab("attendees")}
+          onClick={() => setTab("attendees")}
           className={`flex-1 rounded-xl px-3 py-1.5 text-[11px] font-medium uppercase tracking-wide transition ${
-            activeTab === "attendees" ? "bg-[#4FD1FF] text-[#081018]" : "text-[#8891A3] hover:text-[#F3F5F8]"
+            tab === "attendees" ? "bg-[#4FD1FF] text-[#081018]" : "text-[#8891A3] hover:text-[#F3F5F8]"
           }`}
         >
           Attendees ({attendeeParticipants.length})
@@ -524,11 +507,11 @@ function ParticipantRail({
       <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
         {showingEmptyState && (
           <div className="rounded-2xl border border-dashed border-[#262B35] bg-[#0A0C10] px-4 py-8 text-center text-sm text-[#8891A3]">
-            {activeTab === "admins" ? "No organizers or co-organizers in the room yet." : "No attendees in the room yet."}
+            {tab === "admins" ? "No organizers or co-organizers in the room yet." : "No attendees in the room yet."}
           </div>
         )}
 
-        {activeTab === "admins"
+        {tab === "admins"
           ? adminParticipants.map((participant) => (
               <AdminParticipantCard
                 key={participant.sessionId}
@@ -566,27 +549,190 @@ function ParticipantRail({
           Pinned: {pinnedParticipants.map((p) => participantLabel(p)).join(", ")}
         </div>
       )}
-    </aside>
+    </div>
   );
 }
 
-function DrawerShell({
-  title,
-  description,
-  children,
+function ChatPanel({
+  messages,
+  draft,
+  onDraftChange,
+  onSend,
+  onVote,
+  sendingVoteKey,
+  sending,
+  loading,
 }: {
-  title: string;
-  description: string;
-  children: React.ReactNode;
+  messages: MessageItem[];
+  draft: string;
+  onDraftChange: (value: string) => void;
+  onSend: () => void;
+  onVote: (kind: "message" | "question", targetId: string, direction: "up" | "down") => void;
+  sendingVoteKey: string | null;
+  sending: boolean;
+  loading: boolean;
 }) {
   return (
-    <>
-      <DrawerHeader className="border-b border-[#262B35] bg-[#11161D]">
-        <DrawerTitle className="text-[#F3F5F8]">{title}</DrawerTitle>
-        <DrawerDescription className="text-[#8891A3]">{description}</DrawerDescription>
-      </DrawerHeader>
-      <div className="min-h-0 flex-1 overflow-y-auto p-4">{children}</div>
-    </>
+    <div className="flex h-full flex-col gap-3">
+      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
+        {loading ? (
+          <div className="rounded-2xl border border-dashed border-[#262B35] bg-[#14171D] px-4 py-8 text-center text-sm text-[#8891A3]">
+            Loading chat history...
+          </div>
+        ) : messages.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-[#262B35] bg-[#14171D] px-4 py-8 text-center text-sm text-[#8891A3]">
+            No chat messages yet.
+          </div>
+        ) : (
+          messages.map((message) => (
+            <div key={message.id} className="rounded-2xl border border-[#262B35] bg-[#14171D] p-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-[#F3F5F8]">{message.author}</p>
+                  <p className="text-[10px] uppercase tracking-wide text-[#8891A3]">{participantRoleBadge(message.role)}</p>
+                </div>
+                <span className="text-[11px] text-[#8891A3]">{formatTime(message.createdAt)}</span>
+              </div>
+              <p className="mt-1 text-sm text-[#D7DCE4]">{message.body}</p>
+              <VoteBar
+                kind="message"
+                targetId={message.id}
+                votes={message.votes}
+                onToggleVote={onVote}
+                sendingVoteKey={sendingVoteKey}
+              />
+            </div>
+          ))
+        )}
+      </div>
+      <div className="flex shrink-0 gap-2 border-t border-[#262B35] pt-3">
+        <input
+          value={draft}
+          onChange={(e) => onDraftChange(e.target.value)}
+          placeholder="Write a message..."
+          className="w-full rounded-xl border border-[#262B35] bg-[#0A0C10] px-3 py-2 text-sm text-[#F3F5F8] outline-none placeholder:text-[#8891A3] focus:border-[#4FD1FF]"
+        />
+        <button
+          type="button"
+          onClick={onSend}
+          disabled={sending}
+          className="shrink-0 rounded-xl bg-[#4FD1FF] px-4 py-2 text-sm font-semibold text-[#0A0C10]"
+        >
+          {sending ? "Sending..." : "Send"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function QaPanel({
+  questions,
+  draft,
+  onDraftChange,
+  onAsk,
+  onAnswer,
+  onVote,
+  sendingVoteKey,
+  answerDrafts,
+  onAnswerDraftChange,
+  canModerate,
+  sendingQuestion,
+  sendingAnswerId,
+  loading,
+}: {
+  questions: QuestionItem[];
+  draft: string;
+  onDraftChange: (value: string) => void;
+  onAsk: () => void;
+  onAnswer: (questionId: string) => void;
+  onVote: (kind: "message" | "question", targetId: string, direction: "up" | "down") => void;
+  sendingVoteKey: string | null;
+  answerDrafts: Record<string, string>;
+  onAnswerDraftChange: (questionId: string, value: string) => void;
+  canModerate: boolean;
+  sendingQuestion: boolean;
+  sendingAnswerId: string | null;
+  loading: boolean;
+}) {
+  return (
+    <div className="flex h-full flex-col gap-3">
+      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
+        {loading ? (
+          <div className="rounded-2xl border border-dashed border-[#262B35] bg-[#14171D] px-4 py-8 text-center text-sm text-[#8891A3]">
+            Loading Q&A history...
+          </div>
+        ) : questions.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-[#262B35] bg-[#14171D] px-4 py-8 text-center text-sm text-[#8891A3]">
+            No questions yet.
+          </div>
+        ) : (
+          questions.map((question) => (
+            <div key={question.id} className="rounded-2xl border border-[#262B35] bg-[#14171D] p-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-[#F3F5F8]">{question.author}</p>
+                  <p className="text-[10px] uppercase tracking-wide text-[#8891A3]">{participantRoleBadge(question.role)}</p>
+                </div>
+                <span className={`rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide ${
+                  question.answered ? "bg-[#33D6A0]/15 text-[#33D6A0]" : "bg-[#F5A623]/15 text-[#F5A623]"
+                }`}>
+                  {question.answered ? "answered" : "open"}
+                </span>
+              </div>
+              <p className="mt-1 text-sm text-[#D7DCE4]">{question.body}</p>
+              <VoteBar
+                kind="question"
+                targetId={question.id}
+                votes={question.votes}
+                onToggleVote={onVote}
+                sendingVoteKey={sendingVoteKey}
+              />
+              {question.answered && question.answerBody && (
+                <div className="mt-3 rounded-xl border border-[#33D6A0]/20 bg-[#33D6A0]/8 p-3">
+                  <p className="text-[10px] uppercase tracking-wide text-[#33D6A0]">Answer</p>
+                  <p className="mt-1 text-sm text-[#EAFBF4]">{question.answerBody}</p>
+                </div>
+              )}
+              {canModerate && !question.answered && (
+                <div className="mt-3 flex flex-col gap-2">
+                  <textarea
+                    rows={2}
+                    value={answerDrafts[question.id] ?? ""}
+                    onChange={(e) => onAnswerDraftChange(question.id, e.target.value)}
+                    placeholder="Write an answer..."
+                    className="w-full rounded-xl border border-[#262B35] bg-[#0A0C10] px-3 py-2 text-sm text-[#F3F5F8] outline-none placeholder:text-[#8891A3] focus:border-[#4FD1FF]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => onAnswer(question.id)}
+                    disabled={sendingAnswerId === question.id}
+                    className="self-end rounded-xl bg-[#33D6A0] px-3 py-2 text-xs font-semibold text-[#0A0C10]"
+                  >
+                    {sendingAnswerId === question.id ? "Posting..." : "Mark answered"}
+                  </button>
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+      <div className="flex shrink-0 gap-2 border-t border-[#262B35] pt-3">
+        <input
+          value={draft}
+          onChange={(e) => onDraftChange(e.target.value)}
+          placeholder="Ask a question..."
+          className="w-full rounded-xl border border-[#262B35] bg-[#0A0C10] px-3 py-2 text-sm text-[#F3F5F8] outline-none placeholder:text-[#8891A3] focus:border-[#4FD1FF]"
+        />
+        <button
+          type="button"
+          onClick={onAsk}
+          disabled={sendingQuestion}
+          className="shrink-0 rounded-xl bg-[#4FD1FF] px-4 py-2 text-sm font-semibold text-[#0A0C10]"
+        >
+          {sendingQuestion ? "Asking..." : "Ask"}
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -639,208 +785,6 @@ function DeviceButtons({ setDeviceError }: { setDeviceError: (value: string | nu
   );
 }
 
-function ChatDrawer({
-  open,
-  onOpenChange,
-  messages,
-  draft,
-  onDraftChange,
-  onSend,
-  onVote,
-  sendingVoteKey,
-  sending,
-  loading,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  messages: MessageItem[];
-  draft: string;
-  onDraftChange: (value: string) => void;
-  onSend: () => void;
-  onVote: (kind: "message" | "question", targetId: string, direction: "up" | "down") => void;
-  sendingVoteKey: string | null;
-  sending: boolean;
-  loading: boolean;
-}) {
-  return (
-    <Drawer open={open} onOpenChange={onOpenChange} direction="right">
-      <DrawerContent className="flex h-full w-full flex-col border-l border-[#262B35] bg-[#0F1318] text-[#F3F5F8] sm:max-w-md">
-        <DrawerShell title="Chat" description="Room chat for quick coordination and audience talk.">
-          <div className="space-y-3">
-            {loading ? (
-              <div className="rounded-2xl border border-dashed border-[#262B35] bg-[#14171D] px-4 py-8 text-center text-sm text-[#8891A3]">
-                Loading chat history...
-              </div>
-            ) : messages.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-[#262B35] bg-[#14171D] px-4 py-8 text-center text-sm text-[#8891A3]">
-                No chat messages yet.
-              </div>
-            ) : (
-              messages.map((message) => (
-                <div key={message.id} className="rounded-2xl border border-[#262B35] bg-[#14171D] p-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-[#F3F5F8]">{message.author}</p>
-                      <p className="text-[10px] uppercase tracking-wide text-[#8891A3]">{participantRoleBadge(message.role)}</p>
-                    </div>
-                    <span className="text-[11px] text-[#8891A3]">{formatTime(message.createdAt)}</span>
-                  </div>
-                  <p className="mt-1 text-sm text-[#D7DCE4]">{message.body}</p>
-                  <VoteBar
-                    kind="message"
-                    targetId={message.id}
-                    votes={message.votes}
-                    onToggleVote={onVote}
-                    sendingVoteKey={sendingVoteKey}
-                  />
-                </div>
-              ))
-            )}
-          </div>
-        </DrawerShell>
-        <DrawerFooter className="border-t border-[#262B35] bg-[#11161D]">
-          <div className="flex gap-2">
-            <input
-              value={draft}
-              onChange={(e) => onDraftChange(e.target.value)}
-              placeholder="Write a message..."
-              className="w-full rounded-xl border border-[#262B35] bg-[#0A0C10] px-3 py-2 text-sm text-[#F3F5F8] outline-none placeholder:text-[#8891A3] focus:border-[#4FD1FF]"
-            />
-            <button
-              type="button"
-              onClick={onSend}
-              disabled={sending}
-              className="rounded-xl bg-[#4FD1FF] px-4 py-2 text-sm font-semibold text-[#0A0C10]"
-            >
-              {sending ? "Sending..." : "Send"}
-            </button>
-          </div>
-        </DrawerFooter>
-      </DrawerContent>
-    </Drawer>
-  );
-}
-
-function QADrawer({
-  open,
-  onOpenChange,
-  questions,
-  draft,
-  onDraftChange,
-  onAsk,
-  onAnswer,
-  onVote,
-  sendingVoteKey,
-  answerDrafts,
-  onAnswerDraftChange,
-  canModerate,
-  sendingQuestion,
-  sendingAnswerId,
-  loading,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  questions: QuestionItem[];
-  draft: string;
-  onDraftChange: (value: string) => void;
-  onAsk: () => void;
-  onAnswer: (questionId: string) => void;
-  onVote: (kind: "message" | "question", targetId: string, direction: "up" | "down") => void;
-  sendingVoteKey: string | null;
-  answerDrafts: Record<string, string>;
-  onAnswerDraftChange: (questionId: string, value: string) => void;
-  canModerate: boolean;
-  sendingQuestion: boolean;
-  sendingAnswerId: string | null;
-  loading: boolean;
-}) {
-  return (
-    <Drawer open={open} onOpenChange={onOpenChange} direction="right">
-      <DrawerContent className="flex h-full w-full flex-col border-l border-[#262B35] bg-[#0F1318] text-[#F3F5F8] sm:max-w-md">
-        <DrawerShell title="Q&A" description="Questions and answers for the session.">
-          <div className="space-y-3">
-            {loading ? (
-              <div className="rounded-2xl border border-dashed border-[#262B35] bg-[#14171D] px-4 py-8 text-center text-sm text-[#8891A3]">
-                Loading Q&A history...
-              </div>
-            ) : questions.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-[#262B35] bg-[#14171D] px-4 py-8 text-center text-sm text-[#8891A3]">
-                No questions yet.
-              </div>
-            ) : (
-              questions.map((question) => (
-                <div key={question.id} className="rounded-2xl border border-[#262B35] bg-[#14171D] p-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-[#F3F5F8]">{question.author}</p>
-                      <p className="text-[10px] uppercase tracking-wide text-[#8891A3]">{participantRoleBadge(question.role)}</p>
-                    </div>
-                    <span className={`rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide ${
-                      question.answered ? "bg-[#33D6A0]/15 text-[#33D6A0]" : "bg-[#F5A623]/15 text-[#F5A623]"
-                    }`}>
-                      {question.answered ? "answered" : "open"}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-sm text-[#D7DCE4]">{question.body}</p>
-                  <VoteBar
-                    kind="question"
-                    targetId={question.id}
-                    votes={question.votes}
-                    onToggleVote={onVote}
-                    sendingVoteKey={sendingVoteKey}
-                  />
-                  {question.answered && question.answerBody && (
-                    <div className="mt-3 rounded-xl border border-[#33D6A0]/20 bg-[#33D6A0]/8 p-3">
-                      <p className="text-[10px] uppercase tracking-wide text-[#33D6A0]">Answer</p>
-                      <p className="mt-1 text-sm text-[#EAFBF4]">{question.answerBody}</p>
-                    </div>
-                  )}
-                  {canModerate && !question.answered && (
-                    <div className="mt-3 flex flex-col gap-2">
-                      <textarea
-                        rows={2}
-                        value={answerDrafts[question.id] ?? ""}
-                        onChange={(e) => onAnswerDraftChange(question.id, e.target.value)}
-                        placeholder="Write an answer..."
-                        className="w-full rounded-xl border border-[#262B35] bg-[#0A0C10] px-3 py-2 text-sm text-[#F3F5F8] outline-none placeholder:text-[#8891A3] focus:border-[#4FD1FF]"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => onAnswer(question.id)}
-                        disabled={sendingAnswerId === question.id}
-                        className="self-end rounded-xl bg-[#33D6A0] px-3 py-2 text-xs font-semibold text-[#0A0C10]"
-                      >
-                        {sendingAnswerId === question.id ? "Posting..." : "Mark answered"}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))
-            )}
-          </div>
-        </DrawerShell>
-        <DrawerFooter className="border-t border-[#262B35] bg-[#11161D]">
-          <div className="flex gap-2">
-            <input
-              value={draft}
-              onChange={(e) => onDraftChange(e.target.value)}
-              placeholder="Ask a question..."
-              className="w-full rounded-xl border border-[#262B35] bg-[#0A0C10] px-3 py-2 text-sm text-[#F3F5F8] outline-none placeholder:text-[#8891A3] focus:border-[#4FD1FF]"
-            />
-            <button
-              type="button"
-              onClick={onAsk}
-              disabled={sendingQuestion}
-              className="rounded-xl bg-[#4FD1FF] px-4 py-2 text-sm font-semibold text-[#0A0C10]"
-            >
-              {sendingQuestion ? "Asking..." : "Ask"}
-            </button>
-          </div>
-        </DrawerFooter>
-      </DrawerContent>
-    </Drawer>
-  );
-}
 
 function LeaveMeetingModal({
   open,
@@ -872,7 +816,7 @@ function LeaveMeetingModal({
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-end justify-center bg-black/60 px-3 pb-3 backdrop-blur-sm sm:items-center sm:pb-0"
+      className="fixed inset-0 z-60 flex items-end justify-center bg-black/60 px-3 pb-3 backdrop-blur-sm sm:items-center sm:pb-0"
       onClick={() => !ending && onClose()}
     >
       <div
@@ -1264,7 +1208,7 @@ function StagePanel({
 
   if (!focusParticipant) {
     return (
-      <div className="relative flex h-full min-h-130 items-center justify-center overflow-hidden rounded-3xl border border-[#262B35] bg-[#11161D] px-6 text-center">
+      <div className="relative flex h-full items-center justify-center overflow-hidden rounded-3xl border border-[#262B35] bg-[#11161D] px-6 text-center">
         {bannerUrl ? (
           <Image
             src={bannerUrl}
@@ -1274,9 +1218,9 @@ function StagePanel({
             className="object-cover opacity-35"
           />
         ) : (
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(79,209,255,0.2),_transparent_60%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(79,209,255,0.2),transparent_60%)]" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0A0C10] via-[#0A0C10]/70 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-[#0A0C10] via-[#0A0C10]/70 to-transparent" />
         <div className="relative z-10 max-w-md space-y-3">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#1B1F27] text-[#4FD1FF]">
             <Users size={22} />
@@ -1298,7 +1242,7 @@ function StagePanel({
   const role = participantRoleLabel(focusParticipant);
 
   return (
-    <div className="relative h-full min-h-105 overflow-hidden rounded-3xl border border-[#262B35] bg-[#0A0C10] lg:min-h-140">
+    <div className="relative h-full overflow-hidden rounded-3xl border border-[#262B35] bg-[#0A0C10]">
       <div className="absolute left-4 top-4 z-10 flex items-center gap-2 rounded-full border border-white/10 bg-black/50 px-3 py-1 text-xs text-white backdrop-blur">
         <Shield size={14} className={hasOngoingScreenShare ? "text-[#33D6A0]" : "text-[#4FD1FF]"} />
         <span className="font-medium">{role}</span>
@@ -1374,7 +1318,7 @@ function StagePanel({
           </button>
 
           {pipNotice && (
-            <span className="hidden max-w-[12rem] truncate rounded-full border border-[#F5A623]/30 bg-[#F5A623]/10 px-2.5 py-1 text-xs text-[#F5A623] sm:inline">
+            <span className="hidden max-w-48 truncate rounded-full border border-[#F5A623]/30 bg-[#F5A623]/10 px-2.5 py-1 text-xs text-[#F5A623] sm:inline">
               {pipNotice}
             </span>
           )}
@@ -1399,8 +1343,8 @@ function StagePanel({
 }
 
 type LiveRoomScreenContentProps = LiveRoomScreenProps & {
-  activeDrawer: DrawerKind;
-  setActiveDrawer: (value: DrawerKind) => void;
+  activeTab: RoomTab;
+  setActiveTab: (value: RoomTab) => void;
   chatDraft: string;
   setChatDraft: (value: string) => void;
   qaDraft: string;
@@ -1437,8 +1381,8 @@ function LiveRoomScreenContent({
   canModerate = false,
   eventTitle,
   bannerUrl,
-  activeDrawer,
-  setActiveDrawer,
+  activeTab,
+  setActiveTab,
   chatDraft,
   setChatDraft,
   qaDraft,
@@ -1480,7 +1424,6 @@ function LiveRoomScreenContent({
   const [stageViewMode, setStageViewMode] = useState<StageViewMode>("normal");
 
   const screenShareActive = hasOngoingScreenShare;
-  const participantCount = participants.length;
 
   // --- Mute this tab's incoming audio ---
   // Deliberately browser-only: toggles the `.muted` flag on whatever <audio>
@@ -1598,77 +1541,90 @@ function LiveRoomScreenContent({
   }
 
   return (
-    <StreamTheme className="flex min-h-screen flex-col bg-[#0A0C10] text-[#F3F5F8]">
-      <div ref={audioContainerRef} className="flex flex-1 flex-col overflow-hidden">
-        {/* Audio playback is intentionally decoupled from who's visually
-            focused on the stage — otherwise nobody hears anyone unless that
-            person happens to have their camera on/pinned/screen-sharing.
-            ParticipantsAudio plays every remote participant's audio track
-            regardless of the video layout. The stage ParticipantView below
-            is set to muteAudio so this is the single source of playback
-            (no doubled/echoed audio for whoever's currently focused). */}
+    <StreamTheme className="flex h-dvh w-full flex-col overflow-hidden bg-[#0A0C10] text-[#F3F5F8]">
+      <div ref={audioContainerRef} className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <ParticipantsAudio participants={participants.filter((p) => !p.isLocalParticipant)} />
-        <header className="flex items-center justify-between gap-3 border-b border-[#262B35] bg-[#0A0C10] px-4 py-3">
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-[#F3F5F8]">{eventTitle ?? "Live room"}</p>
-            <p className="text-[11px] uppercase tracking-wide text-[#8891A3]">{participantCount} participants</p>
+    
+        {drawerError && (
+          <div className="mx-3 mt-3 shrink-0 rounded-2xl border border-[#FF5468]/25 bg-[#FF5468]/10 px-4 py-3 text-sm text-[#FFB9C2]">
+            {drawerError}
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setActiveDrawer("chat")}
-              className={`relative flex items-center gap-2 rounded-full px-3 py-2 text-sm ${
-                activeDrawer === "chat" ? "bg-[#4FD1FF] text-[#0A0C10]" : "bg-[#1B1F27] text-[#F3F5F8]"
-              }`}
-            >
-              <MessageSquare size={16} />
-              Chat
-              <NotifyDot show={chatUnseen || chatPulsing} pulsing={chatPulsing} />
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveDrawer("qa")}
-              className={`relative flex items-center gap-2 rounded-full px-3 py-2 text-sm ${
-                activeDrawer === "qa" ? "bg-[#4FD1FF] text-[#0A0C10]" : "bg-[#1B1F27] text-[#F3F5F8]"
-              }`}
-            >
-              <HelpCircle size={16} />
-              Q&A
-              <NotifyDot show={qaUnseen || qaPulsing} pulsing={qaPulsing} />
-            </button>
-          </div>
-        </header>
-
-        <div className="grid min-h-0 flex-1 gap-3 px-3 py-3 xl:grid-cols-[300px_minmax(0,1fr)]">
-          <ParticipantRail eventTitle={eventTitle} canModerate={canModerate} onTogglePin={togglePin} raisedHands={raisedHands} />
-
-          <div className="flex min-h-0 flex-1 flex-col gap-3">
-            {drawerError && (
-              <div className="rounded-2xl border border-[#FF5468]/25 bg-[#FF5468]/10 px-4 py-3 text-sm text-[#FFB9C2]">
-                {drawerError}
+        )}
+  
+        <div className="min-h-0 flex-1 overflow-hidden">
+          <RoomMorphStage
+            className="h-full"
+            value={activeTab}
+            onValueChange={(id) => setActiveTab(id as RoomTab)}
+            items={
+              [
+                {
+                  id: "participants",
+                  label: "Participants",
+                  icon: <Users size={20} />,
+                  content: (
+                    <ParticipantsPanel canModerate={canModerate} onTogglePin={togglePin} raisedHands={raisedHands} />
+                  ),
+                },
+                {
+                  id: "chat",
+                  label: "Chat",
+                  icon: <MessageSquare size={20} />,
+                  badge: chatUnseen || chatPulsing,
+                  content: (
+                    <ChatPanel
+                      messages={chatMessages}
+                      draft={chatDraft}
+                      onDraftChange={setChatDraft}
+                      onSend={sendChat}
+                      onVote={sendVote}
+                      sendingVoteKey={sendingVoteKey}
+                      sending={sendingChat}
+                      loading={discussionLoading}
+                    />
+                  ),
+                },
+                {
+                  id: "qa",
+                  label: "Q&A",
+                  icon: <HelpCircle size={20} />,
+                  badge: qaUnseen || qaPulsing,
+                  content: (
+                    <QaPanel
+                      questions={questions}
+                      draft={qaDraft}
+                      onDraftChange={setQaDraft}
+                      onAsk={askQuestion}
+                      onAnswer={answerQuestion}
+                      onVote={sendVote}
+                      sendingVoteKey={sendingVoteKey}
+                      answerDrafts={answerDrafts}
+                      onAnswerDraftChange={updateAnswerDraft}
+                      canModerate={canModerate}
+                      sendingQuestion={sendingQuestion}
+                      sendingAnswerId={sendingAnswerId}
+                      loading={discussionLoading}
+                    />
+                  ),
+                },
+              ] satisfies MorphNavItem[]
+            }
+            stageContent={
+              <div className="relative h-full min-h-0 p-3">
+                <StagePanel
+                  call={call}
+                  canModerate={canModerate}
+                  viewMode={stageViewMode}
+                  onViewModeChange={setStageViewMode}
+                  bannerUrl={bannerUrl}
+                  eventTitle={eventTitle}
+                />
+                <StageReactionOverlay events={stageEvents} />
               </div>
-            )}
-
-            <div className="relative flex-1">
-              <StagePanel
-                call={call}
-                canModerate={canModerate}
-                viewMode={stageViewMode}
-                onViewModeChange={setStageViewMode}
-                bannerUrl={bannerUrl}
-                eventTitle={eventTitle}
-              />
-              <StageReactionOverlay events={stageEvents} />
-            </div>
-
-            <div className="xl:hidden">
-              <div className="rounded-2xl border border-[#262B35] bg-[#11161D] px-3 py-2 text-sm text-[#8891A3]">
-                Swipe horizontally in the participant rail above to browse people in the room.
-              </div>
-            </div>
-          </div>
+            }
+          />
         </div>
-
+          
         <ControlsBar
           eventId={eventId}
           onLeave={onLeave}
@@ -1687,43 +1643,12 @@ function LiveRoomScreenContent({
           onToggleRoomAudio={() => setRoomAudioMuted((current) => !current)}
         />
       </div>
-
-      <ChatDrawer
-        open={activeDrawer === "chat"}
-        onOpenChange={(open) => setActiveDrawer(open ? "chat" : null)}
-        messages={chatMessages}
-        draft={chatDraft}
-        onDraftChange={setChatDraft}
-        onSend={sendChat}
-        onVote={sendVote}
-        sendingVoteKey={sendingVoteKey}
-        sending={sendingChat}
-        loading={discussionLoading}
-      />
-
-      <QADrawer
-        open={activeDrawer === "qa"}
-        onOpenChange={(open) => setActiveDrawer(open ? "qa" : null)}
-        questions={questions}
-        draft={qaDraft}
-        onDraftChange={setQaDraft}
-        onAsk={askQuestion}
-        onAnswer={answerQuestion}
-        onVote={sendVote}
-        sendingVoteKey={sendingVoteKey}
-        answerDrafts={answerDrafts}
-        onAnswerDraftChange={updateAnswerDraft}
-        canModerate={canModerate}
-        sendingQuestion={sendingQuestion}
-        sendingAnswerId={sendingAnswerId}
-        loading={discussionLoading}
-      />
     </StreamTheme>
   );
 }
 
 export default function LiveRoomScreen({ call, onLeave, eventId, showDeviceControls = true, canModerate = false, eventTitle, bannerUrl }: LiveRoomScreenProps) {
-  const [activeDrawer, setActiveDrawer] = useState<DrawerKind>(null);
+  const [activeTab, setActiveTab] = useState<RoomTab>(null);
   const [chatDraft, setChatDraft] = useState("");
   const [qaDraft, setQaDraft] = useState("");
   const [chatMessages, setChatMessages] = useState<MessageItem[]>([]);
@@ -1750,7 +1675,7 @@ export default function LiveRoomScreen({ call, onLeave, eventId, showDeviceContr
   const [qaUnseen, setQaUnseen] = useState(false);
   const [chatPulsing, setChatPulsing] = useState(false);
   const [qaPulsing, setQaPulsing] = useState(false);
-  const activeDrawerRef = useRef<DrawerKind>(null);
+  const activeTabRef = useRef<RoomTab>(null);
   const lastSeenChatIdRef = useRef<string | null>(null);
   const lastSeenQaIdRef = useRef<string | null>(null);
   const hasLoadedDiscussionRef = useRef(false);
@@ -1769,13 +1694,15 @@ export default function LiveRoomScreen({ call, onLeave, eventId, showDeviceContr
     }, 1500);
   }, []);
 
-  // Clearing the "unseen" dot is a response to the user opening a drawer —
-  // an explicit action, not something to derive via an effect. Wrapping the
-  // setter here (instead of watching `activeDrawer` in a useEffect) avoids
-  // setState-in-effect and keeps activeDrawerRef in sync at the same time.
-  const openDrawer = useCallback((kind: DrawerKind) => {
-    setActiveDrawer(kind);
-    activeDrawerRef.current = kind;
+  // Clearing the "unseen" dot is a response to the user opening a tab — an
+  // explicit action, not something to derive via an effect. Wrapping the
+  // setter here (instead of watching `activeTab` in a useEffect) avoids
+  // setState-in-effect and keeps activeTabRef in sync at the same time.
+  // The "participants" tab has no unseen state of its own, so it's just a
+  // pass-through.
+  const openTab = useCallback((kind: RoomTab) => {
+    setActiveTab(kind);
+    activeTabRef.current = kind;
     if (kind === "chat") setChatUnseen(false);
     if (kind === "qa") setQaUnseen(false);
   }, []);
@@ -1885,11 +1812,11 @@ export default function LiveRoomScreen({ call, onLeave, eventId, showDeviceContr
       } else {
         if (latestChatId && latestChatId !== lastSeenChatIdRef.current) {
           firePulse("chat");
-          if (activeDrawerRef.current !== "chat") setChatUnseen(true);
+          if (activeTabRef.current !== "chat") setChatUnseen(true);
         }
         if (latestQaId && latestQaId !== lastSeenQaIdRef.current) {
           firePulse("qa");
-          if (activeDrawerRef.current !== "qa") setQaUnseen(true);
+          if (activeTabRef.current !== "qa") setQaUnseen(true);
         }
       }
       lastSeenChatIdRef.current = latestChatId;
@@ -2240,8 +2167,8 @@ export default function LiveRoomScreen({ call, onLeave, eventId, showDeviceContr
         canModerate={canModerate}
         eventTitle={eventTitle}
         bannerUrl={bannerUrl}
-        activeDrawer={activeDrawer}
-        setActiveDrawer={openDrawer}
+        activeTab={activeTab}
+        setActiveTab={openTab}
         chatDraft={chatDraft}
         setChatDraft={setChatDraft}
         qaDraft={qaDraft}
