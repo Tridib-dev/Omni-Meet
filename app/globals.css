@@ -718,6 +718,10 @@
       justify-content: stretch;
   }
 
+  .discover-profile-grid > * {
+      min-width: 0;
+  }
+
   .discover-profile-grid [data-slot="profile-card"] {
       container-type: inline-size;
       --profile-card-max: min(100%, 26rem);
