@@ -1,4 +1,5 @@
 // app/(site)/profile/[username]/page.tsx
+
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { getPublicProfile } from "@/lib/actions/profile.actions";
