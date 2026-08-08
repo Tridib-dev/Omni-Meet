@@ -711,7 +711,23 @@
   }
 
   .discover-profile-grid {
-      @apply grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(clamp(8rem, 40vw, 14rem), 1fr));
+      gap: clamp(0.625rem, 2vw, 1rem);
+      align-items: stretch;
+      justify-content: stretch;
+  }
+
+  .discover-profile-grid [data-slot="profile-card"] {
+      container-type: inline-size;
+      --profile-card-max: min(100%, 26rem);
+      --profile-card-banner: clamp(30px, 17cqw, 40px);
+      --profile-card-avatar: clamp(38px, 25cqw, 56px);
+      --profile-card-pad: clamp(8px, 5.5cqw, 12px);
+      --profile-card-name: clamp(12px, 6.5cqw, 14px);
+      --profile-card-meta: clamp(10px, 5.5cqw, 12px);
+      --profile-card-icon: clamp(12px, 6cqw, 14px);
+      justify-self: stretch;
   }
   
   /* --- Date range filter --- */

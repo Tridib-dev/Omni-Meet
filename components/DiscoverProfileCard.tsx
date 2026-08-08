@@ -54,7 +54,8 @@ export default function DiscoverProfileCard({ profile }: DiscoverProfileCardProp
             followLabel={profile.isOwner ? "You" : undefined}
             onFollow={handleFollow}
             followDisabled={profile.isOwner || isPending}
-            className="h-full max-w-none border-dark-300 bg-dark-200 text-light-100 shadow-none"
+            size="compact"
+            className="h-full border-dark-300 bg-dark-200 text-light-100 shadow-none"
         />
     );
 }
