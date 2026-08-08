@@ -17,6 +17,8 @@ const CategoryTabs = async ({ searchParams }: CategoryTabsProps) => {
         ? params.category 
         : undefined;
 
+    if (params.type === "profiles") return null;
+
     const buildHref = (categorySlug?: string) => {
         const urlParams = new URLSearchParams();
         

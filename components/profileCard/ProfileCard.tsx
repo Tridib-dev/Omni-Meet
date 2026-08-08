@@ -4,6 +4,7 @@ import { motion, useReducedMotion, type Variants } from "framer-motion"
 import { Check, CalendarCheck2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Image from "next/image"
+import { useRouter } from "next/navigation"
 
 
 interface ProfileCardProps {
@@ -19,10 +20,13 @@ interface ProfileCardProps {
   className?: string
   onFollow?: () => void
   isFollowing?: boolean
+  href?: string
+  followLabel?: string
+  followDisabled?: boolean
 }
 
 export function ProfileCard({
-  photo = "https://images.unsplash.com/photo-1502685104226-ee32379fefbe?w=400&h=400&fit=crop&auto=format&q=80",
+  photo = "https://placehold.co/160x160/png?text=DE",
   firstName = "Sophie",
   lastName = "Bennett",
   username = "sophiebennett",
@@ -34,10 +38,15 @@ export function ProfileCard({
   className,
   onFollow = () => {},
   isFollowing = false,
+  href,
+  followLabel,
+  followDisabled = false,
 }: ProfileCardProps) {
+  const router = useRouter()
   const shouldReduceMotion = useReducedMotion()
   const shouldAnimate = enableAnimations && !shouldReduceMotion
   const fullName = `${firstName} ${lastName}`.trim()
+  const imageSrc = photo || "https://placehold.co/160x160/png?text=DE"
 
   const containerVariants: Variants = {
     rest: { scale: 1, y: 0 },
@@ -71,11 +80,24 @@ export function ProfileCard({
   return (
     <motion.div
       data-slot="profile-card"
+      role={href ? "link" : undefined}
+      tabIndex={href ? 0 : undefined}
+      onClick={() => {
+        if (href) router.push(href)
+      }}
+      onKeyDown={(event) => {
+        if (!href) return
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault()
+          router.push(href)
+        }
+      }}
       initial="rest"
       whileHover="hover"
       variants={containerVariants}
       className={cn(
-        "relative w-full max-w-[320px] min-w-60 mx-auto rounded-3xl border border-border/20 bg-card text-card-foreground overflow-hidden shadow-xl shadow-black/5 cursor-pointer",
+        "relative w-full max-w-[320px] min-w-60 mx-auto rounded-3xl border border-border/20 bg-card text-card-foreground overflow-hidden shadow-xl shadow-black/5",
+        href && "cursor-pointer",
         "dark:shadow-black/20",
         className
       )}
@@ -90,7 +112,7 @@ export function ProfileCard({
         className="flex flex-col items-center px-5 sm:px-6 pb-5 sm:pb-6 -mt-8 sm:-mt-10"
       >
         {/* Avatar — the visual anchor */}
-        <motion.div variants={itemVariants} className="relative shrink-0">
+        <motion.div variants={itemVariants} className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full ring-4 ring-card shadow-md sm:h-20 sm:w-20">
           {/* <img
             src={photo}
             alt={fullName}
@@ -99,7 +121,7 @@ export function ProfileCard({
 
 
           <Image
-            src={photo}
+            src={imageSrc}
             alt={fullName}
             fill
             sizes="(min-width: 640px) 80px, 64px"
@@ -171,18 +193,23 @@ export function ProfileCard({
         {/* Follow Button */}
         <motion.button
           variants={itemVariants}
-          onClick={onFollow}
+          onClick={(event) => {
+            event.stopPropagation()
+            onFollow()
+          }}
+          disabled={followDisabled}
           whileHover={{ scale: 1.02, transition: { type: "spring", stiffness: 400, damping: 25 } }}
           whileTap={{ scale: 0.98 }}
           className={cn(
             "w-full cursor-pointer py-2 sm:py-2.5 px-4 rounded-2xl font-semibold text-sm transition-colors duration-200 mt-5",
             "border border-border/20 shadow-sm",
+            "disabled:cursor-not-allowed disabled:opacity-60",
             isFollowing
               ? "bg-muted text-muted-foreground hover:bg-muted/80"
               : "bg-foreground text-background hover:bg-foreground/90"
           )}
         >
-          {isFollowing ? "Following" : "Follow +"}
+          {followLabel ?? (isFollowing ? "Following" : "Follow +")}
         </motion.button>
       </motion.div>
     </motion.div>

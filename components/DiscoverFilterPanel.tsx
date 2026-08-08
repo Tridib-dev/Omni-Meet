@@ -5,6 +5,7 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 import DiscoverDateFilter from "./DiscoverDateFilter";
 import DiscoverTagFilter from "./Discovertagfilter";
 import DiscoverModeFilter from "./Discovermodefilter";
@@ -14,6 +15,9 @@ const FILTER_ICON_SRC = "/icons/sliders-horizontal.svg";
 
 const DiscoverFilterPanel = () => {
     const [isOpen, setIsOpen] = useState(false);
+    const searchParams = useSearchParams();
+
+    if (searchParams.get("type") === "profiles") return null;
 
     return (
         <>

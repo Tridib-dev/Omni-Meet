@@ -12,13 +12,26 @@ const DiscoverSearchBar = () => {
 
     const [q, setQ] = useState(searchParams.get("q") ?? "");
     const [location, setLocation] = useState(searchParams.get("location") ?? "");
+    const activeType = searchParams.get("type") === "profiles" ? "profiles" : "events";
 
     const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
 
         const params = new URLSearchParams(searchParams.toString());
-        q.trim() ? params.set("q", q.trim()) : params.delete("q");
-        location.trim() ? params.set("location", location.trim()) : params.delete("location");
+        if (q.trim()) {
+            params.set("q", q.trim());
+        } else {
+            params.delete("q");
+        }
+        if (activeType === "events") {
+            if (location.trim()) {
+                params.set("location", location.trim());
+            } else {
+                params.delete("location");
+            }
+        } else {
+            params.delete("location");
+        }
         params.delete("page");
 
         router.push(`/events/discover?${params.toString()}`);
@@ -35,29 +48,31 @@ const DiscoverSearchBar = () => {
                     type="text"
                     value={q}
                     onChange={(e) => setQ(e.target.value)}
-                    placeholder="Search events, tags, topics..."
-                    aria-label="Search events"
+                    placeholder={activeType === "profiles" ? "Search people, usernames, interests..." : "Search events, tags, topics..."}
+                    aria-label={activeType === "profiles" ? "Search profiles" : "Search events"}
                 />
             </div>
 
-            <div className="discover-search-box">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="discover-search-icon">
-                    <path
-                        d="M12 21s-7-6.1-7-11a7 7 0 1 1 14 0c0 4.9-7 11-7 11Z"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinejoin="round"
+            {activeType === "events" && (
+                <div className="discover-search-box">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="discover-search-icon">
+                        <path
+                            d="M12 21s-7-6.1-7-11a7 7 0 1 1 14 0c0 4.9-7 11-7 11Z"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinejoin="round"
+                        />
+                        <circle cx="12" cy="10" r="2.5" stroke="currentColor" strokeWidth="2" />
+                    </svg>
+                    <input
+                        type="text"
+                        value={location}
+                        onChange={(e) => setLocation(e.target.value)}
+                        placeholder="City, state, or country"
+                        aria-label="Location"
                     />
-                    <circle cx="12" cy="10" r="2.5" stroke="currentColor" strokeWidth="2" />
-                </svg>
-                <input
-                    type="text"
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    placeholder="City, state, or country"
-                    aria-label="Location"
-                />
-            </div>
+                </div>
+            )}
 
             <button type="submit" className="discover-search-button">
                 Search
