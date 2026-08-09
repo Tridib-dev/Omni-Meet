@@ -1,6 +1,7 @@
 // app/api/events/route.ts
 
 import { Event } from "@/database/event.model";
+import { CoOrganizer } from "@/database/coOrganizer.model";
 import { User } from "@/database/User.model";
 import connectToDatabase from "@/lib/mongodb";
 import imagekit from "@/lib/imagekit";
@@ -157,6 +158,20 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ message: "Invalid agenda data." }, { status: 400 });
         }
 
+        // Co-organizers are optional — invalid/missing JSON just means none
+        // were selected, not a request failure.
+        let coOrganizerClerkIds: string[] = [];
+        try {
+            const parsed = JSON.parse(formData.get('coOrganizerClerkIds') as string || '[]');
+            if (Array.isArray(parsed)) {
+                coOrganizerClerkIds = parsed.filter((id): id is string => typeof id === "string" && id.trim().length > 0);
+            }
+        } catch {
+            coOrganizerClerkIds = [];
+        }
+        // Dedupe and never let the creator co-organize with themselves.
+        coOrganizerClerkIds = Array.from(new Set(coOrganizerClerkIds)).filter((id) => id !== userId);
+
         const existingEvent = await Event.findOne({ slug });
         if (existingEvent) {
             return NextResponse.json({ message: "An event with this slug already exists" }, { status: 409 });
@@ -206,6 +221,27 @@ export async function POST(req: NextRequest) {
                 organizerEmails,
                 creatorClerkId: userId,
             });
+
+            // Co-organizers: same collection the room's organizer-tier permission
+            // check (isGateAuthorized) reads from, so this is what actually grants
+            // them organizer access in the live room, not just a display label.
+            // A failure here shouldn't undo an otherwise-successful event
+            // creation — log it and let the organizer add people again from
+            // event settings rather than failing the whole request post-save.
+            if (coOrganizerClerkIds.length > 0) {
+                try {
+                    await CoOrganizer.insertMany(
+                        coOrganizerClerkIds.map((clerkId) => ({
+                            eventId: create_event._id,
+                            clerkId,
+                            addedByClerkId: userId,
+                        })),
+                        { ordered: false }
+                    );
+                } catch (coOrganizerErr) {
+                    console.error('Co-organizer assignment failed:', coOrganizerErr);
+                }
+            }
 
             await notifyFollowersOfNewEvent({
                 creatorClerkId: userId,

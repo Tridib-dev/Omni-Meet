@@ -2,6 +2,7 @@ import type { EventCategory } from "@/lib/constants/event-categories";
 import type { AgendaItemInput } from "./fields/AgendaFields";
 import type { SponsorItemInput } from "./fields/SponsorFields";
 import type { LocationValue } from "./fields/LocationFields";
+import { ProfileRowUser } from "../profileCard";
 
 export type EventMode = "In-Person" | "Online" | "Hybrid (In-Person & Online)";
 
@@ -42,6 +43,7 @@ export interface EventDraft {
   organizer: string;
   organizerEmails: string[];
   sponsors: SponsorItemInput[];
+  coOrganizers?: ProfileRowUser[];
 }
 
 export const emptyDraft: EventDraft = {

@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
 import { toast } from "sonner";
 
 import "./styles/create-event-wizard.css";
@@ -44,6 +45,7 @@ const buildFormData = (draft: ReturnType<typeof useEventDraft>["draft"]): FormDa
   const validSponsors = draft.sponsors.filter((s) => s.name.trim() && s.website.trim());
   fd.append("sponsors", JSON.stringify(validSponsors.map((s) => ({ name: s.name, website: s.website }))));
   fd.append("agenda", JSON.stringify(draft.agenda.map((a) => ({ startTime: a.startTime, endTime: a.endTime, keynote: a.keynote }))));
+  fd.append("coOrganizerClerkIds", JSON.stringify((draft.coOrganizers ?? []).map((u) => u.clerkId)));
 
   draft.tags.forEach((tag) => fd.append("tags", tag));
   draft.audience.forEach((a) => fd.append("audience", a));
@@ -58,6 +60,7 @@ const buildFormData = (draft: ReturnType<typeof useEventDraft>["draft"]): FormDa
 
 const CreateEventWizard = () => {
   const router = useRouter();
+  const { user } = useUser();
   const { draft, updateDraft, resetDraft, isHydrated } = useEventDraft();
   const [currentStep, setCurrentStep] = useState<WizardStepKey>("spark");
   const [isPublishing, setIsPublishing] = useState(false);
@@ -147,7 +150,15 @@ const CreateEventWizard = () => {
     }
     goTo(WIZARD_STEPS[currentIndex + 1].key);
   };
-
+  const organizerUser = user
+  ? {
+      clerkId: user.id,
+      photo: user.imageUrl ?? "",
+      firstName: user.firstName ?? "",
+      lastName: user.lastName ?? "",
+      username: user.username ?? "",
+    }
+  : null;
   const renderStep = () => {
     switch (currentStep) {
       case "spark":
@@ -161,9 +172,9 @@ const CreateEventWizard = () => {
       case "tickets":
         return <Step5Tickets draft={draft} onUpdate={updateDraft} />;
       case "organizer":
-        return <Step6Organizer draft={draft} onUpdate={updateDraft} />;
+        return <Step6Organizer draft={draft} onUpdate={updateDraft} viewerClerkId={user?.id ?? ""} />;
       case "review":
-        return <Step7Review draft={draft} onJumpToStep={goTo} />;
+        return <Step7Review draft={draft} onJumpToStep={goTo} organizerUser={organizerUser} />;
       default:
         return null;
     }

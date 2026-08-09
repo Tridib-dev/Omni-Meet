@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, type CSSProperties } from "react"
 import { Search } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { BottomModal } from "@/components/uitripled/bottom-modal"
@@ -31,6 +31,21 @@ function toProfileRowUser(connection: ProfileConnection): ProfileRowUser {
   }
 }
 
+const DARK_MODAL_VARS: CSSProperties = {
+  colorScheme: "dark",
+  "--background": "#0d1117",
+  "--foreground": "#f8fafc",
+  "--card": "#121826",
+  "--card-foreground": "#f8fafc",
+  "--popover": "#121826",
+  "--popover-foreground": "#f8fafc",
+  "--muted": "#182231",
+  "--muted-foreground": "#9aa7b6",
+  "--border": "#273347",
+  "--input": "#273347",
+  "--ring": "#67e8f9",
+} as CSSProperties
+
 export function AddCoOrganizerModal({
   open,
   onOpenChange,
@@ -50,22 +65,19 @@ export function AddCoOrganizerModal({
   useEffect(() => {
     if (!open) return
     let active = true
-    setLoading(true)
-    getProfileConnections(viewerClerkId, tab)
-      .then((result) => {
+    ;(async () => {
+      setLoading(true)
+      try {
+        const result = await getProfileConnections(viewerClerkId, tab)
         if (active) setConnections(result)
-      })
-      .finally(() => {
+      } finally {
         if (active) setLoading(false)
-      })
+      }
+    })()
     return () => {
       active = false
     }
   }, [open, tab, viewerClerkId])
-
-  useEffect(() => {
-    if (!open) setQuery("")
-  }, [open])
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -77,22 +89,27 @@ export function AddCoOrganizerModal({
     )
   }, [connections, query])
 
+  const handleOpenChange = (nextOpen: boolean) => {
+    onOpenChange(nextOpen)
+    if (!nextOpen) setQuery("")
+  }
+
   return (
     <BottomModal
       open={open}
-      onOpenChange={onOpenChange}
+      onOpenChange={handleOpenChange}
       title="Add co-organizer"
       description={`${connections.length} ${tab}`}
       className="md:max-w-md"
     >
-      <div className="flex flex-col gap-3">
+      <div style={DARK_MODAL_VARS} className="flex flex-col gap-3 text-white">
         <div className="flex items-center gap-1 rounded-2xl border border-border/20 bg-muted/40 p-1">
           <button
             type="button"
             onClick={() => setTab("followers")}
             className={cn(
               "flex-1 rounded-xl px-3 py-2 text-sm font-medium transition-colors",
-              tab === "followers" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+              tab === "followers" ? "bg-card text-card-foreground shadow-sm" : "text-muted-foreground"
             )}
           >
             Followers
@@ -102,7 +119,7 @@ export function AddCoOrganizerModal({
             onClick={() => setTab("following")}
             className={cn(
               "flex-1 rounded-xl px-3 py-2 text-sm font-medium transition-colors",
-              tab === "following" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+              tab === "following" ? "bg-card text-card-foreground shadow-sm" : "text-muted-foreground"
             )}
           >
             Following
@@ -115,7 +132,7 @@ export function AddCoOrganizerModal({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search"
-            className="w-full rounded-xl border border-border/20 bg-muted/40 py-2.5 pl-9 pr-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-border/40"
+            className="w-full rounded-xl border border-border/20 bg-muted/40 py-2.5 pl-9 pr-3 text-sm text-card-foreground outline-none placeholder:text-muted-foreground focus:border-border/40"
           />
         </div>
 

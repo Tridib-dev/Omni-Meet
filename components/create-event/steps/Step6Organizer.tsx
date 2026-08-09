@@ -4,13 +4,15 @@ import React from "react";
 import { EventDraft } from "../types";
 import OrganizerEmails from "../fields/OrganizerEmails";
 import SponsorFields from "../fields/SponsorFields";
+import { CoOrganizerPicker } from "@/components/profileCard";
 
 interface Step6Props {
   draft: EventDraft;
   onUpdate: (patch: Partial<EventDraft>) => void;
+  viewerClerkId: string;
 }
 
-const Step6Organizer = ({ draft, onUpdate }: Step6Props) => {
+const Step6Organizer = ({ draft, onUpdate, viewerClerkId }: Step6Props) => {
   return (
     <>
       <p className="cew-step-eyebrow">Step 6 of 7</p>
@@ -33,6 +35,17 @@ const Step6Organizer = ({ draft, onUpdate }: Step6Props) => {
         <div className="field">
           <label>Organizer contact email(s)</label>
           <OrganizerEmails onChange={(organizerEmails) => onUpdate({ organizerEmails })} />
+        </div>
+
+        <div className="field">
+          <label>Co-organizers (optional)</label>
+          <div className="z-99">
+            <CoOrganizerPicker
+              viewerClerkId={viewerClerkId}
+              value={draft.coOrganizers ?? []}
+              onChange={(coOrganizers) => onUpdate({ coOrganizers })}
+            />
+          </div>  
         </div>
 
         <div className="field">
