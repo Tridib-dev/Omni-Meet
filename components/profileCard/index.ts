@@ -13,3 +13,6 @@ export {
   type ShareToFollowerRowProps,
   type CoOrganizerListRowProps,
 } from "./ProfileRow"
+
+export { AddCoOrganizerModal, type AddCoOrganizerModalProps } from "./AddCoOrganizerModal"
+export { CoOrganizerPicker, type CoOrganizerPickerProps } from "./CoOrganizerPicker"

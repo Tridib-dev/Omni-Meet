@@ -11,7 +11,9 @@ export const SEO_EVENTS_CACHE_TAG = "events";
 export type SeoEventCard = Pick<
   IEvent,
   "title" | "slug" | "location" | "date" | "time" | "image"
->;
+> & {
+  _id: string;
+};
 
 type SeoEventDocument = SeoEventCard & {
   tags?: string[];
@@ -27,7 +29,7 @@ type SeoEventDocument = SeoEventCard & {
 };
 
 const EVENT_CARD_SELECT =
-  "title slug location date time image tags country state city category tagSlugs countrySlug stateSlug citySlug categorySlug";
+  "_id title slug location date time image tags country state city category tagSlugs countrySlug stateSlug citySlug categorySlug";
 
 export const slugifySegment = (value: string): string =>
   value
@@ -47,6 +49,7 @@ export const titleizeFromSlug = (value: string): string =>
 
 const normalizeCards = (events: SeoEventDocument[]): SeoEventCard[] =>
   events.map((event) => ({
+    _id: String(event._id),
     title: event.title,
     slug: event.slug,
     location: event.location,
