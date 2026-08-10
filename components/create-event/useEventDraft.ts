@@ -3,7 +3,7 @@ import { EventDraft, emptyDraft } from "./types";
 
 const STORAGE_KEY = "eventDraft:v1";
 
-type SerializableDraft = Omit<EventDraft, "imageFile">;
+type SerializableDraft = Omit<EventDraft, "imageFile" | "slideshowImageFiles">;
 
 const readStoredDraft = (): SerializableDraft | null => {
   if (typeof window === "undefined") return null;
@@ -26,13 +26,14 @@ const readStoredDraft = (): SerializableDraft | null => {
 export const useEventDraft = () => {
   const [draft, setDraft] = useState<EventDraft>(() => {
     const stored = readStoredDraft();
-    return stored ? { ...emptyDraft, ...stored, imageFile: null } : emptyDraft;
+    return stored ? { ...emptyDraft, ...stored, imageFile: null, slideshowImageFiles: [] } : emptyDraft;
   });
   const [isHydrated, setIsHydrated] = useState(false);
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    setIsHydrated(true);
+    const hydrationTimeout = window.setTimeout(() => setIsHydrated(true), 0);
+    return () => window.clearTimeout(hydrationTimeout);
   }, []);
 
   useEffect(() => {
@@ -40,7 +41,9 @@ export const useEventDraft = () => {
     if (saveTimeout.current) clearTimeout(saveTimeout.current);
 
     saveTimeout.current = setTimeout(() => {
-      const { imageFile: _imageFile, ...serializable } = draft;
+      const serializable: Partial<EventDraft> = { ...draft };
+      delete serializable.imageFile;
+      delete serializable.slideshowImageFiles;
       try {
         window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(serializable));
       } catch {

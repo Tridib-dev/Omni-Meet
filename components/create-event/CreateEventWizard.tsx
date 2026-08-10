@@ -54,6 +54,7 @@ const buildFormData = (draft: ReturnType<typeof useEventDraft>["draft"]): FormDa
   if (draft.imageFile) {
     fd.append("image", draft.imageFile);
   }
+  draft.slideshowImageFiles.forEach((file) => fd.append("slideshowImages", file));
 
   return fd;
 };

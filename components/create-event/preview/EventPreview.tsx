@@ -1,6 +1,8 @@
 'use client';
 
-import React from "react";
+/* eslint-disable @next/next/no-img-element */
+
+import React, { useEffect, useMemo, useState } from "react";
 import { EventDraft } from "../types";
 
 const formatDate = (value: string) => {
@@ -11,6 +13,23 @@ const formatDate = (value: string) => {
 };
 
 const EventPreview = ({ draft }: { draft: EventDraft }) => {
+  const slides = useMemo(
+    () => [draft.imagePreviewUrl, ...draft.slideshowPreviewUrls].filter((src): src is string => Boolean(src)),
+    [draft.imagePreviewUrl, draft.slideshowPreviewUrls]
+  );
+  const [activeSlide, setActiveSlide] = useState(0);
+  const activeSlideIndex = slides.length > 0 ? activeSlide % slides.length : 0;
+
+  useEffect(() => {
+    if (slides.length <= 1) return;
+
+    const interval = window.setInterval(() => {
+      setActiveSlide((current) => (current + 1) % slides.length);
+    }, 3200);
+
+    return () => window.clearInterval(interval);
+  }, [slides.length]);
+
   return (
     <div
       style={{
@@ -20,15 +39,34 @@ const EventPreview = ({ draft }: { draft: EventDraft }) => {
         background: "var(--cew-paper)",
       }}
     >
-      <div
-        style={{
-          aspectRatio: "16 / 6",
-          background: draft.imagePreviewUrl
-            ? `center / cover no-repeat url(${draft.imagePreviewUrl})`
-            : "var(--cew-blue-tint)",
-        }}
-      />
       <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 10 }}>
+        <h2 className="cew-preview-title">
+          {draft.title || "Untitled event"}
+        </h2>
+
+        <div className="cew-review-slideshow" aria-label="Event image slideshow">
+          {slides.length > 0 ? (
+            slides.map((src, index) => (
+              <img
+                key={src}
+                src={src}
+                alt={index === 0 ? "Event banner preview" : `Event slideshow preview ${index}`}
+                className={index === activeSlideIndex ? "is-active" : ""}
+              />
+            ))
+          ) : (
+            <div className="cew-review-slideshow-placeholder" />
+          )}
+
+          {slides.length > 1 && (
+            <div className="cew-review-slide-dots" aria-hidden="true">
+              {slides.map((src, index) => (
+                <span className={index === activeSlideIndex ? "is-active" : ""} key={`${src}-${index}`} />
+              ))}
+            </div>
+          )}
+        </div>
+
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
           <span className="pill">{draft.category || "Category"}</span>
           <span style={{ fontSize: 13, fontWeight: 700, color: draft.isFree ? "var(--cew-success)" : "var(--cew-blue)" }}>
@@ -36,9 +74,6 @@ const EventPreview = ({ draft }: { draft: EventDraft }) => {
           </span>
         </div>
 
-        <h2 style={{ margin: 0, fontSize: 21, fontWeight: 700, color: "var(--cew-ink)" }}>
-          {draft.title || "Untitled event"}
-        </h2>
         <p style={{ margin: 0, fontSize: 14, color: "var(--cew-ink-soft)" }}>{draft.tagline}</p>
 
         <div style={{ display: "flex", gap: 16, fontSize: 13, color: "var(--cew-ink-soft)", flexWrap: "wrap" }}>

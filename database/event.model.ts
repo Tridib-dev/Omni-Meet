@@ -20,6 +20,7 @@ export interface IEvent {
   description: string;
   overview: string;
   image: string;
+  slideshowImages: string[];
   venue: string;
   location: string;
   address: string;
@@ -36,7 +37,7 @@ export interface IEvent {
   audience: string[];
   agenda: IAgendaItem[];
   organizer: string;
-  creatorClerkId: string;   
+  creatorClerkId: string;
   organizerEmails: string[];
   tags: string[];
   tagSlugs?: string[];
@@ -44,8 +45,8 @@ export interface IEvent {
   stateSlug?: string;
   citySlug?: string;
   categorySlug?: string;
-  price : number;
-  isFree ?: boolean;
+  price: number;
+  isFree?: boolean;
   sponsors: ISponsorItem[];
   createdAt: Date;
   updatedAt: Date;
@@ -174,6 +175,14 @@ const eventSchema = new Schema<IEvent>(
     description: { type: String, required: true, trim: true },
     overview: { type: String, required: true, trim: true },
     image: { type: String, required: true, trim: true },
+    slideshowImages: {
+      type: [{ type: String, trim: true }],
+      default: [],
+      validate: {
+        validator: (value: string[]) => value.length <= 3,
+        message: "slideshowImages can contain at most 3 images.",
+      },
+    },
     venue: { type: String, required: true, trim: true },
     location: { type: String, required: true, trim: true },
 
@@ -196,11 +205,11 @@ const eventSchema = new Schema<IEvent>(
       },
     },
 
-    price: { 
-      type: Number, 
-      required: true, 
-      min: 0, 
-      default: 0 
+    price: {
+      type: Number,
+      required: true,
+      min: 0,
+      default: 0
     },
 
     // Sponsors — optional overall, but any entry that IS provided must have
@@ -288,6 +297,9 @@ eventSchema.pre("validate", function validateAndNormalizeEvent(this: EventDocume
 
   this.tagSlugs = Array.from(
     new Set((this.tags ?? []).map((tag) => createSlug(tag)).filter(Boolean))
+  );
+  this.slideshowImages = Array.from(
+    new Set((this.slideshowImages ?? []).map((url) => url.trim()).filter(Boolean))
   );
   this.countrySlug = createSlug(this.country);
   this.stateSlug = createSlug(this.state);

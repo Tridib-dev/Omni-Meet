@@ -28,6 +28,8 @@ export interface EventDraft {
   // Step 3 — Story
   imageFile: File | null;
   imagePreviewUrl: string | null;
+  slideshowImageFiles: File[];
+  slideshowPreviewUrls: string[];
   overview: string;
 
   // Step 4 — Details
@@ -66,6 +68,8 @@ export const emptyDraft: EventDraft = {
 
   imageFile: null,
   imagePreviewUrl: null,
+  slideshowImageFiles: [],
+  slideshowPreviewUrls: [],
   overview: "",
 
   audience: [],

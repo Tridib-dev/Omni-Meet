@@ -752,6 +752,136 @@
 .cew-scope .cew-cover-drop img { width: 100%; height: 100%; object-fit: cover; }
 .cew-scope .cew-cover-drop-placeholder { text-align: center; color: var(--cew-ink-soft); font-size: 13px; padding: 16px; }
 
+.cew-scope .cew-slideshow-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+  gap: 10px;
+}
+
+.cew-scope .cew-slideshow-thumb,
+.cew-scope .cew-slideshow-add {
+  aspect-ratio: 4 / 3;
+  border-radius: var(--cew-radius-md);
+  overflow: hidden;
+}
+
+.cew-scope .cew-slideshow-thumb {
+  position: relative;
+  background: var(--cew-surface);
+  border: 1px solid var(--cew-line);
+}
+
+.cew-scope .cew-slideshow-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cew-scope .cew-slideshow-thumb button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(11, 13, 16, 0.72);
+  color: #fff;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.cew-scope .cew-slideshow-add {
+  border: 1.5px dashed var(--cew-line-strong);
+  background: var(--cew-surface);
+  color: var(--cew-ink);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 700;
+  transition: border-color 0.2s var(--cew-ease), background 0.2s var(--cew-ease);
+}
+
+.cew-scope .cew-slideshow-add:hover {
+  border-color: var(--cew-blue);
+  background: var(--cew-blue-tint);
+}
+
+.cew-scope .cew-slideshow-add span {
+  color: var(--cew-ink-soft);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.cew-scope .cew-preview-title {
+  margin: 0;
+  color: var(--cew-ink);
+  font-size: 24px;
+  font-weight: 760;
+  line-height: 1.12;
+}
+
+.cew-scope .cew-review-slideshow {
+  position: relative;
+  aspect-ratio: 16 / 7;
+  border-radius: var(--cew-radius-lg);
+  background: var(--cew-blue-tint);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.cew-scope .cew-review-slideshow img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transform: scale(1.035);
+  filter: saturate(0.92);
+  transition: opacity 0.7s var(--cew-ease), transform 1.4s var(--cew-ease), filter 0.7s var(--cew-ease);
+}
+
+.cew-scope .cew-review-slideshow img.is-active {
+  opacity: 1;
+  transform: scale(1);
+  filter: saturate(1.04);
+}
+
+.cew-scope .cew-review-slideshow-placeholder {
+  width: 100%;
+  height: 100%;
+}
+
+.cew-scope .cew-review-slide-dots {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  z-index: 2;
+  display: flex;
+  gap: 6px;
+  transform: translateX(-50%);
+}
+
+.cew-scope .cew-review-slide-dots span {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: 0 1px 4px rgba(11, 13, 16, 0.24);
+  transition: width 0.25s var(--cew-ease), background 0.25s var(--cew-ease);
+}
+
+.cew-scope .cew-review-slide-dots span.is-active {
+  width: 18px;
+  background: #fff;
+}
+
 .cew-scope .cew-skeleton {
   position: relative;
   overflow: hidden;

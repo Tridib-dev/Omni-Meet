@@ -3,6 +3,7 @@
 import React from "react";
 import { EventDraft } from "../types";
 import CoverImageField from "../fields/CoverImageField";
+import SlideshowImagesField from "../fields/SlideshowImagesField";
 
 interface Step3Props {
   draft: EventDraft;
@@ -10,11 +11,36 @@ interface Step3Props {
 }
 
 const Step3Story = ({ draft, onUpdate }: Step3Props) => {
+  const maxSlideshowImages = 3;
+
   const handleFile = (file: File | null) => {
     if (draft.imagePreviewUrl) URL.revokeObjectURL(draft.imagePreviewUrl);
     onUpdate({
       imageFile: file,
       imagePreviewUrl: file ? URL.createObjectURL(file) : null,
+    });
+  };
+
+  const handleSlideshowFiles = (files: File[]) => {
+    const openSlots = maxSlideshowImages - draft.slideshowImageFiles.length;
+    if (openSlots <= 0) return;
+
+    const nextFiles = files.slice(0, openSlots);
+    const nextPreviewUrls = nextFiles.map((file) => URL.createObjectURL(file));
+
+    onUpdate({
+      slideshowImageFiles: [...draft.slideshowImageFiles, ...nextFiles],
+      slideshowPreviewUrls: [...draft.slideshowPreviewUrls, ...nextPreviewUrls],
+    });
+  };
+
+  const handleRemoveSlideshowImage = (index: number) => {
+    const previewUrl = draft.slideshowPreviewUrls[index];
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+
+    onUpdate({
+      slideshowImageFiles: draft.slideshowImageFiles.filter((_, itemIndex) => itemIndex !== index),
+      slideshowPreviewUrls: draft.slideshowPreviewUrls.filter((_, itemIndex) => itemIndex !== index),
     });
   };
 
@@ -26,6 +52,12 @@ const Step3Story = ({ draft, onUpdate }: Step3Props) => {
 
       <div className="cew-step-body">
         <CoverImageField previewUrl={draft.imagePreviewUrl} onFileSelected={handleFile} />
+        <SlideshowImagesField
+          previewUrls={draft.slideshowPreviewUrls}
+          maxImages={maxSlideshowImages}
+          onFilesAdded={handleSlideshowFiles}
+          onRemove={handleRemoveSlideshowImage}
+        />
 
         <div className="field">
           <label htmlFor="overview">Overview</label>

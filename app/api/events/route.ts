@@ -26,11 +26,60 @@ type ImageKitUploadResult = {
     fileID?: string;
 };
 
+const MAX_IMAGE_FILE_SIZE = 3 * 1024 * 1024;
+const MAX_SLIDESHOW_IMAGES = 3;
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
+
 const isDuplicateKeyError = (error: unknown): boolean =>
     typeof error === "object" &&
     error !== null &&
     "code" in error &&
     (error as { code?: number }).code === 11000;
+
+const getImageKitFileId = (uploadResult: ImageKitUploadResult): string | undefined =>
+    uploadResult.fileId || uploadResult.file_id || uploadResult.fileID;
+
+const validateImageFile = (file: File, label: string): string | null => {
+    if (file.size > MAX_IMAGE_FILE_SIZE) {
+        return `${label} size must be less than 3MB. Please upload a smaller image.`;
+    }
+
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+        return `${label} must be a JPG, PNG, or WebP image.`;
+    }
+
+    return null;
+};
+
+const uploadEventImage = async ({
+    file,
+    title,
+    folder,
+    prefix,
+}: {
+    file: File;
+    title: string;
+    folder: string;
+    prefix: string;
+}): Promise<ImageKitUploadResult> => {
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const extension = file.name.split('.').pop() || 'jpg';
+    const cleanFileName = `${Date.now()}-${prefix}-${slugifySegment(title)}.${extension}`;
+
+    const uploadResult = await imagekit.upload({
+        file: buffer,
+        fileName: cleanFileName,
+        folder,
+        useUniqueFileName: true,
+    }) as ImageKitUploadResult;
+
+    if (!uploadResult?.url) {
+        throw new Error('Image upload failed. Please try again.');
+    }
+
+    return uploadResult;
+};
 
 /**
  * Normally the Clerk `user.created` webhook has already inserted this row.
@@ -130,18 +179,28 @@ export async function POST(req: NextRequest) {
 
         const file = fileEntry;
 
-        const MAX_FILE_SIZE = 3 * 1024 * 1024; // 5MB
-        if (file.size > MAX_FILE_SIZE) {
-            return NextResponse.json({
-                message: 'Image size must be less than 3MB. Please upload a smaller image.'
-            }, { status: 400 });
+        const imageValidationError = validateImageFile(file, "Banner image");
+        if (imageValidationError) {
+            return NextResponse.json({ message: imageValidationError }, { status: 400 });
         }
 
-        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
-        if (!allowedTypes.includes(file.type)) {
-            return NextResponse.json({
-                message: 'Only JPG, PNG, and WebP images are allowed.'
-            }, { status: 400 });
+        const slideshowEntries = formData.getAll("slideshowImages");
+        if (slideshowEntries.length > MAX_SLIDESHOW_IMAGES) {
+            return NextResponse.json({ message: `You can upload at most ${MAX_SLIDESHOW_IMAGES} slideshow photos.` }, { status: 400 });
+        }
+
+        const slideshowFiles: File[] = [];
+        for (const entry of slideshowEntries) {
+            if (!(entry instanceof File) || entry.size === 0) {
+                return NextResponse.json({ message: 'Each slideshow photo must be a valid image file.' }, { status: 400 });
+            }
+
+            const slideshowValidationError = validateImageFile(entry, "Slideshow photo");
+            if (slideshowValidationError) {
+                return NextResponse.json({ message: slideshowValidationError }, { status: 400 });
+            }
+
+            slideshowFiles.push(entry);
         }
         // ========================================================
 
@@ -177,31 +236,38 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ message: "An event with this slug already exists" }, { status: 409 });
         }
 
-        // Upload Image
-        const arrayBuffer = await file.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-        const cleanFileName = `${Date.now()}-${slugifySegment(title)}.${file.name.split('.').pop() || 'jpg'}`;
-
-        const uploadResult = await imagekit.upload({
-            file: buffer,
-            fileName: cleanFileName,
-            folder: "/DevEvent",
-            useUniqueFileName: true,
-        }) as ImageKitUploadResult;
-
-        if (!uploadResult?.url) {
-            return NextResponse.json({ message: 'Image upload failed. Please try again.' }, { status: 500 });
-        }
-
-        const imageFileId = uploadResult.fileId || uploadResult.file_id || uploadResult.fileID;
+        const uploadedFileIds: string[] = [];
 
         try {
+            const uploadResult = await uploadEventImage({
+                file,
+                title,
+                folder: "/DevEvent",
+                prefix: "banner",
+            });
+            const imageFileId = getImageKitFileId(uploadResult);
+            if (imageFileId) uploadedFileIds.push(imageFileId);
+
+            const slideshowImages: string[] = [];
+            for (const [index, slideshowFile] of slideshowFiles.entries()) {
+                const slideshowUploadResult = await uploadEventImage({
+                    file: slideshowFile,
+                    title,
+                    folder: "/DevEvent/slideshows",
+                    prefix: `slideshow-${index + 1}`,
+                });
+                const slideshowFileId = getImageKitFileId(slideshowUploadResult);
+                if (slideshowFileId) uploadedFileIds.push(slideshowFileId);
+                slideshowImages.push(slideshowUploadResult.url);
+            }
+
             const create_event = await Event.create({
                 title: String(eventFields.title ?? ""),
                 slug,
                 description: String(eventFields.description ?? ""),
                 overview: String(eventFields.overview ?? ""),
                 image: uploadResult.url,
+                slideshowImages,
                 venue: String(eventFields.venue ?? ""),
                 location: String(eventFields.location ?? ""),
                 address: String(eventFields.address ?? ""),
@@ -261,9 +327,9 @@ export async function POST(req: NextRequest) {
             }, { status: 201 });
 
         } catch (createErr: unknown) {
-            if (imageFileId) {
+            for (const fileId of uploadedFileIds) {
                 try {
-                    await imagekit.deleteFile(imageFileId);
+                    await imagekit.deleteFile(fileId);
                 } catch (deleteErr) {
                     console.error('ImageKit cleanup failed:', deleteErr);
                 }
