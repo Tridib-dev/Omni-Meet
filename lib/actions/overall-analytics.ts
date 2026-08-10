@@ -6,6 +6,7 @@ import connectToDatabase from "@/lib/mongodb";
 import { Booking } from "@/database/booking.model";
 import { Order } from "@/database/Order.model";
 import { Event } from "@/database/event.model";
+import { CoOrganizer } from "@/database/coOrganizer.model";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -338,8 +339,14 @@ export const getEventAnalytics = cache(async (eventId: string): Promise<EventAna
 
         await connectToDatabase();
 
-        const event = await Event.findOne({ _id: eventId, creatorClerkId: userId }).lean() as any | null;
+        const event = await Event.findById(eventId).lean() as any | null;
         if (!event) return empty;
+
+        const isCreator = event.creatorClerkId === userId;
+        const hasAccess = isCreator
+            || Boolean(await CoOrganizer.exists({ eventId, clerkId: userId }));
+
+        if (!hasAccess) return empty;
 
         const [bookings, orders] = await Promise.all([
             Booking.find({ eventId }).sort({ createdAt: -1 }).lean() as Promise<any[]>,

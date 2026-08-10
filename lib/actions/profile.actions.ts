@@ -10,6 +10,7 @@ import { UserBadge } from "@/database/user-badge.model";
 import { Booking } from "@/database/booking.model";
 import { Order } from "@/database/Order.model";
 import { Event } from "@/database/event.model";
+import { CoOrganizer } from "@/database/coOrganizer.model";
 import { Watchlist } from "@/database/watchlist.model";
 import { BADGE_CATALOG } from "@/lib/constants/badges";
 import { revalidatePath } from "next/cache";
@@ -46,6 +47,7 @@ export interface PublicProfile {
     }[];
     organizedEvents: unknown[];
     attendedEvents: unknown[];
+    coOrganizedEvents: unknown[];
 }
 
 interface ProfileUserDoc {
@@ -101,6 +103,7 @@ const buildPublicProfile = async (
         orders,
         savedCount,
         organizedEvents,
+        coOrganizerEntries,
     ] = await Promise.all([
         Follow.countDocuments({ followingId: targetClerkId }),
         Follow.countDocuments({ followerId: targetClerkId }),
@@ -116,7 +119,16 @@ const buildPublicProfile = async (
             .sort({ date: -1 })
             .limit(6)
             .lean(),
+        CoOrganizer.find({ clerkId: targetClerkId }).select("eventId").lean(),
     ]);
+
+    const coEventIds = coOrganizerEntries.map((entry) => entry.eventId);
+    const coOrganizedEvents = coEventIds.length
+        ? await Event.find({ _id: { $in: coEventIds } })
+            .sort({ date: -1 })
+            .limit(6)
+            .lean()
+        : [];
 
     const [bookedEvents, paidEvents] = await Promise.all([
         Booking.find({ clerkId: targetClerkId }).populate("eventId").sort({ createdAt: -1 }).limit(6).lean(),
@@ -174,6 +186,7 @@ const buildPublicProfile = async (
         badges,
         organizedEvents: JSON.parse(JSON.stringify(organizedEvents)),
         attendedEvents: JSON.parse(JSON.stringify(attendedRaw)),
+        coOrganizedEvents: JSON.parse(JSON.stringify(coOrganizedEvents)),
     };
 };
 

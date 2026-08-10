@@ -37,20 +37,25 @@ function EventCard({ event }: { event: EventItem }) {
 }
 
 function EmptyState({ tab }: { tab: string }) {
+    const messages: Record<string, string> = {
+        organized: "No events organized yet.",
+        attended: "No events attended yet.",
+        coOrganized: "No co-organized events yet.",
+    };
+
     return (
         <div className="py-12 text-center">
             <p className="text-[13px] text-white/30">
-                {tab === "organized"
-                    ? "No events organized yet."
-                    : "No events attended yet."}
+                {messages[tab] ?? "No events yet."}
             </p>
         </div>
     );
 }
 
 const TABS = [
-    { key: "attended",  label: "Attended" },
+    { key: "attended", label: "Attended" },
     { key: "organized", label: "Organized" },
+    { key: "coOrganized", label: "Co-Organized" },
 ] as const;
 
 type TabKey = typeof TABS[number]["key"];
@@ -58,13 +63,16 @@ type TabKey = typeof TABS[number]["key"];
 export default function EventsSection({
     attendedEvents,
     organizedEvents,
+    coOrganizedEvents = [],
 }: {
     attendedEvents: EventItem[];
     organizedEvents: EventItem[];
+    coOrganizedEvents?: EventItem[];
 }) {
     const lists: Record<TabKey, EventItem[]> = {
         attended: attendedEvents,
         organized: organizedEvents,
+        coOrganized: coOrganizedEvents,
     };
 
     return (
@@ -74,7 +82,7 @@ export default function EventsSection({
                     Events
                 </p>
                 <span className="text-[11px] text-white/25 font-mono">
-                    {lists.attended.length + lists.organized.length} total
+                    {lists.attended.length + lists.organized.length + lists.coOrganized.length} total
                 </span>
             </div>
 

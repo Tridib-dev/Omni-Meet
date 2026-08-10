@@ -66,10 +66,11 @@ async function ProfilePageContent({
 
             <div className="my-8" style={{ height: 1, background: "rgba(255,255,255,0.07)" }} />
 
-            {/* Events: Attended + Organized tabs */}
+            {/* Events: Attended + Organized + Co-Organized tabs */}
             <EventsSection
                 attendedEvents={profile.attendedEvents}
                 organizedEvents={profile.organizedEvents}
+                coOrganizedEvents={profile.coOrganizedEvents}
             />
 
             <div className="my-8" style={{ height: 1, background: "rgba(255,255,255,0.07)" }} />

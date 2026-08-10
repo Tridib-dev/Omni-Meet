@@ -8,6 +8,7 @@ import { Order } from "@/database/Order.model";
 import { Watchlist } from "@/database/watchlist.model";
 import { User } from "@/database/User.model";
 import { Event } from "@/database/event.model";
+import { CoOrganizer } from "@/database/coOrganizer.model";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -171,6 +172,54 @@ export const getUserStats = cache(async (): Promise<UserStats> => {
     }
 });
 
+function organizedEventStatus(dateStr: string): "upcoming" | "past" {
+    return categorize(dateStr) === "upcoming" ? "upcoming" : "past";
+}
+
+async function buildOrganizedEventItems(events: any[]): Promise<OrganizedEventItem[]> {
+    if (!events.length) return [];
+
+    const eventIds = events.map((e) => e._id);
+
+    const [bookingCounts, orderAggs] = await Promise.all([
+        Booking.aggregate([
+            { $match: { eventId: { $in: eventIds } } },
+            { $group: { _id: "$eventId", count: { $sum: 1 } } },
+        ]),
+        Order.aggregate([
+            { $match: { eventId: { $in: eventIds }, status: "paid" } },
+            { $group: { _id: "$eventId", revenue: { $sum: "$amount" }, count: { $sum: 1 } } },
+        ]),
+    ]);
+
+    const bookingMap = Object.fromEntries(
+        bookingCounts.map((b: any) => [b._id.toString(), b.count])
+    );
+    const orderMap = Object.fromEntries(
+        orderAggs.map((o: any) => [o._id.toString(), { revenue: o.revenue, count: o.count }])
+    );
+
+    return events.map((ev: any) => {
+        const id = ev._id.toString();
+        const freeCount = bookingMap[id] ?? 0;
+        const paidData = orderMap[id] ?? { revenue: 0, count: 0 };
+
+        return {
+            id,
+            title: ev.title,
+            slug: ev.slug,
+            image: ev.image,
+            date: ev.date,
+            location: ev.location,
+            mode: ev.mode,
+            price: ev.price ?? 0,
+            status: organizedEventStatus(ev.date),
+            attendeeCount: freeCount + paidData.count,
+            revenue: paidData.revenue,
+        };
+    });
+}
+
 // ─── getOrganizedEvents ────────────────────────────────────────────────────────
 
 export const getOrganizedEvents = cache(async (): Promise<OrganizedEventItem[]> => {
@@ -184,50 +233,40 @@ export const getOrganizedEvents = cache(async (): Promise<OrganizedEventItem[]> 
             .sort({ date: -1 })
             .lean();
 
-        if (!events.length) return [];
-
-        const eventIds = events.map((e: any) => e._id);
-
-        // Get attendee counts + revenue in parallel
-        const [bookingCounts, orderAggs] = await Promise.all([
-            Booking.aggregate([
-                { $match: { eventId: { $in: eventIds } } },
-                { $group: { _id: "$eventId", count: { $sum: 1 } } },
-            ]),
-            Order.aggregate([
-                { $match: { eventId: { $in: eventIds }, status: "paid" } },
-                { $group: { _id: "$eventId", revenue: { $sum: "$amount" }, count: { $sum: 1 } } },
-            ]),
-        ]);
-
-        const bookingMap = Object.fromEntries(
-            bookingCounts.map((b: any) => [b._id.toString(), b.count])
-        );
-        const orderMap = Object.fromEntries(
-            orderAggs.map((o: any) => [o._id.toString(), { revenue: o.revenue, count: o.count }])
-        );
-
-        return events.map((ev: any) => {
-            const id = ev._id.toString();
-            const freeCount = bookingMap[id] ?? 0;
-            const paidData = orderMap[id] ?? { revenue: 0, count: 0 };
-
-            return {
-                id,
-                title: ev.title,
-                slug: ev.slug,
-                image: ev.image,
-                date: ev.date,
-                location: ev.location,
-                mode: ev.mode,
-                price: ev.price ?? 0,
-                status: categorize(ev.date),
-                attendeeCount: freeCount + paidData.count,
-                revenue: paidData.revenue,
-            };
-        });
+        return buildOrganizedEventItems(events);
     } catch (error) {
         console.error("[getOrganizedEvents]", error);
+        return [];
+    }
+});
+
+// ─── getCoOrganizedEvents ──────────────────────────────────────────────────────
+
+export const getCoOrganizedEvents = cache(async (): Promise<OrganizedEventItem[]> => {
+    try {
+        const { userId } = await auth();
+        if (!userId) return [];
+
+        await connectToDatabase();
+
+        const coOrganizerEntries = await CoOrganizer.find({ clerkId: userId })
+            .select("eventId")
+            .lean();
+
+        if (!coOrganizerEntries.length) return [];
+
+        const eventIds = coOrganizerEntries.map((entry) => entry.eventId);
+
+        const events = await Event.find({
+            _id: { $in: eventIds },
+            creatorClerkId: { $ne: userId },
+        })
+            .sort({ date: -1 })
+            .lean();
+
+        return buildOrganizedEventItems(events);
+    } catch (error) {
+        console.error("[getCoOrganizedEvents]", error);
         return [];
     }
 });

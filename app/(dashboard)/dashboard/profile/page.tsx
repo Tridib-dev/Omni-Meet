@@ -85,6 +85,7 @@ export default async function OwnerProfilePage() {
             <EventsSection
                 attendedEvents={profile.attendedEvents}
                 organizedEvents={profile.organizedEvents}
+                coOrganizedEvents={profile.coOrganizedEvents}
             />
 
             <div className="my-8" style={{ height: 1, background: "rgba(255,255,255,0.07)" }} />
