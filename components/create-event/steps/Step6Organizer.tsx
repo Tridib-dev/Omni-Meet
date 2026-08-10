@@ -38,7 +38,10 @@ const Step6Organizer = ({ draft, onUpdate, viewerClerkId }: Step6Props) => {
         </div>
 
         <div className="field">
-          <label>Co-organizers (optional)</label>
+          <label>Invite co-organizers (optional)</label>
+          <p className="mb-2 text-sm text-muted-foreground">
+            They&apos;ll receive a request and must accept before getting organizer access.
+          </p>
           <div className="z-99">
             <CoOrganizerPicker
               viewerClerkId={viewerClerkId}

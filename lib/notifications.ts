@@ -1,5 +1,10 @@
 import connectToDatabase from "@/lib/mongodb";
-import { Notification, type NotificationType } from "@/database/notification.model";
+import {
+    Notification,
+    type NotificationCategory,
+    type NotificationRequestStatus,
+    type NotificationType,
+} from "@/database/notification.model";
 import { Follow } from "@/database/follow.model";
 import { User } from "@/database/User.model";
 
@@ -30,6 +35,7 @@ async function upsertNotification(params: {
     recipientClerkId: string;
     actor: ActorSnapshot;
     type: NotificationType;
+    category?: NotificationCategory;
     title: string;
     body: string;
     dedupeKey: string;
@@ -37,7 +43,13 @@ async function upsertNotification(params: {
     eventSlug?: string;
     eventTitle?: string;
     profileUsername?: string;
+    inviteId?: string;
+    requestStatus?: NotificationRequestStatus;
 }) {
+    const category =
+        params.category ??
+        (params.type === "co_organizer_invite" ? "requests" : "activity");
+
     await Notification.updateOne(
         { dedupeKey: params.dedupeKey },
         {
@@ -48,16 +60,41 @@ async function upsertNotification(params: {
                 actorName: params.actor.name,
                 actorPhoto: params.actor.photo,
                 type: params.type,
+                category,
                 title: params.title,
                 body: params.body,
                 eventId: params.eventId,
                 eventSlug: params.eventSlug,
                 eventTitle: params.eventTitle,
                 profileUsername: params.profileUsername,
+                inviteId: params.inviteId,
+                requestStatus: params.requestStatus,
                 dedupeKey: params.dedupeKey,
             },
         },
         { upsert: true }
+    );
+}
+
+export async function updateCoOrganizerInviteNotificationStatus({
+    inviteeClerkId,
+    eventId,
+    requestStatus,
+}: {
+    inviteeClerkId: string;
+    eventId: string;
+    requestStatus: NotificationRequestStatus;
+}) {
+    await connectToDatabase();
+
+    await Notification.updateOne(
+        { dedupeKey: `co_organizer_invite:${inviteeClerkId}:${eventId}` },
+        {
+            $set: {
+                requestStatus,
+                readAt: new Date(),
+            },
+        }
     );
 }
 
@@ -136,12 +173,111 @@ export async function notifyFollowersOfNewEvent({
     );
 }
 
+export async function notifyCoOrganizerInvited({
+    inviteId,
+    eventId,
+    eventSlug,
+    eventTitle,
+    inviteeClerkId,
+    invitedByClerkId,
+}: {
+    inviteId: string;
+    eventId: string;
+    eventSlug: string;
+    eventTitle: string;
+    inviteeClerkId: string;
+    invitedByClerkId: string;
+}) {
+    if (!inviteId || !eventId || !eventSlug || !eventTitle || !inviteeClerkId || !invitedByClerkId) {
+        return;
+    }
+
+    if (inviteeClerkId === invitedByClerkId) {
+        return;
+    }
+
+    await connectToDatabase();
+
+    const actor = await getActorSnapshot(invitedByClerkId);
+
+    await Notification.updateOne(
+        { dedupeKey: `co_organizer_invite:${inviteeClerkId}:${eventId}` },
+        {
+            $set: {
+                recipientClerkId: inviteeClerkId,
+                actorClerkId: actor.clerkId,
+                actorUsername: actor.username,
+                actorName: actor.name,
+                actorPhoto: actor.photo,
+                type: "co_organizer_invite" as NotificationType,
+                category: "requests" as NotificationCategory,
+                title: "Co-organizer invitation",
+                body: `${actor.name} invited you to co-organize ${eventTitle}.`,
+                eventId,
+                eventSlug,
+                eventTitle,
+                profileUsername: actor.username || undefined,
+                inviteId,
+                requestStatus: "pending" as NotificationRequestStatus,
+                readAt: null,
+            },
+            $setOnInsert: {
+                dedupeKey: `co_organizer_invite:${inviteeClerkId}:${eventId}`,
+            },
+        },
+        { upsert: true }
+    );
+}
+
+export async function notifyCoOrganizerAccepted({
+    eventId,
+    eventSlug,
+    eventTitle,
+    organizerClerkId,
+    acceptedByClerkId,
+}: {
+    eventId: string;
+    eventSlug: string;
+    eventTitle: string;
+    organizerClerkId: string;
+    acceptedByClerkId: string;
+}) {
+    if (!eventId || !eventSlug || !eventTitle || !organizerClerkId || !acceptedByClerkId) {
+        return;
+    }
+
+    await connectToDatabase();
+
+    const actor = await getActorSnapshot(acceptedByClerkId);
+
+    await upsertNotification({
+        recipientClerkId: organizerClerkId,
+        actor,
+        type: "co_organizer_accepted",
+        category: "activity",
+        title: "Co-organizer accepted",
+        body: `${actor.name} accepted your co-organizer invite for ${eventTitle}.`,
+        eventId,
+        eventSlug,
+        eventTitle,
+        profileUsername: actor.username || undefined,
+        dedupeKey: `co_organizer_accepted:${organizerClerkId}:${eventId}:${acceptedByClerkId}`,
+    });
+}
+
 export async function buildNotificationHref(notification: {
     type: NotificationType;
     eventSlug?: string;
     profileUsername?: string;
 }) {
-    if (notification.type === "event_created" && notification.eventSlug) {
+    if (
+        (notification.type === "event_created" || notification.type === "co_organizer_accepted") &&
+        notification.eventSlug
+    ) {
+        return `/events/${notification.eventSlug}`;
+    }
+
+    if (notification.type === "co_organizer_invite" && notification.eventSlug) {
         return `/events/${notification.eventSlug}`;
     }
 

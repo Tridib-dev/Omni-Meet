@@ -9,6 +9,7 @@ import { CoOrganizer } from "@/database/coOrganizer.model";
 import { Event } from "@/database/event.model";
 import { User } from "@/database/User.model";
 import { isEventCreator } from "@/lib/actions/event.actions";
+import { sendCoOrganizerInvites } from "@/lib/co-organizer-invites";
 
 export type TicketType = "booking" | "order";
 
@@ -368,24 +369,26 @@ export async function addCoOrganizer(eventId: string, clerkId: string): Promise<
         }
 
         const { userId } = await auth();
+        const result = await sendCoOrganizerInvites(eventId, [normalizedClerkId], userId ?? "");
 
-        const created = await CoOrganizer.create({
-            eventId,
-            clerkId: normalizedClerkId,
-            addedByClerkId: userId ?? undefined,
-            addedAt: new Date(),
-        });
+        if (result.sent.includes(normalizedClerkId)) {
+            return {
+                success: true,
+                coOrganizer: {
+                    clerkId: normalizedClerkId,
+                    name: profile.name,
+                    email: profile.email,
+                    photo: profile.photo,
+                    addedAt: new Date().toISOString(),
+                },
+            };
+        }
 
-        return {
-            success: true,
-            coOrganizer: {
-                clerkId: created.clerkId,
-                name: profile.name,
-                email: profile.email,
-                photo: profile.photo,
-                addedAt: created.addedAt.toISOString(),
-            },
-        };
+        if (result.skipped.includes(normalizedClerkId)) {
+            return { success: true, reason: "already_exists" };
+        }
+
+        return { success: false, reason: "not_found" };
     } catch (error) {
         console.error("[addCoOrganizer]", error);
         return { success: false, reason: "not_found" };

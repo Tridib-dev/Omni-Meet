@@ -98,7 +98,7 @@ export function AddCoOrganizerModal({
     <BottomModal
       open={open}
       onOpenChange={handleOpenChange}
-      title="Add co-organizer"
+      title="Invite co-organizer"
       description={`${connections.length} ${tab}`}
       className="md:max-w-md"
     >

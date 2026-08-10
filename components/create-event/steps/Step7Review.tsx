@@ -30,6 +30,28 @@ const Step7Review = ({ draft, onJumpToStep, organizerUser }: Step7Props) => {
           </div>
         )}
       </div>
+
+      {(draft.coOrganizers?.length ?? 0) > 0 && (
+        <div className="field">
+          <label>Co-organizer invites</label>
+          <p className="mb-2 text-sm text-muted-foreground">
+            These people will receive an invite after you publish. They must accept before getting organizer access.
+          </p>
+          <div className="flex flex-col gap-2">
+            {(draft.coOrganizers ?? []).map((user) => (
+              <ProfileRowShell
+                key={user.clerkId}
+                user={user}
+                badge={
+                  <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-300">
+                    Invite pending
+                  </span>
+                }
+              />
+            ))}
+          </div>
+        </div>
+      )}
       <div className="cew-step-body">
         <EventPreview draft={draft} />
 

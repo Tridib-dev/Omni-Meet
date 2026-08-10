@@ -1,7 +1,6 @@
 // app/api/events/route.ts
 
 import { Event } from "@/database/event.model";
-import { CoOrganizer } from "@/database/coOrganizer.model";
 import { User } from "@/database/User.model";
 import connectToDatabase from "@/lib/mongodb";
 import imagekit from "@/lib/imagekit";
@@ -12,6 +11,7 @@ import { validateEmails } from "@/lib/validateemail";
 import { slugifySegment } from "@/lib/seo-events";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { notifyFollowersOfNewEvent } from "@/lib/notifications";
+import { sendCoOrganizerInvites } from "@/lib/co-organizer-invites";
 
 type AgendaItem = {
     startTime: string;
@@ -288,24 +288,15 @@ export async function POST(req: NextRequest) {
                 creatorClerkId: userId,
             });
 
-            // Co-organizers: same collection the room's organizer-tier permission
-            // check (isGateAuthorized) reads from, so this is what actually grants
-            // them organizer access in the live room, not just a display label.
-            // A failure here shouldn't undo an otherwise-successful event
-            // creation — log it and let the organizer add people again from
-            // event settings rather than failing the whole request post-save.
+            // Co-organizer invites: pending until the invitee accepts. Only
+            // accepted co-organizers are written to CoOrganizer (what
+            // isGateAuthorized reads). Failures here shouldn't undo event
+            // creation — log and let the organizer re-invite from settings.
             if (coOrganizerClerkIds.length > 0) {
                 try {
-                    await CoOrganizer.insertMany(
-                        coOrganizerClerkIds.map((clerkId) => ({
-                            eventId: create_event._id,
-                            clerkId,
-                            addedByClerkId: userId,
-                        })),
-                        { ordered: false }
-                    );
+                    await sendCoOrganizerInvites(create_event._id, coOrganizerClerkIds, userId);
                 } catch (coOrganizerErr) {
-                    console.error('Co-organizer assignment failed:', coOrganizerErr);
+                    console.error("Co-organizer invite failed:", coOrganizerErr);
                 }
             }
 

@@ -55,7 +55,7 @@ export function CoOrganizerPicker({ viewerClerkId, value, onChange }: CoOrganize
         className="flex items-center justify-center gap-1.5 rounded-2xl border border-dashed border-border/30 px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:border-border/50 hover:text-foreground"
       >
         <Plus size={16} />
-        Add co-organizer
+        Invite co-organizer
       </button>
 
       <AddCoOrganizerModal

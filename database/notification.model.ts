@@ -1,6 +1,12 @@
 import { Schema, model, models, Model } from "mongoose";
 
-export type NotificationType = "follow" | "event_created";
+export type NotificationCategory = "activity" | "requests";
+export type NotificationType =
+    | "follow"
+    | "event_created"
+    | "co_organizer_invite"
+    | "co_organizer_accepted";
+export type NotificationRequestStatus = "pending" | "accepted" | "denied";
 
 export interface INotification {
     recipientClerkId: string;
@@ -9,12 +15,15 @@ export interface INotification {
     actorName: string;
     actorPhoto: string;
     type: NotificationType;
+    category?: NotificationCategory;
     title: string;
     body: string;
     eventId?: string;
     eventSlug?: string;
     eventTitle?: string;
     profileUsername?: string;
+    inviteId?: string;
+    requestStatus?: NotificationRequestStatus;
     readAt?: Date | null;
     dedupeKey?: string;
     createdAt: Date;
@@ -33,7 +42,12 @@ const notificationSchema = new Schema<INotification>(
         type: {
             type: String,
             required: true,
-            enum: ["follow", "event_created"],
+            enum: ["follow", "event_created", "co_organizer_invite", "co_organizer_accepted"],
+            index: true,
+        },
+        category: {
+            type: String,
+            enum: ["activity", "requests"],
             index: true,
         },
         title: { type: String, required: true, trim: true },
@@ -42,6 +56,11 @@ const notificationSchema = new Schema<INotification>(
         eventSlug: { type: String, index: true },
         eventTitle: { type: String, trim: true },
         profileUsername: { type: String, trim: true, index: true },
+        inviteId: { type: String, index: true },
+        requestStatus: {
+            type: String,
+            enum: ["pending", "accepted", "denied"],
+        },
         readAt: { type: Date, default: null, index: true },
         dedupeKey: { type: String, unique: true, sparse: true, index: true },
     },

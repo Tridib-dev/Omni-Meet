@@ -162,7 +162,7 @@ export function CoOrganizerCandidateRow({
       className={className}
       trailing={
         <RowActionButton active={isCoOrganizer} disabled={pending} onClick={isCoOrganizer ? onRemove : onAdd}>
-          {pending ? "..." : isCoOrganizer ? "Remove" : "Add"}
+          {pending ? "..." : isCoOrganizer ? "Remove" : "Invite"}
         </RowActionButton>
       }
     />

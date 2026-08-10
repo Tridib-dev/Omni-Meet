@@ -2,12 +2,18 @@
 
 import { auth } from "@clerk/nextjs/server";
 import connectToDatabase from "@/lib/mongodb";
-import { Notification } from "@/database/notification.model";
+import {
+    Notification,
+    type NotificationCategory,
+    type NotificationRequestStatus,
+    type NotificationType,
+} from "@/database/notification.model";
 import { buildNotificationHref } from "@/lib/notifications";
 
 export type NotificationItem = {
     _id: string;
-    type: "follow" | "event_created";
+    type: NotificationType;
+    category: NotificationCategory;
     title: string;
     body: string;
     actorClerkId: string;
@@ -17,14 +23,29 @@ export type NotificationItem = {
     eventSlug?: string;
     eventTitle?: string;
     profileUsername?: string;
+    inviteId?: string;
+    requestStatus?: NotificationRequestStatus;
+    isActionable: boolean;
     href: string;
     readAt: string | null;
     createdAt: string;
 };
 
+function resolveCategory(notification: {
+    type: NotificationType;
+    category?: NotificationCategory;
+}): NotificationCategory {
+    if (notification.category) {
+        return notification.category;
+    }
+
+    return notification.type === "co_organizer_invite" ? "requests" : "activity";
+}
+
 const serializeNotification = async (notification: {
     _id: { toString(): string } | string;
-    type: "follow" | "event_created";
+    type: NotificationType;
+    category?: NotificationCategory;
     title: string;
     body: string;
     actorClerkId: string;
@@ -34,39 +55,68 @@ const serializeNotification = async (notification: {
     eventSlug?: string;
     eventTitle?: string;
     profileUsername?: string;
+    inviteId?: string;
+    requestStatus?: NotificationRequestStatus;
     readAt?: Date | null;
     createdAt: Date;
-}) => ({
-    _id: notification._id.toString(),
-    type: notification.type,
-    title: notification.title,
-    body: notification.body,
-    actorClerkId: notification.actorClerkId,
-    actorUsername: notification.actorUsername,
-    actorName: notification.actorName,
-    actorPhoto: notification.actorPhoto,
-    eventSlug: notification.eventSlug,
-    eventTitle: notification.eventTitle,
-    profileUsername: notification.profileUsername,
-    href: await buildNotificationHref({
-        type: notification.type,
-        eventSlug: notification.eventSlug,
-        profileUsername: notification.profileUsername,
-    }),
-    readAt: notification.readAt ? notification.readAt.toISOString() : null,
-    createdAt: notification.createdAt.toISOString(),
-});
+}) => {
+    const category = resolveCategory(notification);
+    const requestStatus =
+        notification.requestStatus ??
+        (notification.type === "co_organizer_invite" ? "pending" : undefined);
 
-export const getMyNotifications = async (limit = 20): Promise<NotificationItem[]> => {
+    return {
+        _id: notification._id.toString(),
+        type: notification.type,
+        category,
+        title: notification.title,
+        body: notification.body,
+        actorClerkId: notification.actorClerkId,
+        actorUsername: notification.actorUsername,
+        actorName: notification.actorName,
+        actorPhoto: notification.actorPhoto,
+        eventSlug: notification.eventSlug,
+        eventTitle: notification.eventTitle,
+        profileUsername: notification.profileUsername,
+        inviteId: notification.inviteId,
+        requestStatus,
+        isActionable:
+            notification.type === "co_organizer_invite" && requestStatus === "pending",
+        href: await buildNotificationHref({
+            type: notification.type,
+            eventSlug: notification.eventSlug,
+            profileUsername: notification.profileUsername,
+        }),
+        readAt: notification.readAt ? notification.readAt.toISOString() : null,
+        createdAt: notification.createdAt.toISOString(),
+    };
+};
+
+export const getMyNotifications = async (
+    options?: { category?: NotificationCategory; limit?: number }
+): Promise<NotificationItem[]> => {
     try {
         const { userId } = await auth();
         if (!userId) return [];
 
         await connectToDatabase();
 
-        const notifications = await Notification.find({ recipientClerkId: userId })
+        const filter: Record<string, unknown> = { recipientClerkId: userId };
+        if (options?.category === "activity") {
+            filter.$or = [
+                { category: "activity" },
+                {
+                    type: { $in: ["follow", "event_created", "co_organizer_accepted"] },
+                    category: { $exists: false },
+                },
+            ];
+        } else if (options?.category === "requests") {
+            filter.$or = [{ category: "requests" }, { type: "co_organizer_invite" }];
+        }
+
+        const notifications = await Notification.find(filter)
             .sort({ createdAt: -1 })
-            .limit(limit)
+            .limit(options?.limit ?? 20)
             .lean();
 
         const serialized = await Promise.all(notifications.map((notification) => serializeNotification(notification)));
