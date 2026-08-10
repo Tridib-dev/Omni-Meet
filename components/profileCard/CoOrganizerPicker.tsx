@@ -52,7 +52,7 @@ export function CoOrganizerPicker({ viewerClerkId, value, onChange }: CoOrganize
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex items-center justify-center gap-1.5 rounded-2xl border border-dashed border-border/30 px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:border-border/50 hover:text-foreground"
+        className="flex items-center justify-center gap-1.5 rounded-2xl border border-dashed border-border/50 bg-muted/20 px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:border-border hover:bg-accent hover:text-accent-foreground"
       >
         <Plus size={16} />
         Invite co-organizer

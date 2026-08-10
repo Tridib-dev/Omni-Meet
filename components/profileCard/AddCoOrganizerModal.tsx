@@ -34,7 +34,7 @@ function toProfileRowUser(connection: ProfileConnection): ProfileRowUser {
 const DARK_MODAL_VARS: CSSProperties = {
   colorScheme: "dark",
   "--background": "#0d1117",
-  "--foreground": "#f8fafc",
+  "--foreground": "#2f3037",
   "--card": "#121826",
   "--card-foreground": "#f8fafc",
   "--popover": "#121826",
@@ -100,7 +100,7 @@ export function AddCoOrganizerModal({
       onOpenChange={handleOpenChange}
       title="Invite co-organizer"
       description={`${connections.length} ${tab}`}
-      className="md:max-w-md"
+      className="md:max-w-md h-[75dvh] max-h-[75dvh]"
     >
       <div style={DARK_MODAL_VARS} className="flex flex-col gap-3 text-white">
         <div className="flex items-center gap-1 rounded-2xl border border-border/20 bg-muted/40 p-1">
@@ -109,7 +109,9 @@ export function AddCoOrganizerModal({
             onClick={() => setTab("followers")}
             className={cn(
               "flex-1 rounded-xl px-3 py-2 text-sm font-medium transition-colors",
-              tab === "followers" ? "bg-card text-card-foreground shadow-sm" : "text-muted-foreground"
+              tab === "followers"
+                ? "bg-white/10 text-white shadow-sm ring-1 ring-white/10"
+                : "text-muted-foreground hover:text-foreground/80"
             )}
           >
             Followers
@@ -119,7 +121,9 @@ export function AddCoOrganizerModal({
             onClick={() => setTab("following")}
             className={cn(
               "flex-1 rounded-xl px-3 py-2 text-sm font-medium transition-colors",
-              tab === "following" ? "bg-card text-card-foreground shadow-sm" : "text-muted-foreground"
+              tab === "following"
+                ? "bg-white/10 text-white shadow-sm ring-1 ring-white/10"
+                : "text-muted-foreground hover:text-foreground/80"
             )}
           >
             Following

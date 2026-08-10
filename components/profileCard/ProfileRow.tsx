@@ -68,7 +68,7 @@ export function ProfileRowShell({
 
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
-          <p className="truncate text-sm font-semibold text-foreground leading-tight">{fullName}</p>
+          <p className="truncate text-sm font-semibold text-[#2f3037] leading-tight">{fullName}</p>
           {badge}
         </div>
         <p className="truncate text-xs text-muted-foreground">@{user.username}</p>
