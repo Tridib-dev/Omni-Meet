@@ -34,7 +34,7 @@ export default async function EventRoomPage({
                 description="Control the live room, stage, and online experience."
             />
 
-            <div className="grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(320px,.9fr)]">
+            <div className="space-y-4">
                 <Card className="overflow-hidden">
                     <CardHeader>
                         <div className="flex items-start gap-3">

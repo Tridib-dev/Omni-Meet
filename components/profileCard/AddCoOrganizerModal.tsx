@@ -1,25 +1,36 @@
-"use client"
+"use client";
 
-import { useEffect, useMemo, useState, type CSSProperties } from "react"
-import { Search } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { BottomModal } from "@/components/uitripled/bottom-modal"
-import { CoOrganizerCandidateRow, ProfileRowSkeleton, type ProfileRowUser } from "./ProfileRow"
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { Search } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { BottomModal } from "@/components/uitripled/bottom-modal";
+import { CoOrganizerCandidateRow, ProfileRowSkeleton, type ProfileRowUser } from "./ProfileRow";
 import {
   getProfileConnections,
   type ConnectionRelation,
   type ProfileConnection,
-} from "@/lib/actions/profile.actions"
+} from "@/lib/actions/profile.actions";
+import {
+  getCoOrganizerInviteStateAction,
+  revokeCoOrganizerInviteAction,
+  sendCoOrganizerInvitesAction,
+} from "@/lib/actions/coOrganizerInvite.actions";
+import { removeCoOrganizer } from "@/lib/actions/gate.actions";
 
 export interface AddCoOrganizerModalProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   /** The organizer's own clerkId — connections are fetched relative to them. */
-  viewerClerkId: string
-  /** clerkIds already picked in the parent form — drives each row's Add/Remove state. */
-  selectedClerkIds: Set<string>
-  onToggle: (user: ProfileRowUser) => void
+  viewerClerkId: string;
+  eventId?: string;
+  selectedClerkIds?: Set<string>;
+  onToggle?: (user: ProfileRowUser) => void;
+  busyClerkIds?: Set<string>;
+  onChanged?: () => void;
 }
+
+type InviteState = "none" | "pending" | "active" | "denied";
+type ConnectionTab = ConnectionRelation | "all";
 
 function toProfileRowUser(connection: ProfileConnection): ProfileRowUser {
   return {
@@ -28,7 +39,19 @@ function toProfileRowUser(connection: ProfileConnection): ProfileRowUser {
     firstName: connection.firstName,
     lastName: connection.lastName,
     username: connection.username,
+  };
+}
+
+function mergeUnique(...lists: ProfileConnection[][]): ProfileConnection[] {
+  const map = new Map<string, ProfileConnection>();
+  for (const list of lists) {
+    for (const item of list) {
+      if (!map.has(item.clerkId)) {
+        map.set(item.clerkId, item);
+      }
+    }
   }
+  return Array.from(map.values());
 }
 
 const DARK_MODAL_VARS: CSSProperties = {
@@ -44,55 +67,151 @@ const DARK_MODAL_VARS: CSSProperties = {
   "--border": "#273347",
   "--input": "#273347",
   "--ring": "#67e8f9",
-} as CSSProperties
+} as CSSProperties;
 
 export function AddCoOrganizerModal({
   open,
   onOpenChange,
   viewerClerkId,
+  eventId,
   selectedClerkIds,
   onToggle,
+  busyClerkIds: externalBusyClerkIds,
+  onChanged,
 }: AddCoOrganizerModalProps) {
-  const [tab, setTab] = useState<ConnectionRelation>("followers")
-  const [query, setQuery] = useState("")
-  const [connections, setConnections] = useState<ProfileConnection[]>([])
-  const [loading, setLoading] = useState(false)
+  const [tab, setTab] = useState<ConnectionTab>("all");
+  const [query, setQuery] = useState("");
+  const [followers, setFollowers] = useState<ProfileConnection[]>([]);
+  const [following, setFollowing] = useState<ProfileConnection[]>([]);
+  const [inviteStateById, setInviteStateById] = useState<Record<string, InviteState>>({});
+  const [localBusyClerkIds, setLocalBusyClerkIds] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(false);
+  const isSelectionMode = Boolean(onToggle && selectedClerkIds);
+  const busyClerkIds = externalBusyClerkIds ?? localBusyClerkIds;
 
-  // Refetch whenever the modal opens or the tab changes. getProfileConnections
-  // has no search param today, so filtering below is client-side — fine at
-  // typical follower-list sizes; worth moving server-side later if lists get
-  // large enough that shipping the whole list becomes wasteful.
   useEffect(() => {
-    if (!open) return
-    let active = true
-    ;(async () => {
-      setLoading(true)
+    if (!open) return;
+
+    let active = true;
+    (async () => {
+      setLoading(true);
       try {
-        const result = await getProfileConnections(viewerClerkId, tab)
-        if (active) setConnections(result)
+        const requests = [
+          getProfileConnections(viewerClerkId, "followers"),
+          getProfileConnections(viewerClerkId, "following"),
+        ] as const;
+
+        const [followersResult, followingResult] = await Promise.all(requests);
+
+        if (!active) return;
+
+        setFollowers(followersResult);
+        setFollowing(followingResult);
+        if (!isSelectionMode && eventId) {
+          const inviteState = await getCoOrganizerInviteStateAction(eventId);
+          if (!active) return;
+
+          setInviteStateById(() => {
+            const next: Record<string, InviteState> = {};
+            inviteState.activeClerkIds.forEach((id) => {
+              next[id] = "active";
+            });
+            inviteState.pendingClerkIds.forEach((id) => {
+              next[id] = "pending";
+            });
+            inviteState.deniedClerkIds.forEach((id) => {
+              if (!next[id]) next[id] = "denied";
+            });
+            return next;
+          });
+        } else {
+          setInviteStateById({});
+        }
       } finally {
-        if (active) setLoading(false)
+        if (active) setLoading(false);
       }
-    })()
+    })();
+
     return () => {
-      active = false
-    }
-  }, [open, tab, viewerClerkId])
+      active = false;
+    };
+  }, [open, viewerClerkId, eventId, isSelectionMode]);
+
+  const connections = useMemo(() => {
+    if (tab === "followers") return followers;
+    if (tab === "following") return following;
+    return mergeUnique(followers, following);
+  }, [tab, followers, following]);
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    if (!q) return connections
+    const q = query.trim().toLowerCase();
+    if (!q) return connections;
     return connections.filter(
       (c) =>
         c.username.toLowerCase().includes(q) ||
         `${c.firstName} ${c.lastName}`.toLowerCase().includes(q)
-    )
-  }, [connections, query])
+    );
+  }, [connections, query]);
+
+  function setBusy(clerkId: string, busy: boolean) {
+    setBusyClerkIds((current) => {
+      const next = new Set(current);
+      if (busy) next.add(clerkId);
+      else next.delete(clerkId);
+      return next;
+    });
+  }
+
+  async function handleAction(connection: ProfileConnection) {
+    if (busyClerkIds.has(connection.clerkId)) return;
+
+    if (isSelectionMode) {
+      onToggle?.(toProfileRowUser(connection));
+      return;
+    }
+
+    const currentState = inviteStateById[connection.clerkId] ?? "none";
+    if (!eventId) return;
+
+    setLocalBusyClerkIds((current) => {
+      const next = new Set(current);
+      next.add(connection.clerkId);
+      return next;
+    });
+
+    try {
+      if (currentState === "none" || currentState === "denied") {
+        const result = await sendCoOrganizerInvitesAction(eventId, [connection.clerkId]);
+        if (result.sent.includes(connection.clerkId)) {
+          setInviteStateById((current) => ({ ...current, [connection.clerkId]: "pending" }));
+          onChanged?.();
+        }
+      } else if (currentState === "pending") {
+        const result = await revokeCoOrganizerInviteAction(eventId, connection.clerkId);
+        if (result.success) {
+          setInviteStateById((current) => ({ ...current, [connection.clerkId]: "none" }));
+          onChanged?.();
+        }
+      } else if (currentState === "active") {
+        const result = await removeCoOrganizer(eventId, connection.clerkId);
+        if (result.success) {
+          setInviteStateById((current) => ({ ...current, [connection.clerkId]: "none" }));
+          onChanged?.();
+        }
+      }
+    } finally {
+      setLocalBusyClerkIds((current) => {
+        const next = new Set(current);
+        next.delete(connection.clerkId);
+        return next;
+      });
+    }
+  }
 
   const handleOpenChange = (nextOpen: boolean) => {
-    onOpenChange(nextOpen)
-    if (!nextOpen) setQuery("")
-  }
+    onOpenChange(nextOpen);
+    if (!nextOpen) setQuery("");
+  };
 
   return (
     <BottomModal
@@ -103,31 +222,22 @@ export function AddCoOrganizerModal({
       className="md:max-w-md h-[75dvh] max-h-[75dvh]"
     >
       <div style={DARK_MODAL_VARS} className="flex flex-col gap-3 text-white">
-        <div className="flex items-center gap-1 rounded-2xl border border-border/20 bg-muted/40 p-1">
-          <button
-            type="button"
-            onClick={() => setTab("followers")}
-            className={cn(
-              "flex-1 rounded-xl px-3 py-2 text-sm font-medium transition-colors",
-              tab === "followers"
-                ? "bg-white/10 text-white shadow-sm ring-1 ring-white/10"
-                : "text-muted-foreground hover:text-foreground/80"
-            )}
-          >
-            Followers
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab("following")}
-            className={cn(
-              "flex-1 rounded-xl px-3 py-2 text-sm font-medium transition-colors",
-              tab === "following"
-                ? "bg-white/10 text-white shadow-sm ring-1 ring-white/10"
-                : "text-muted-foreground hover:text-foreground/80"
-            )}
-          >
-            Following
-          </button>
+        <div className="grid grid-cols-3 gap-1 rounded-2xl border border-border/20 bg-muted/40 p-1">
+          {(["all", "followers", "following"] as const).map((item) => (
+            <button
+              key={item}
+              type="button"
+              onClick={() => setTab(item)}
+              className={cn(
+                "rounded-xl px-3 py-2 text-sm font-medium transition-colors",
+                tab === item
+                  ? "bg-white/10 text-white shadow-sm ring-1 ring-white/10"
+                  : "text-muted-foreground hover:text-foreground/80"
+              )}
+            >
+              {item === "all" ? "All" : item === "followers" ? "Followers" : "Following"}
+            </button>
+          ))}
         </div>
 
         <div className="relative">
@@ -148,18 +258,27 @@ export function AddCoOrganizerModal({
               {query ? "No matches." : `No ${tab} yet.`}
             </p>
           ) : (
-            filtered.map((connection) => (
-              <CoOrganizerCandidateRow
-                key={connection.clerkId}
-                user={toProfileRowUser(connection)}
-                isCoOrganizer={selectedClerkIds.has(connection.clerkId)}
-                onAdd={() => onToggle(toProfileRowUser(connection))}
-                onRemove={() => onToggle(toProfileRowUser(connection))}
-              />
-            ))
+            filtered.map((connection) => {
+              const state = isSelectionMode
+                ? selectedClerkIds?.has(connection.clerkId)
+                  ? "active"
+                  : "none"
+                : inviteStateById[connection.clerkId] ?? "none";
+
+              return (
+                <CoOrganizerCandidateRow
+                  key={connection.clerkId}
+                  user={toProfileRowUser(connection)}
+                  state={state}
+                  pending={busyClerkIds.has(connection.clerkId)}
+                  onAdd={() => handleAction(connection)}
+                  onRemove={() => handleAction(connection)}
+                />
+              );
+            })
           )}
         </div>
       </div>
     </BottomModal>
-  )
+  );
 }

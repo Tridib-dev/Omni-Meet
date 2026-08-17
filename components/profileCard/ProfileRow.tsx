@@ -122,11 +122,11 @@ function RowActionButton({
       whileHover={!disabled ? { scale: 1.03 } : undefined}
       whileTap={!disabled ? { scale: 0.97 } : undefined}
       className={cn(
-        "rounded-xl border border-border/20 px-3 py-1.5 text-xs font-semibold transition-colors duration-150",
+        "rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors duration-150",
         "disabled:opacity-60",
         active
-          ? "bg-muted text-muted-foreground hover:bg-muted/80"
-          : "bg-foreground text-background hover:bg-foreground/90"
+          ? "border-white/10 bg-white/[0.05] text-white/55 hover:bg-white/[0.08]"
+          : "border-[#332be0]/30 bg-[#332be0] text-white shadow-[0_8px_20px_rgba(51,43,224,0.22)] hover:bg-[#2b24c8]"
       )}
     >
       {children}
@@ -138,7 +138,7 @@ function RowActionButton({
 
 export interface CoOrganizerCandidateRowProps {
   user: ProfileRowUser
-  isCoOrganizer: boolean
+  state: "none" | "pending" | "active" | "denied"
   pending?: boolean
   onAdd: () => void
   onRemove: () => void
@@ -148,21 +148,38 @@ export interface CoOrganizerCandidateRowProps {
 
 export function CoOrganizerCandidateRow({
   user,
-  isCoOrganizer,
+  state,
   pending = false,
   onAdd,
   onRemove,
   onClick,
   className,
 }: CoOrganizerCandidateRowProps) {
+  const isCoOrganizer = state === "pending" || state === "active"
+
   return (
     <ProfileRowShell
       user={user}
       onClick={onClick}
+      badge={
+        state === "pending" ? (
+          <span className="rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[10px] font-medium text-white/55">
+            Pending
+          </span>
+        ) : state === "active" ? (
+          <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-300">
+            Active
+          </span>
+        ) : state === "denied" ? (
+          <span className="rounded-full border border-rose-500/20 bg-rose-500/10 px-2 py-0.5 text-[10px] font-medium text-rose-300">
+            Denied
+          </span>
+        ) : null
+      }
       className={className}
       trailing={
-        <RowActionButton active={isCoOrganizer} disabled={pending} onClick={isCoOrganizer ? onRemove : onAdd}>
-          {pending ? "..." : isCoOrganizer ? "Remove" : "Invite"}
+        <RowActionButton active={isCoOrganizer} disabled={pending} onClick={state === "none" || state === "denied" ? onAdd : onRemove}>
+          {pending ? "..." : state === "none" || state === "denied" ? "Invite" : "Remove"}
         </RowActionButton>
       }
     />

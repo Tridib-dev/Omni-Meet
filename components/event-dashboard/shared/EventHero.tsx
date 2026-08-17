@@ -48,12 +48,13 @@ function formatCountdown(target: Date | null) {
 function formatEventDate(date: Date | null) {
     if (!date) return "Date not set";
 
-    return date.toLocaleDateString("en-IN", {
+    return new Intl.DateTimeFormat("en-IN", {
         weekday: "long",
         day: "numeric",
         month: "long",
         year: "numeric",
-    });
+        timeZone: "UTC",
+    }).format(date);
 }
 
 export default function EventHero({
@@ -68,7 +69,7 @@ export default function EventHero({
     time: string;
 }) {
     const { displayDate, startDate } = useMemo(() => parseEventDate(date, time), [date, time]);
-    const [countdown, setCountdown] = useState(() => formatCountdown(startDate));
+    const [countdown, setCountdown] = useState<ReturnType<typeof formatCountdown> | null>(null);
 
     useEffect(() => {
         setCountdown(formatCountdown(startDate));
@@ -77,7 +78,7 @@ export default function EventHero({
     }, [startDate]);
 
     return (
-        <section className="relative overflow-hidden px-2 py-2 sm:px-4 sm:py-4">
+        <section className="relative overflow-hidden px-2 py-0 sm:px-4 sm:py-1">
             <div
                 aria-hidden="true"
                 className="pointer-events-none absolute inset-x-1/2 top-0 h-40 w-96 -translate-x-1/2 rounded-full blur-3xl"
@@ -103,7 +104,7 @@ export default function EventHero({
                 </p>
 
                 <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-                    {countdown.label ? (
+                    {!countdown || countdown.label ? (
                         <div
                             className="rounded-full border px-4 py-2 text-sm font-medium text-white/80"
                             style={{
@@ -111,7 +112,7 @@ export default function EventHero({
                                 background: edTokens.accentMuted,
                             }}
                         >
-                            {countdown.label}
+                            {countdown?.label ?? "Loading countdown"}
                         </div>
                     ) : (
                         (["days", "hours", "minutes", "seconds"] as const).map((unit) => (

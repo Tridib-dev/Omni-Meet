@@ -7,8 +7,9 @@ import DataTable from "@/components/event-dashboard/shared/DataTable";
 import PageSection from "@/components/event-dashboard/shared/PageSection";
 import EmptyState from "@/components/event-dashboard/shared/EmptyState";
 import { Badge } from "@/components/ui/badge";
-import { addCoOrganizer, removeCoOrganizer } from "@/lib/actions/gate.actions";
+import { removeCoOrganizer } from "@/lib/actions/gate.actions";
 import type { EventOrganizersData } from "@/lib/event-dashboard/organizers";
+import InviteCoOrganizerComposer from "@/components/event-dashboard/organizers/InviteCoOrganizerComposer";
 
 type TabId = "active" | "pending" | "declined";
 
@@ -31,28 +32,10 @@ export default function OrganizersPanel({
 }) {
     const router = useRouter();
     const [tab, setTab] = useState<TabId>("active");
-    const [clerkId, setClerkId] = useState("");
-    const [message, setMessage] = useState<string | null>(null);
     const [pending, startTransition] = useTransition();
 
     function refresh() {
         router.refresh();
-    }
-
-    function handleInvite(e: React.FormEvent) {
-        e.preventDefault();
-        if (!clerkId.trim()) return;
-        setMessage(null);
-        startTransition(async () => {
-            const result = await addCoOrganizer(eventId, clerkId.trim());
-            if (result.success) {
-                setClerkId("");
-                setMessage("Invite sent successfully.");
-                refresh();
-            } else {
-                setMessage("Could not send invite. Check the Clerk ID and try again.");
-            }
-        });
     }
 
     function handleRemove(targetClerkId: string) {
@@ -70,26 +53,12 @@ export default function OrganizersPanel({
 
     return (
         <div className="space-y-6">
-            {isCreator && (
-                <PageSection title="Invite co-organizer" description="Send an invite by Clerk user ID.">
-                    <form onSubmit={handleInvite} className="flex flex-col gap-3 sm:flex-row">
-                        <input
-                            value={clerkId}
-                            onChange={(e) => setClerkId(e.target.value)}
-                            placeholder="Clerk user ID (user_…)"
-                            className="h-10 flex-1 rounded-lg border border-white/10 bg-white/[0.04] px-3 text-[13px] text-white outline-none placeholder:text-white/30 focus:border-[#332be0]/40"
-                        />
-                        <button
-                            type="submit"
-                            disabled={pending || !clerkId.trim()}
-                            className="h-10 rounded-lg bg-[#332be0] px-4 text-[13px] font-medium text-white transition-opacity disabled:opacity-50"
-                        >
-                            {pending ? "Sending…" : "Send invite"}
-                        </button>
-                    </form>
-                    {message && <p className="mt-2 text-[12px] text-white/50">{message}</p>}
-                </PageSection>
-            )}
+            <InviteCoOrganizerComposer
+                eventId={eventId}
+                isCreator={isCreator}
+                initialPendingClerkIds={data.pending.map((item) => item.clerkId)}
+                initialActiveClerkIds={data.active.map((item) => item.clerkId)}
+            />
 
             <PageSection
                 title="Committee"

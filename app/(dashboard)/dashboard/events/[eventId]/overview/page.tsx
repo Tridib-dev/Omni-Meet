@@ -28,7 +28,7 @@ export default async function EventOverviewPage({
     const actionItems = getActionRailItems(eventId, data.event.normalizedMode, "overview");
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-3">
             <EventHero
                 title={data.event.title}
                 category={data.event.category}

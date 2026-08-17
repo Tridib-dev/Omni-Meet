@@ -11,6 +11,7 @@ import { User } from "@/database/User.model";
 import {
     notifyCoOrganizerAccepted,
     notifyCoOrganizerInvited,
+    deleteCoOrganizerInviteNotification,
     updateCoOrganizerInviteNotificationStatus,
 } from "@/lib/notifications";
 
@@ -343,6 +344,41 @@ export async function cancelCoOrganizerInvite(
     });
 
     return { success: true, reason: "success", inviteId };
+}
+
+export async function revokeCoOrganizerInvite(
+    eventId: string,
+    inviteeClerkId: string,
+    actingClerkId: string
+): Promise<CoOrganizerInviteMutationResult> {
+    if (!isValidObjectId(eventId) || !inviteeClerkId || !actingClerkId) {
+        return { success: false, reason: "invalid" };
+    }
+
+    await connectToDatabase();
+
+    const event = await getEventForInvite(eventId);
+    if (!event || event.creatorClerkId !== actingClerkId) {
+        return { success: false, reason: "unauthorized" };
+    }
+
+    const invite = (await CoOrganizerInvite.findOne({
+        eventId: event._id,
+        inviteeClerkId,
+        status: "pending",
+    }).lean()) as InviteDoc | null;
+
+    if (!invite) {
+        return { success: false, reason: "not_found" };
+    }
+
+    await CoOrganizerInvite.deleteOne({ _id: invite._id, status: "pending" });
+    await deleteCoOrganizerInviteNotification({
+        inviteeClerkId,
+        eventId: event._id.toString(),
+    });
+
+    return { success: true, reason: "success", inviteId: invite._id.toString() };
 }
 
 export async function getPendingInvitesForUser(clerkId: string): Promise<CoOrganizerInviteSummaryItem[]> {

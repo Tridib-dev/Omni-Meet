@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { edTokens } from "@/components/event-dashboard/theme/tokens";
@@ -15,6 +15,42 @@ export default function EventDashboardShellInner({ children }: { children: React
     const { context } = useEventDashboard();
     const [collapsed, setCollapsed] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
+    const mainRef = useRef<HTMLElement | null>(null);
+
+    useEffect(() => {
+        if ("scrollRestoration" in history) {
+            const prev = history.scrollRestoration;
+            history.scrollRestoration = "manual";
+            return () => {
+                history.scrollRestoration = prev;
+            };
+        }
+    }, []);
+
+    useLayoutEffect(() => {
+        const main = mainRef.current;
+        if (!main) return;
+
+        main.scrollTop = 0;
+        main.scrollLeft = 0;
+        window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+
+        const raf1 = requestAnimationFrame(() => {
+            main.scrollTop = 0;
+            main.scrollLeft = 0;
+            window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+        });
+        const raf2 = requestAnimationFrame(() => {
+            main.scrollTop = 0;
+            main.scrollLeft = 0;
+            window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+        });
+
+        return () => {
+            cancelAnimationFrame(raf1);
+            cancelAnimationFrame(raf2);
+        };
+    }, [pathname]);
 
     return (
         <div
@@ -35,7 +71,12 @@ export default function EventDashboardShellInner({ children }: { children: React
             <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
                 <EventTopbar onMenuClick={() => setMobileOpen(true)} />
 
-                <main data-dashboard-main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
+                <main
+                    ref={mainRef}
+                    data-dashboard-main
+                    className="min-h-0 flex-1 overscroll-y-none overflow-y-auto overflow-x-hidden"
+                    style={{ overflowAnchor: "none", scrollBehavior: "auto" }}
+                >
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={pathname}
@@ -43,7 +84,7 @@ export default function EventDashboardShellInner({ children }: { children: React
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -6 }}
                             transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-                            className="w-full px-4 pb-20 pt-4 sm:px-5 sm:pt-5 lg:px-6 xl:px-8"
+                            className="w-full px-4 pb-20 pt-0 sm:px-5 lg:px-6 xl:px-8"
                         >
                             {children}
                         </motion.div>

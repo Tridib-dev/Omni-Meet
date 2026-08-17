@@ -25,7 +25,7 @@ export default function ActionCardRail({
     return (
         <PageSection title={title} description={description}>
             <ScrollArea className="pb-2">
-                <div className="grid auto-cols-[minmax(220px,240px)] grid-flow-col gap-3">
+                <div className="grid auto-cols-[240px] grid-flow-col items-stretch gap-3">
                     {items.map((item, index) => (
                         <ActionCard
                             key={item.id}

@@ -98,6 +98,24 @@ export async function updateCoOrganizerInviteNotificationStatus({
     );
 }
 
+export async function deleteCoOrganizerInviteNotification({
+    inviteeClerkId,
+    eventId,
+}: {
+    inviteeClerkId: string;
+    eventId: string;
+}) {
+    if (!inviteeClerkId || !eventId) {
+        return;
+    }
+
+    await connectToDatabase();
+
+    await Notification.deleteOne({
+        dedupeKey: `co_organizer_invite:${inviteeClerkId}:${eventId}`,
+    });
+}
+
 export async function notifyFollowCreated({
     followerClerkId,
     followingClerkId,
