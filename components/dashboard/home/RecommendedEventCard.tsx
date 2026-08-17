@@ -111,9 +111,9 @@ export function RecommendedEventCard({ event, index, compact = false }: Props) {
                 />
             </div>
 
-            <div className={compact ? "w-full rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(7,9,15,0.18),rgba(7,9,15,0.88))] px-3.5 py-3.5 backdrop-blur-md sm:px-4 sm:py-4 lg:px-5 lg:py-5" : "w-full rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(7,9,15,0.18),rgba(7,9,15,0.88))] px-4 py-4 backdrop-blur-md sm:px-5 sm:py-5 lg:px-6 lg:py-6"}>
-                <div className="grid gap-4 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,0.7fr)] lg:items-end">
-                    <div className="space-y-3">
+            <div className={compact ? "w-full px-1 pt-2" : "w-full px-1 pt-3"}>
+                <div className="grid gap-3 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,0.7fr)] lg:items-end">
+                    <div className="space-y-2.5">
                         <h3 className={compact ? "max-w-2xl text-[21px] font-semibold leading-[1.04] tracking-[-0.04em] text-white sm:text-[28px] lg:text-[34px]" : "max-w-2xl text-[26px] font-semibold leading-[1.04] tracking-[-0.04em] text-white sm:text-[34px] lg:text-[42px]"}>
                             {event.title}
                         </h3>
