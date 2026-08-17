@@ -23,14 +23,14 @@ export default async function AnalyticsPage() {
                 description="Visual dashboards for how you attend and how you host."
                 right={
                     <div
-                        className="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1.5 text-[12px] text-cyan-200"
+                        className="rounded-full border border-[#332be0]/25 bg-[#332be0]/10 px-3 py-1.5 text-[12px] text-[#a5a0ff]"
                     >
                         Live motion, not static numbers
                     </div>
                 }
             />
 
-            <div className="rounded-xl border border-white/8 bg-[radial-gradient(circle_at_top_left,rgba(103,232,249,0.10),transparent_35%),radial-gradient(circle_at_top_right,rgba(168,85,247,0.10),transparent_32%),rgba(255,255,255,0.02)] p-4 sm:p-5">
+            <div className="rounded-xl border border-white/8 bg-[radial-gradient(circle_at_top_left,rgba(51,43,224,0.10),transparent_35%),radial-gradient(circle_at_top_right,rgba(129,140,248,0.10),transparent_32%),rgba(255,255,255,0.02)] p-4 sm:p-5">
                 <NativeTabs
                     defaultValue="attended"
                     items={[

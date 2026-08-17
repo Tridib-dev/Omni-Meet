@@ -1,24 +1,26 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import { cn } from "@/lib/utils";
 
 export default function HorizontalScrollProgress({
     children,
     className,
     contentClassName,
+    viewportRef: externalViewportRef,
 }: {
     children: ReactNode;
     className?: string;
     contentClassName?: string;
+    viewportRef?: RefObject<HTMLDivElement | null>;
 }) {
-    const viewportRef = useRef<HTMLDivElement | null>(null);
+    const internalViewportRef = useRef<HTMLDivElement | null>(null);
     const [progress, setProgress] = useState(0);
     const [visibleFraction, setVisibleFraction] = useState(1);
     const [hasOverflow, setHasOverflow] = useState(false);
 
     useEffect(() => {
-        const viewport = viewportRef.current;
+        const viewport = externalViewportRef?.current ?? internalViewportRef.current;
         if (!viewport) return;
 
         let raf = 0;
@@ -57,7 +59,7 @@ export default function HorizontalScrollProgress({
     return (
         <div className={cn("space-y-2", className)}>
             <div
-                ref={viewportRef}
+                ref={externalViewportRef ?? internalViewportRef}
                 className={cn(
                     "overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
                     contentClassName

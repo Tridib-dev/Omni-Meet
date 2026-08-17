@@ -56,8 +56,7 @@ function OrganizedEventGrid({
                 {showCreateLink && (
                     <Link
                         href="/create_event"
-                        className="mt-4 px-4 py-2 rounded-lg text-[12px] font-medium transition-colors"
-                        style={{ background: "rgba(6,182,212,0.12)", border: "1px solid rgba(6,182,212,0.2)", color: "#67e8f9" }}
+                        className="mt-4 rounded-xl border border-[#332be0]/30 bg-[#332be0] px-4 py-2 text-[12px] font-medium text-white shadow-[0_8px_20px_rgba(51,43,224,0.22)] transition-colors hover:bg-[#2b24c8] active:scale-95"
                     >
                         Create your first event →
                     </Link>
@@ -67,11 +66,11 @@ function OrganizedEventGrid({
     }
 
     return (
-        <div className="grid gap-3 lg:grid-cols-2">
+        <div className="grid gap-3 sm:[grid-template-columns:repeat(auto-fit,minmax(200px,340px))] sm:justify-start">
             {events.map((ev) => (
                 <div
                     key={ev.id}
-                    className="group flex min-w-0 flex-col overflow-hidden rounded-xl"
+                    className="group flex w-full max-w-[340px] min-w-0 flex-col overflow-hidden rounded-xl"
                     style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
                 >
                     <div className="relative h-32 flex-shrink-0 overflow-hidden sm:h-36">
@@ -125,8 +124,7 @@ function OrganizedEventGrid({
                         <div className="mt-auto flex items-center gap-2">
                             <Link
                                 href={`/dashboard/events/${ev.id}/overview`}
-                                className="flex-1 text-center py-2 rounded-lg text-[12px] font-medium text-white/60 hover:text-white/90 transition-colors"
-                                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
+                                className="flex-1 rounded-xl border border-[#332be0]/30 bg-[#332be0] py-2 text-center text-[12px] font-medium text-white shadow-[0_8px_20px_rgba(51,43,224,0.22)] transition-colors hover:bg-[#2b24c8] active:scale-95"
                             >
                                 Manage event →
                             </Link>

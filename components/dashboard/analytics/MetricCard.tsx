@@ -49,7 +49,7 @@ export default function MetricCard({
     prefix = "",
     suffix = "",
     sub,
-    color = "#06b6d4",
+    color = "#332be0",
     sparkData,
     index = 0,
 }: MetricCardProps) {

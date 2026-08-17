@@ -36,29 +36,29 @@ export default function AttendedAnalytics({ data }: { data: AttendedAnalyticsDat
                 <MetricCard
                     label="Lifetime attended"
                     value={data.lifetime}
-                    color="#67e8f9"
+                    color="#332be0"
                     sub="All ticket entries on your profile"
                     index={0}
                 />
                 <MetricCard
                     label="This year"
                     value={data.thisYear}
-                    color="#a78bfa"
+                    color="#4c46ff"
                     sub="Events attended since January"
                     index={1}
                 />
                 <MetricCard
                     label="Upcoming"
                     value={data.upcomingCount}
-                    color="#22c55e"
+                    color="#818cf8"
                     sub={data.nextEventCountdown ? `Next: ${data.nextEventCountdown}` : "No upcoming events"}
                     index={2}
                 />
                 <MetricCard
                     label="Streak"
                     value={data.streak}
-                    suffix=" mo"
-                    color="#f59e0b"
+                    suffix=" months"
+                    color="#332be0"
                     sub="Consecutive months with at least one event"
                     index={3}
                 />
@@ -86,21 +86,21 @@ export default function AttendedAnalytics({ data }: { data: AttendedAnalyticsDat
                 <motion.section
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="rounded-xl border border-white/8 bg-[radial-gradient(circle_at_top_left,rgba(103,232,249,0.14),transparent_45%),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] p-4 sm:p-5"
+                    className="rounded-xl border border-white/8 bg-[radial-gradient(circle_at_top_left,rgba(51,43,224,0.14),transparent_45%),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] p-4 sm:p-5"
                 >
                     <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                             <p className="text-[11px] uppercase tracking-[0.16em] text-white/25">Next pulse</p>
                             <h2 className="mt-1 text-[16px] font-semibold text-white/90">Upcoming event snapshot</h2>
                         </div>
-                        <span className="text-[11px] text-cyan-300/80">{data.nextEventCountdown ?? "No countdown"}</span>
+                        <span className="text-[11px] text-[#a5a0ff]">{data.nextEventCountdown ?? "No countdown"}</span>
                     </div>
 
                     {data.nextEvent ? (
                         <div className="space-y-4">
                             <div className="rounded-xl border border-white/8 bg-black/20 p-4">
                                 <p className="text-[12px] text-white/35">{nextDate}</p>
-                                <Link href={`/events/${data.nextEvent.slug}`} className="mt-1 block text-[20px] font-semibold tracking-[-0.02em] text-white/95 hover:text-cyan-300 transition-colors">
+                                <Link href={`/events/${data.nextEvent.slug}`} className="mt-1 block text-[20px] font-semibold tracking-[-0.02em] text-white/95 hover:text-[#a5a0ff] transition-colors">
                                     {data.nextEvent.title}
                                 </Link>
                                 <p className="mt-2 text-[12px] text-white/35">Starts {data.nextEventCountdown}</p>
@@ -190,8 +190,8 @@ export default function AttendedAnalytics({ data }: { data: AttendedAnalyticsDat
                                                     style={{
                                                         width: `${Math.max(18, (organizer.count / (data.favoriteOrganizers[0]?.count || 1)) * 100)}%`,
                                                         background: index === 0
-                                                            ? "linear-gradient(90deg, #67e8f9, #22c55e)"
-                                                            : "linear-gradient(90deg, #f59e0b, #fb7185)",
+                                                            ? "linear-gradient(90deg, #332be0, #4c46ff)"
+                                                            : "linear-gradient(90deg, #818cf8, #a78bfa)",
                                                     }}
                                                 />
                                             </div>
@@ -228,7 +228,7 @@ function TrendCard({ data }: { data: AttendedAnalyticsData["monthlyActivity"] })
                                 height: `${Math.max(8, (item.count / max) * 100)}%`,
                                 background: item.count === 0
                                     ? "rgba(255,255,255,0.06)"
-                                    : "linear-gradient(180deg, rgba(103,232,249,0.95), rgba(103,232,249,0.18))",
+                                    : "linear-gradient(180deg, rgba(51,43,224,0.95), rgba(51,43,224,0.18))",
                             }}
                         />
                         <span className="text-[9px] text-white/25 text-center">{item.month.split(" ")[0]}</span>

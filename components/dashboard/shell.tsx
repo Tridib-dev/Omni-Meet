@@ -6,6 +6,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import DashboardSidebar from "./sidebar";
 import DashboardTopbar from "./topbar";
+import DashboardActionCardRail from "@/components/dashboard/action-card-rail";
 import type { AccessibleDashboardEvent } from "@/lib/event-dashboard/access";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 
@@ -85,7 +86,10 @@ export default function DashboardShell({
                             transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
                             className="w-full px-4 pb-20 pt-0 sm:px-5 lg:px-6 xl:px-8"
                         >
-                            {children}
+                            <div className="space-y-8">
+                                {children}
+                                <DashboardActionCardRail />
+                            </div>
                         </motion.div>
                     </AnimatePresence>
                 </main>
@@ -109,11 +113,6 @@ export function PageHeader({
     return (
         <div className="mb-6 flex flex-col gap-4 sm:mb-7 lg:flex-row lg:items-start lg:justify-between">
             <div className="min-w-0">
-                {kicker && (
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-cyan-500/80 mb-1.5">
-                        {kicker}
-                    </p>
-                )}
                 <h1 className="text-[24px] font-semibold leading-tight text-white sm:text-[28px]">
                     {title}
                 </h1>

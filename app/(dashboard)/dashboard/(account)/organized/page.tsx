@@ -21,8 +21,7 @@ export default async function OrganizedPage() {
                 right={
                     <Link
                         href="/create_event"
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-medium text-white transition-all hover:opacity-90 active:scale-95"
-                        style={{ background: "rgba(6,182,212,0.15)", border: "1px solid rgba(6,182,212,0.25)", color: "#67e8f9" }}
+                        className="flex items-center gap-2 rounded-xl border border-[#332be0]/30 bg-[#332be0] px-4 py-2 text-[13px] font-medium text-white shadow-[0_8px_20px_rgba(51,43,224,0.22)] transition-all hover:bg-[#2b24c8] active:scale-95"
                     >
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                             <line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/>

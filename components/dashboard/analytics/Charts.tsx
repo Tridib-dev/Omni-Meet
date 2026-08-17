@@ -55,8 +55,8 @@ export function CategoryRadar({
                 <Radar
                     name="Events"
                     dataKey="value"
-                    stroke="#06b6d4"
-                    fill="#06b6d4"
+                    stroke="#332be0"
+                    fill="#332be0"
                     fillOpacity={0.18}
                     strokeWidth={2}
                 />
@@ -69,7 +69,7 @@ export function CategoryRadar({
 export function TrendChart({
     data,
     dataKey = "count",
-    color = "#06b6d4",
+    color = "#332be0",
     label = "Events",
 }: {
     data: TrendPoint[];
@@ -160,7 +160,7 @@ export function RevenueBarChart({
                     cursor={{ fill: "rgba(255,255,255,0.04)" }}
                     formatter={(v: number) => [`₹${v.toLocaleString("en-IN")}`, "Revenue"]}
                 />
-                <Bar dataKey="revenue" fill="#f59e0b" radius={[6, 6, 0, 0]} maxBarSize={36} />
+                <Bar dataKey="revenue" fill="#332be0" radius={[6, 6, 0, 0]} maxBarSize={36} />
             </BarChart>
         </ResponsiveContainer>
     );
@@ -193,8 +193,8 @@ export function FunnelBar({
                             className="h-full rounded-full"
                             style={{
                                 background: i === 0
-                                    ? "linear-gradient(to right, #06b6d4, #8b5cf6)"
-                                    : "linear-gradient(to right, #22c55e, #06b6d4)",
+                                    ? "linear-gradient(to right, #332be0, #4c46ff)"
+                                    : "linear-gradient(to right, #4c46ff, #818cf8)",
                             }}
                             initial={{ width: 0 }}
                             animate={{ width: `${item.pct}%` }}
@@ -230,7 +230,7 @@ export function ActivityHeatmap({
                             style={{
                                 background: d.count === 0
                                     ? "rgba(255,255,255,0.05)"
-                                    : `rgba(6,182,212,${0.2 + intensity * 0.8})`,
+                                    : `rgba(51,43,224,${0.2 + intensity * 0.8})`,
                             }}
                         />
                         {data.length <= 7 || i % 3 === 0 ? (

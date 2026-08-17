@@ -7,20 +7,8 @@ import { edTokens } from "@/components/event-dashboard/theme/tokens";
 import EventSidebar from "@/components/event-dashboard/shell/EventSidebar";
 import EventTopbar from "@/components/event-dashboard/shell/EventTopbar";
 import EventDashboardTracker from "@/components/event-dashboard/shared/EventDashboardTracker";
-import ActionCardRail from "@/components/event-dashboard/shared/ActionCardRail";
 import { useEventDashboard } from "@/components/event-dashboard/shell/EventDashboardProvider";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { getActionRailItems, type EventDashboardPageId } from "@/lib/event-dashboard/navigation";
-
-const DASHBOARD_PAGE_IDS = new Set<EventDashboardPageId>([
-    "overview",
-    "applicants",
-    "organizers",
-    "analytics",
-    "gate",
-    "room",
-    "settings",
-]);
 
 export default function EventDashboardShellInner({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
@@ -28,10 +16,6 @@ export default function EventDashboardShellInner({ children }: { children: React
     const [collapsed, setCollapsed] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
     const mainRef = useRef<HTMLElement | null>(null);
-    const pageId = pathname?.split("/").pop() ?? "overview";
-    const actionItems = DASHBOARD_PAGE_IDS.has(pageId as EventDashboardPageId)
-        ? getActionRailItems(context.eventId, context.normalizedMode, pageId as EventDashboardPageId)
-        : [];
 
     useEffect(() => {
         if ("scrollRestoration" in history) {
@@ -102,10 +86,7 @@ export default function EventDashboardShellInner({ children }: { children: React
                             transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
                             className="w-full px-4 pb-20 pt-0 sm:px-5 lg:px-6 xl:px-8"
                         >
-                            <div className="space-y-8">
-                                {children}
-                                {actionItems.length > 0 && <ActionCardRail items={actionItems} />}
-                            </div>
+                            {children}
                         </motion.div>
                     </AnimatePresence>
                 </main>
