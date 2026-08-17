@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import Image from "next/image";
 import DataTable from "@/components/event-dashboard/shared/DataTable";
 import PageSection from "@/components/event-dashboard/shared/PageSection";
 import { Badge } from "@/components/ui/badge";
@@ -44,7 +45,11 @@ export default function ApplicantsPanel({
         }
         if (query.trim()) {
             const q = query.trim().toLowerCase();
-            rows = rows.filter((row) => row.email.toLowerCase().includes(q));
+            rows = rows.filter(
+                (row) =>
+                    row.email.toLowerCase().includes(q) ||
+                    row.name.toLowerCase().includes(q)
+            );
         }
         return rows;
     }, [data.rows, query, ticketFilter]);
@@ -104,10 +109,23 @@ export default function ApplicantsPanel({
                 <DataTable
                     columns={[
                         {
-                            key: "email",
-                            header: "Email",
+                            key: "profile",
+                            header: "Applicant",
                             cell: (row) => (
-                                <span className="font-mono text-[13px] text-white/85">{row.email}</span>
+                                <div className="flex items-center gap-3">
+                                    <div className="relative h-8 w-8 overflow-hidden rounded-full border border-white/10">
+                                        <Image
+                                            src={row.photo || "https://placehold.co/32x32/111318/666?text=?"}
+                                            alt={row.name}
+                                            fill
+                                            className="object-cover"
+                                        />
+                                    </div>
+                                    <div>
+                                        <p className="text-[13px] text-white/85">{row.name}</p>
+                                        <p className="font-mono text-[11px] text-white/35">{row.email}</p>
+                                    </div>
+                                </div>
                             ),
                         },
                         {

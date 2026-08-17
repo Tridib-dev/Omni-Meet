@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
 import Image from "next/image";
 import DataTable from "@/components/event-dashboard/shared/DataTable";
 import PageSection from "@/components/event-dashboard/shared/PageSection";
@@ -9,9 +10,19 @@ import EmptyState from "@/components/event-dashboard/shared/EmptyState";
 import { Badge } from "@/components/ui/badge";
 import { removeCoOrganizer } from "@/lib/actions/gate.actions";
 import type { EventOrganizersData } from "@/lib/event-dashboard/organizers";
-import InviteCoOrganizerComposer from "@/components/event-dashboard/organizers/InviteCoOrganizerComposer";
+import { AddCoOrganizerModal } from "@/components/profileCard";
 
-type TabId = "active" | "pending" | "declined";
+type TabId = "all" | "active" | "pending" | "declined";
+
+type CommitteeRow = {
+    clerkId: string;
+    name: string;
+    photo: string;
+    status: "active" | "pending" | "declined";
+    sinceLabel: string;
+    sinceValue: string;
+    email?: string;
+};
 
 function formatDate(iso: string) {
     return new Date(iso).toLocaleDateString("en-IN", {
@@ -31,8 +42,10 @@ export default function OrganizersPanel({
     isCreator: boolean;
 }) {
     const router = useRouter();
-    const [tab, setTab] = useState<TabId>("active");
+    const { user } = useUser();
+    const [tab, setTab] = useState<TabId>("all");
     const [pending, startTransition] = useTransition();
+    const [inviteOpen, setInviteOpen] = useState(false);
 
     function refresh() {
         router.refresh();
@@ -45,7 +58,36 @@ export default function OrganizersPanel({
         });
     }
 
+    const allRows: CommitteeRow[] = [
+        ...data.active.map((row) => ({
+            clerkId: row.clerkId,
+            name: row.name,
+            photo: row.photo,
+            email: row.email,
+            status: "active" as const,
+            sinceLabel: "Added",
+            sinceValue: row.addedAt,
+        })),
+        ...data.pending.map((row) => ({
+            clerkId: row.clerkId,
+            name: row.name,
+            photo: row.photo,
+            status: "pending" as const,
+            sinceLabel: "Invited",
+            sinceValue: row.invitedAt,
+        })),
+        ...data.denied.map((row) => ({
+            clerkId: row.clerkId,
+            name: row.name,
+            photo: row.photo,
+            status: "declined" as const,
+            sinceLabel: "Responded",
+            sinceValue: row.respondedAt ?? row.invitedAt,
+        })),
+    ];
+
     const tabs: { id: TabId; label: string; count: number }[] = [
+        { id: "all", label: "All", count: allRows.length },
         { id: "active", label: "Active", count: data.active.length },
         { id: "pending", label: "Pending invites", count: data.pending.length },
         { id: "declined", label: "Declined", count: data.denied.length },
@@ -53,35 +95,94 @@ export default function OrganizersPanel({
 
     return (
         <div className="space-y-6">
-            <InviteCoOrganizerComposer
-                eventId={eventId}
-                isCreator={isCreator}
-                initialPendingClerkIds={data.pending.map((item) => item.clerkId)}
-                initialActiveClerkIds={data.active.map((item) => item.clerkId)}
-            />
-
             <PageSection
                 title="Committee"
                 description="Manage co-organizers and track invite status."
                 action={
-                    <div className="flex flex-wrap gap-2">
-                        {tabs.map((item) => (
+                    <div className="flex flex-col items-end gap-5">
+                        {isCreator && (
                             <button
-                                key={item.id}
                                 type="button"
-                                onClick={() => setTab(item.id)}
-                                className={`rounded-full px-3 py-1 text-[12px] transition-colors ${
-                                    tab === item.id
-                                        ? "bg-[#332be0]/20 text-[#a5a0ff] border border-[#332be0]/30"
-                                        : "bg-white/5 text-white/50 border border-white/8 hover:text-white/75"
-                                }`}
+                                onClick={() => setInviteOpen(true)}
+                                className="inline-flex items-center gap-2 rounded-xl border border-[#332be0]/30 bg-[#332be0] px-4 py-2.5 text-[13px] font-semibold text-white shadow-[0_8px_20px_rgba(51,43,224,0.22)] transition-colors hover:bg-[#2b24c8]"
                             >
-                                {item.label} ({item.count})
+                                Add co-organizer
                             </button>
-                        ))}
+                        )}
+                        <div className="flex flex-wrap items-center justify-end gap-2.5">
+                            {tabs.map((item) => (
+                                <button
+                                    key={item.id}
+                                    type="button"
+                                    onClick={() => setTab(item.id)}
+                                    className={`rounded-full px-3 py-1 text-[12px] transition-colors ${
+                                        tab === item.id
+                                            ? "bg-[#332be0]/20 text-[#a5a0ff] border border-[#332be0]/30"
+                                            : "bg-white/5 text-white/50 border border-white/8 hover:text-white/75"
+                                    }`}
+                                >
+                                    {item.label} ({item.count})
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 }
             >
+                {tab === "all" && (
+                    <>
+                        {allRows.length === 0 ? (
+                            <EmptyState title="No co-organizers yet" description="Invite someone to help run this event." />
+                        ) : (
+                            <DataTable
+                                columns={[
+                                    {
+                                        key: "name",
+                                        header: "Invitee",
+                                        cell: (row: CommitteeRow) => (
+                                            <div className="flex items-center gap-3">
+                                                <div className="relative h-8 w-8 overflow-hidden rounded-full border border-white/10">
+                                                    <Image
+                                                        src={row.photo || "https://placehold.co/32x32/111318/666?text=?"}
+                                                        alt={row.name}
+                                                        fill
+                                                        className="object-cover"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <p className="text-[13px] text-white/85">{row.name}</p>
+                                                    {row.email && <p className="text-[11px] text-white/35">{row.email}</p>}
+                                                </div>
+                                            </div>
+                                        ),
+                                    },
+                                    {
+                                        key: "status",
+                                        header: "Status",
+                                        cell: (row: CommitteeRow) =>
+                                            row.status === "active" ? (
+                                                <Badge variant="outline">Active</Badge>
+                                            ) : row.status === "pending" ? (
+                                                <Badge variant="secondary">Pending</Badge>
+                                            ) : (
+                                                <Badge variant="outline">Declined</Badge>
+                                            ),
+                                    },
+                                    {
+                                        key: "since",
+                                        header: "Since",
+                                        cell: (row: CommitteeRow) => (
+                                            <span className="text-[12px] text-white/45">
+                                                {row.sinceLabel} {formatDate(row.sinceValue)}
+                                            </span>
+                                        ),
+                                    },
+                                ]}
+                                rows={allRows}
+                            />
+                        )}
+                    </>
+                )}
+
                 {tab === "active" && (
                     <>
                         {data.active.length === 0 ? (
@@ -209,6 +310,13 @@ export default function OrganizersPanel({
                     />
                 )}
             </PageSection>
+            <AddCoOrganizerModal
+                open={inviteOpen}
+                onOpenChange={setInviteOpen}
+                viewerClerkId={user?.id ?? ""}
+                eventId={eventId}
+                onChanged={refresh}
+            />
         </div>
     );
 }

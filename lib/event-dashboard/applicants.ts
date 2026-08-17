@@ -9,7 +9,10 @@ export type ApplicantFilter = "all" | "checked-in" | "pending";
 export interface EventApplicantRow {
     id: string;
     type: "free" | "paid";
+    clerkId: string;
+    name: string;
     email: string;
+    photo: string;
     checkedIn: boolean;
     checkedInAt?: string;
     bookedAt: string;
@@ -44,7 +47,10 @@ export const getEventApplicants = cache(
         let rows: EventApplicantRow[] = data.attendees.map((attendee) => ({
             id: attendee.id,
             type: attendee.type === "order" ? "paid" : "free",
+            clerkId: attendee.clerkId,
+            name: attendee.name,
             email: attendee.email,
+            photo: attendee.photo,
             checkedIn: attendee.checkedIn,
             checkedInAt: attendee.checkedInAt,
             bookedAt: attendee.bookedAt,

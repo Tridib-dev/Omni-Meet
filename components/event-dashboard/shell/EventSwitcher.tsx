@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ChevronDown, Check } from "lucide-react";
 import posthog from "posthog-js";
+import { cn } from "@/lib/utils";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -24,13 +25,20 @@ function formatDate(date: string) {
     });
 }
 
-export default function EventSwitcher() {
+export default function EventSwitcher({ compact = false }: { compact?: boolean }) {
     const { context, accessibleEvents } = useEventDashboard();
 
     return (
         <DropdownMenu>
-            <DropdownMenuTrigger className="flex max-w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left outline-none transition-colors hover:bg-white/[0.06] focus-visible:ring-2 focus-visible:ring-[#332be0]/40">
-                <div className="relative h-8 w-8 flex-shrink-0 overflow-hidden rounded-md border border-white/10">
+            <DropdownMenuTrigger
+                className={cn(
+                    "flex max-w-full items-center gap-2 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[#332be0]/40",
+                    compact
+                        ? "h-11 w-11 justify-center rounded-xl border border-white/8 bg-white/[0.04] hover:bg-white/[0.06]"
+                        : "w-full rounded-xl border border-white/8 bg-white/[0.04] px-2.5 py-2 hover:bg-white/[0.06]"
+                )}
+            >
+                <div className={cn("relative flex-shrink-0 overflow-hidden rounded-md border border-white/10", compact ? "h-7 w-7" : "h-8 w-8")}>
                     <Image
                         src={context.image || "https://placehold.co/64x64/111318/666?text=E"}
                         alt={context.title}
@@ -38,11 +46,15 @@ export default function EventSwitcher() {
                         className="object-cover"
                     />
                 </div>
-                <div className="min-w-0">
-                    <p className="truncate text-[13px] font-medium text-white/90">{context.title}</p>
-                    <p className="truncate text-[11px] text-white/40">{formatDate(context.date)}</p>
-                </div>
-                <ChevronDown size={14} className="flex-shrink-0 text-white/40" />
+                {!compact && (
+                    <>
+                        <div className="min-w-0">
+                            <p className="truncate text-[13px] font-medium text-white/90">{context.title}</p>
+                            <p className="truncate text-[11px] text-white/40">{formatDate(context.date)}</p>
+                        </div>
+                        <ChevronDown size={14} className="ml-auto flex-shrink-0 text-white/40" />
+                    </>
+                )}
             </DropdownMenuTrigger>
 
             <DropdownMenuContent align="start" className="w-[320px] border-white/10 bg-[#171a21] text-white">
@@ -54,7 +66,11 @@ export default function EventSwitcher() {
                     accessibleEvents.map((event) => {
                         const active = event.id === context.eventId;
                         return (
-                            <DropdownMenuItem key={event.id} asChild>
+                            <DropdownMenuItem
+                                key={event.id}
+                                asChild
+                                className="rounded-md hover:bg-[#1f2430] focus:bg-[#1f2430] data-[highlighted]:bg-[#1f2430] focus:text-white"
+                            >
                                 <Link
                                     href={`/dashboard/events/${event.id}/overview`}
                                     onClick={() => {

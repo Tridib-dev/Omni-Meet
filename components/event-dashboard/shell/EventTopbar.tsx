@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
 import { Search } from "lucide-react";
-import EventSwitcher from "@/components/event-dashboard/shell/EventSwitcher";
 import EventCommandPalette from "@/components/event-dashboard/shell/EventCommandPalette";
 import NotificationsBell from "@/components/dashboard/notifications-bell";
 import { useEventDashboard } from "@/components/event-dashboard/shell/EventDashboardProvider";
@@ -48,10 +47,6 @@ export default function EventTopbar({ onMenuClick }: { onMenuClick?: () => void 
                 )}
 
                 <div className="flex min-w-0 flex-1 items-center gap-2 lg:gap-3">
-                    <div className="hidden lg:block">
-                        <EventSwitcher />
-                    </div>
-
                     <Breadcrumb className="min-w-0 flex-1">
                         <BreadcrumbList className="text-[12px] text-white/40">
                             <BreadcrumbItem className="lg:hidden">

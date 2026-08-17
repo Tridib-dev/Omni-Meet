@@ -16,7 +16,10 @@ export type TicketType = "booking" | "order";
 export interface GateAttendeeItem {
     id: string;
     type: TicketType;
+    clerkId: string;
+    name: string;
     email: string;
+    photo: string;
     checkedIn: boolean;
     checkedInAt?: string;
     bookedAt: string;
@@ -454,24 +457,40 @@ export async function getEventAttendees(eventId: string): Promise<GateAttendeesR
             Order.find({ eventId, status: "paid" }).sort({ createdAt: 1 }).lean(),
         ]);
 
-        const bookingRows = (bookings as BookingDoc[]).map<GateAttendeeItem>((booking) => ({
-            id: booking._id.toString(),
-            type: "booking",
-            email: booking.email,
-            checkedIn: Boolean(booking.checkedIn),
-            checkedInAt: toIso(booking.checkedInAt),
-            bookedAt: booking.createdAt.toISOString(),
-        }));
+        const bookingRows = await Promise.all(
+            (bookings as BookingDoc[]).map(async (booking) => {
+                const profile = await resolveUserProfile(booking.clerkId);
+
+                return {
+                    id: booking._id.toString(),
+                    type: "booking" as const,
+                    clerkId: booking.clerkId,
+                    name: profile?.name ?? booking.email ?? "Unknown attendee",
+                    email: profile?.email ?? booking.email,
+                    photo: profile?.photo ?? "",
+                    checkedIn: Boolean(booking.checkedIn),
+                    checkedInAt: toIso(booking.checkedInAt),
+                    bookedAt: booking.createdAt.toISOString(),
+                } satisfies GateAttendeeItem;
+            })
+        );
 
         const orderRows = await Promise.all(
-            (orders as OrderDoc[]).map(async (order) => ({
-                id: order._id.toString(),
-                type: "order" as const,
-                email: await getOrderEmail(order.clerkId),
-                checkedIn: Boolean(order.checkedIn),
-                checkedInAt: toIso(order.checkedInAt),
-                bookedAt: order.createdAt.toISOString(),
-            }))
+            (orders as OrderDoc[]).map(async (order) => {
+                const profile = await resolveUserProfile(order.clerkId);
+
+                return {
+                    id: order._id.toString(),
+                    type: "order" as const,
+                    clerkId: order.clerkId,
+                    name: profile?.name ?? "Unknown attendee",
+                    email: profile?.email ?? (await getOrderEmail(order.clerkId)),
+                    photo: profile?.photo ?? "",
+                    checkedIn: Boolean(order.checkedIn),
+                    checkedInAt: toIso(order.checkedInAt),
+                    bookedAt: order.createdAt.toISOString(),
+                } satisfies GateAttendeeItem;
+            })
         );
 
         const attendees = [...bookingRows, ...orderRows].sort((a, b) => {

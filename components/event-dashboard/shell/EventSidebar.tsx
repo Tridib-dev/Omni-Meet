@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { motion, LayoutGroup } from "framer-motion";
 import {
@@ -19,6 +18,7 @@ import {
 import { cn } from "@/lib/utils";
 import { edTokens } from "@/components/event-dashboard/theme/tokens";
 import { useEventDashboard } from "@/components/event-dashboard/shell/EventDashboardProvider";
+import EventSwitcher from "@/components/event-dashboard/shell/EventSwitcher";
 import { getEventDashboardNav } from "@/lib/event-dashboard/navigation";
 import type { EventDashboardPageId } from "@/lib/event-dashboard/navigation";
 
@@ -65,30 +65,21 @@ export default function EventSidebar({
                 )}
             >
                 <div className="flex h-[52px] flex-shrink-0 items-center overflow-hidden border-b border-white/8 px-3">
-                    <Link href="/dashboard/organized" className="flex min-w-0 items-center gap-2.5">
-                        <Image src="/icons/logo.png" alt="DevEvent" width={22} height={22} className="flex-shrink-0 opacity-90" />
+                    <Link href="/dashboard/organized" className="flex min-w-0 items-center gap-2.5 text-white/70 transition-colors hover:text-white">
+                        <ChevronLeft size={17} className="flex-shrink-0" />
                         <motion.span
                             animate={{ opacity: collapsed && !mobile ? 0 : 1 }}
                             className="truncate text-[13px] font-semibold text-white/90"
                         >
-                            Event Dashboard
+                            Go to My Events
                         </motion.span>
                     </Link>
                 </div>
 
                 <nav className="flex-1 space-y-4 overflow-y-auto px-2 py-3">
-                    <Link
-                        href="/dashboard/organized"
-                        className="flex items-center gap-2.5 rounded-md px-2 py-1.5 text-white/55 transition-colors hover:bg-white/[0.06] hover:text-white/90"
-                    >
-                        <ChevronLeft size={15} />
-                        <motion.span
-                            animate={{ opacity: collapsed && !mobile ? 0 : 1, width: collapsed && !mobile ? 0 : "auto" }}
-                            className="overflow-hidden whitespace-nowrap text-[12.5px]"
-                        >
-                            Back to My Events
-                        </motion.span>
-                    </Link>
+                    <div className={cn("px-0.5", collapsed && !mobile && "flex justify-center px-0")}>
+                        <EventSwitcher compact={collapsed && !mobile} />
+                    </div>
 
                     <NavSection
                         label="Manage"
