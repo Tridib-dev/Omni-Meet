@@ -17,6 +17,7 @@ export interface DiscoverCard {
     _id: any;                    // ← Added
     title: string;
     slug: string;
+    description: string;
     location: string;
     date: string;
     time: string;
@@ -50,6 +51,7 @@ const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]
 type DiscoverCardDocument = {
     title?: string;
     slug?: string;
+    description?: string;
     location?: string;
     date?: string;
     time?: string;
@@ -69,6 +71,7 @@ const normalizeDiscoverCards = (events: any[]): DiscoverCard[] =>
         _id: event._id,
         title: event.title ?? "",
         slug: event.slug ?? "",
+        description: event.description ?? "",
         location: event.location ?? "",
         date: event.date ?? "",
         time: event.time ?? "",
@@ -369,13 +372,14 @@ async function queryDiscoverEvents(
                 events: [
                     { $skip: skip },
                     { $limit: limit },
-                    {
-                        $project: {
-                            title: 1,
-                            slug: 1,
-                            location: 1,
-                            date: 1,
-                            time: 1,
+                        {
+                            $project: {
+                                title: 1,
+                                slug: 1,
+                                description: 1,
+                                location: 1,
+                                date: 1,
+                                time: 1,
                             image: 1,
                             tags: 1,
                             mode: 1,
