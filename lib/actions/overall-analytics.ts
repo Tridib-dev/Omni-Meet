@@ -1,4 +1,5 @@
 "use server";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { auth } from "@clerk/nextjs/server";
 import { cache } from "react";
@@ -22,11 +23,14 @@ export interface AttendedAnalyticsData {
     categoryBreakdown: { category: string; count: number }[];
     favoriteOrganizers: { name: string; count: number }[];
     monthlyActivity: { month: string; count: number }[];
+    modeBreakdown: { mode: string; count: number }[];
     streak: number;
 }
 
 export interface OrganizedAnalyticsData {
     totalEvents: number;
+    thisMonth: number;
+    thisYear: number;
     totalAttendees: number;
     avgAttendeesPerEvent: number;
     totalRevenue: number;
@@ -35,6 +39,8 @@ export interface OrganizedAnalyticsData {
     repeatAttendeeRate: number;
     revenueByEvent: { title: string; revenue: number; attendees: number }[];
     attendeeGrowth: { month: string; attendees: number; revenue: number }[];
+    monthlyActivity: { month: string; count: number }[];
+    modeBreakdown: { mode: string; count: number }[];
     funnel: { label: string; value: number; pct: number }[];
 }
 
@@ -99,6 +105,15 @@ function humanCountdown(date: Date) {
     return `in ${days}d`;
 }
 
+function displayMode(mode: string) {
+    const normalized = String(mode || "other").trim().toLowerCase();
+    if (normalized === "online") return "Online";
+    if (normalized === "offline") return "Offline";
+    if (normalized === "hybrid") return "Hybrid";
+    if (!normalized) return "Other";
+    return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+}
+
 // ─── Attended analytics ───────────────────────────────────────────────────────
 
 export const getAttendedAnalytics = cache(async (): Promise<AttendedAnalyticsData> => {
@@ -106,7 +121,7 @@ export const getAttendedAnalytics = cache(async (): Promise<AttendedAnalyticsDat
         lifetime: 0, thisYear: 0, thisMonth: 0, upcomingCount: 0,
         nextEvent: null, nextEventCountdown: null, totalSpent: 0, avgTicketPrice: 0,
         categoryBreakdown: [], favoriteOrganizers: [],
-        monthlyActivity: [], streak: 0,
+        monthlyActivity: [], modeBreakdown: [], streak: 0,
     };
 
     try {
@@ -183,6 +198,15 @@ export const getAttendedAnalytics = cache(async (): Promise<AttendedAnalyticsDat
         });
         const monthlyActivity = last12Months.map((month) => ({ month, count: monthMap[month] }));
 
+        const modeMap: Record<string, number> = {};
+        allEvents.forEach((e) => {
+            const mode = displayMode(e.event.mode);
+            modeMap[mode] = (modeMap[mode] ?? 0) + 1;
+        });
+        const modeBreakdown = Object.entries(modeMap)
+            .map(([mode, count]) => ({ mode, count }))
+            .sort((a, b) => b.count - a.count);
+
         // Streak: consecutive months with at least 1 event (going backwards)
         let streak = 0;
         for (let i = monthlyActivity.length - 1; i >= 0; i--) {
@@ -197,7 +221,7 @@ export const getAttendedAnalytics = cache(async (): Promise<AttendedAnalyticsDat
                 : null,
             nextEventCountdown: nextEvent ? humanCountdown(new Date(nextEvent.date)) : null,
             totalSpent, avgTicketPrice,
-            categoryBreakdown, favoriteOrganizers, monthlyActivity, streak,
+            categoryBreakdown, favoriteOrganizers, monthlyActivity, modeBreakdown, streak,
         };
     } catch (err) {
         console.error("[getAttendedAnalytics]", err);
@@ -209,9 +233,9 @@ export const getAttendedAnalytics = cache(async (): Promise<AttendedAnalyticsDat
 
 export const getOrganizedAnalytics = cache(async (): Promise<OrganizedAnalyticsData> => {
     const empty: OrganizedAnalyticsData = {
-        totalEvents: 0, totalAttendees: 0, avgAttendeesPerEvent: 0,
+        totalEvents: 0, thisMonth: 0, thisYear: 0, totalAttendees: 0, avgAttendeesPerEvent: 0,
         totalRevenue: 0, avgRevenuePerAttendee: 0, checkinRate: 0,
-        repeatAttendeeRate: 0, revenueByEvent: [], attendeeGrowth: [], funnel: [],
+        repeatAttendeeRate: 0, revenueByEvent: [], attendeeGrowth: [], monthlyActivity: [], modeBreakdown: [], funnel: [],
     };
 
     try {
@@ -224,6 +248,11 @@ export const getOrganizedAnalytics = cache(async (): Promise<OrganizedAnalyticsD
         if (!myEvents.length) return empty;
 
         const eventIds = myEvents.map((e) => e._id);
+        const now = new Date();
+        const yearStart = startOf("year");
+        const monthStart = startOf("month");
+        const thisMonth = myEvents.filter((e) => new Date(e.date) >= monthStart).length;
+        const thisYear = myEvents.filter((e) => new Date(e.date) >= yearStart).length;
 
         const [allBookings, allOrders] = await Promise.all([
             Booking.find({ eventId: { $in: eventIds } }).lean() as Promise<any[]>,
@@ -258,7 +287,6 @@ export const getOrganizedAnalytics = cache(async (): Promise<OrganizedAnalyticsD
             : 0;
 
         // Revenue by event (top 6)
-        const eventMap = Object.fromEntries(myEvents.map((e) => [e._id.toString(), e]));
         const revenueByEventMap: Record<string, { revenue: number; attendees: number; title: string }> = {};
         myEvents.forEach((e) => {
             revenueByEventMap[e._id.toString()] = { revenue: 0, attendees: 0, title: e.title };
@@ -279,7 +307,6 @@ export const getOrganizedAnalytics = cache(async (): Promise<OrganizedAnalyticsD
             .slice(0, 6);
 
         // Attendee growth (last 12 months)
-        const now = new Date();
         const growthMap: Record<string, { attendees: number; revenue: number }> = {};
         const last12: string[] = [];
         for (let i = 11; i >= 0; i--) {
@@ -297,6 +324,29 @@ export const getOrganizedAnalytics = cache(async (): Promise<OrganizedAnalyticsD
         });
         const attendeeGrowth = last12.map((month) => ({ month, ...growthMap[month] }));
 
+        const monthlyMap: Record<string, number> = {};
+        const last12Events: string[] = [];
+        for (let i = 11; i >= 0; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const k = monthKey(d);
+            last12Events.push(k);
+            monthlyMap[k] = 0;
+        }
+        myEvents.forEach((event) => {
+            const k = monthKey(new Date(event.date));
+            if (k in monthlyMap) monthlyMap[k] += 1;
+        });
+        const monthlyActivity = last12Events.map((month) => ({ month, count: monthlyMap[month] }));
+
+        const modeMap: Record<string, number> = {};
+        myEvents.forEach((event) => {
+            const mode = displayMode(event.mode);
+            modeMap[mode] = (modeMap[mode] ?? 0) + 1;
+        });
+        const modeBreakdown = Object.entries(modeMap)
+            .map(([mode, count]) => ({ mode, count }))
+            .sort((a, b) => b.count - a.count);
+
         // Funnel: total bookings → check-ins
         const funnel = [
             { label: "Registered", value: totalAttendees, pct: 100 },
@@ -304,9 +354,9 @@ export const getOrganizedAnalytics = cache(async (): Promise<OrganizedAnalyticsD
         ];
 
         return {
-            totalEvents, totalAttendees, avgAttendeesPerEvent,
+            totalEvents, thisMonth, thisYear, totalAttendees, avgAttendeesPerEvent,
             totalRevenue, avgRevenuePerAttendee, checkinRate,
-            repeatAttendeeRate, revenueByEvent, attendeeGrowth, funnel,
+            repeatAttendeeRate, revenueByEvent, attendeeGrowth, monthlyActivity, modeBreakdown, funnel,
         };
     } catch (err) {
         console.error("[getOrganizedAnalytics]", err);

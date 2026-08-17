@@ -121,18 +121,18 @@ export function RecommendedEventCard({ event, index }: Props) {
                         </p>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[12px] text-white/78 sm:text-[13px] lg:justify-end">
-                        <span className="flex items-center gap-1.5">
+                    <div className="grid gap-2 text-[12px] text-white/78 sm:text-[13px] lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-x-5 lg:gap-y-2">
+                        <span className="flex min-w-0 items-center gap-1.5 lg:col-span-2">
                             <MapPin size={13} />
                             <span className="truncate">{event.location}</span>
                         </span>
                         <span className="flex items-center gap-1.5">
-                            <Calendar size={13} />
-                            <span>{formatDate(event.date)}</span>
-                        </span>
-                        <span className="flex items-center gap-1.5">
                             <Clock size={13} />
                             <span>{event.time}</span>
+                        </span>
+                        <span className="flex items-center gap-1.5 lg:justify-end">
+                            <Calendar size={13} />
+                            <span>{formatDate(event.date)}</span>
                         </span>
                     </div>
                 </div>

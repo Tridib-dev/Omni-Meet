@@ -1,5 +1,6 @@
 import { PageHeader } from "@/components/dashboard/shell";
 import { NativeTabs } from "@/components/uitripled/native-tabs-shadcnui";
+import { PersonalAnalyticsSummary } from "@/components/dashboard/analytics/PersonalAnalyticsSummary";
 import AttendedAnalytics from "@/components/dashboard/analytics/AttendedAnalytics";
 import OrganizedAnalytics from "@/components/dashboard/analytics/OrganizedAnalytics";
 import {
@@ -28,6 +29,13 @@ export default async function AnalyticsPage() {
                         Live motion, not static numbers
                     </div>
                 }
+            />
+
+            <PersonalAnalyticsSummary
+                attended={attended.lifetime}
+                organized={organized.totalEvents}
+                spendings={attended.totalSpent}
+                revenue={organized.totalRevenue}
             />
 
             <div className="rounded-xl border border-white/8 bg-[radial-gradient(circle_at_top_left,rgba(51,43,224,0.10),transparent_35%),radial-gradient(circle_at_top_right,rgba(129,140,248,0.10),transparent_32%),rgba(255,255,255,0.02)] p-4 sm:p-5">

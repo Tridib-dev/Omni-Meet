@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 
 import MetricCard from "./MetricCard";
 import { ActivityHeatmap, FunnelBar, RevenueBarChart, TrendChart } from "./Charts";
+import { MonthlyOverviewSection } from "./MonthlyOverviewSection";
 import type { OrganizedAnalyticsData } from "@/lib/actions/overall-analytics";
 
 function StatRow({
@@ -61,6 +62,16 @@ export default function OrganizedAnalytics({ data }: { data: OrganizedAnalyticsD
                     index={3}
                 />
             </div>
+
+            <MonthlyOverviewSection
+                title="Organized events"
+                subtitle="How your event schedule evolves month by month."
+                monthlyData={data.monthlyActivity}
+                modeBreakdown={data.modeBreakdown}
+                thisMonth={data.thisMonth}
+                thisYear={data.thisYear}
+                totalLabel="Organized"
+            />
 
             <div className="grid gap-4 xl:grid-cols-[1.2fr_.8fr]">
                 <motion.section

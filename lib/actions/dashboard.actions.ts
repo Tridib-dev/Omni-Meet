@@ -1,4 +1,5 @@
 "use server";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { cache } from "react";
@@ -25,6 +26,7 @@ export interface TicketItem {
     eventTime: string;
     eventLocation: string;
     eventMode: string;
+    eventOrganizer: string;
     price: number;
     bookedAt: string;
     checkedIn: boolean;
@@ -44,7 +46,9 @@ export interface OrganizedEventItem {
     slug: string;
     image: string;
     date: string;
+    time: string;
     location: string;
+    organizer: string;
     mode: string;
     price: number;
     status: "upcoming" | "past";
@@ -101,6 +105,7 @@ export const getUserTickets = cache(async (): Promise<TicketItem[]> => {
                 eventTime: ev.time,
                 eventLocation: ev.location,
                 eventMode: ev.mode,
+                eventOrganizer: ev.organizer ?? "",
                 price: 0,
                 bookedAt: (b as any).createdAt,
                 checkedIn: (b as any).checkedIn ?? false,
@@ -125,6 +130,7 @@ export const getUserTickets = cache(async (): Promise<TicketItem[]> => {
                 eventTime: ev.time,
                 eventLocation: ev.location,
                 eventMode: ev.mode,
+                eventOrganizer: ev.organizer ?? "",
                 price: o.amount,
                 bookedAt: (o as any).createdAt,
                 checkedIn: false,
@@ -210,7 +216,9 @@ async function buildOrganizedEventItems(events: any[]): Promise<OrganizedEventIt
             slug: ev.slug,
             image: ev.image,
             date: ev.date,
+            time: ev.time,
             location: ev.location,
+            organizer: ev.organizer ?? "",
             mode: ev.mode,
             price: ev.price ?? 0,
             status: organizedEventStatus(ev.date),

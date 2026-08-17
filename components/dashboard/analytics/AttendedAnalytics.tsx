@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 
 import MetricCard from "./MetricCard";
 import { ActivityHeatmap, CategoryRadar } from "./Charts";
+import { MonthlyOverviewSection } from "./MonthlyOverviewSection";
 import type { AttendedAnalyticsData } from "@/lib/actions/overall-analytics";
 
 function MoneyLine({
@@ -63,6 +64,16 @@ export default function AttendedAnalytics({ data }: { data: AttendedAnalyticsDat
                     index={3}
                 />
             </div>
+
+            <MonthlyOverviewSection
+                title="Attended events"
+                subtitle="How your attendance moves through the year."
+                monthlyData={data.monthlyActivity}
+                modeBreakdown={data.modeBreakdown}
+                thisMonth={data.thisMonth}
+                thisYear={data.thisYear}
+                totalLabel="Attended"
+            />
 
             <div className="grid gap-4 xl:grid-cols-[1.2fr_.8fr]">
                 <motion.section

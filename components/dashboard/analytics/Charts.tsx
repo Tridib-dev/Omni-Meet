@@ -6,6 +6,7 @@
 import {
     RadarChart, Radar, PolarGrid, PolarAngleAxis,
     AreaChart, Area, BarChart, Bar,
+    PieChart, Pie, Cell,
     XAxis, YAxis, Tooltip, CartesianGrid,
     ResponsiveContainer,
 } from "recharts";
@@ -28,6 +29,8 @@ type TrendPoint = {
     revenue?: number;
     [key: string]: number | string | undefined;
 };
+
+const INDIGO_SCALE = ["#332be0", "#4c46ff", "#818cf8", "#a5a0ff"];
 
 // ─── CategoryRadar ────────────────────────────────────────────────────────────
 export function CategoryRadar({
@@ -163,6 +166,112 @@ export function RevenueBarChart({
                 <Bar dataKey="revenue" fill="#332be0" radius={[6, 6, 0, 0]} maxBarSize={36} />
             </BarChart>
         </ResponsiveContainer>
+    );
+}
+
+// ─── MonthlyBarChart ──────────────────────────────────────────────────────────
+export function MonthlyBarChart({
+    data,
+    label = "Events",
+    color = "#332be0",
+}: {
+    data: TrendPoint[];
+    label?: string;
+    color?: string;
+}) {
+    if (!data.some((d) => Number(d.count ?? 0) > 0)) {
+        return <EmptyChart label="No monthly data yet" />;
+    }
+
+    return (
+        <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={data} margin={{ top: 10, right: 8, bottom: 0, left: -20 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                <XAxis
+                    dataKey="month"
+                    tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 10 }}
+                    axisLine={false}
+                    tickLine={false}
+                    interval="preserveStartEnd"
+                />
+                <YAxis
+                    tick={{ fill: "rgba(255,255,255,0.25)", fontSize: 10 }}
+                    axisLine={false}
+                    tickLine={false}
+                    allowDecimals={false}
+                />
+                <Tooltip
+                    contentStyle={tooltipStyle}
+                    cursor={{ fill: "rgba(255,255,255,0.04)" }}
+                    formatter={(v: number) => [v.toLocaleString("en-IN"), label]}
+                />
+                <Bar dataKey="count" name={label} fill={color} radius={[8, 8, 0, 0]} maxBarSize={28} />
+            </BarChart>
+        </ResponsiveContainer>
+    );
+}
+
+// ─── ModeDonutChart ───────────────────────────────────────────────────────────
+export function ModeDonutChart({
+    data,
+}: {
+    data: { mode: string; count: number }[];
+}) {
+    if (!data.some((d) => d.count > 0)) {
+        return <EmptyChart label="No mode data yet" />;
+    }
+
+    const total = data.reduce((sum, item) => sum + item.count, 0);
+    const sorted = [...data].sort((a, b) => b.count - a.count).slice(0, 3);
+
+    return (
+        <div className="space-y-4">
+            <div className="relative mx-auto h-[220px] max-w-[260px]">
+                <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                        <Tooltip
+                            contentStyle={tooltipStyle}
+                            formatter={(v: number, name: string) => [v.toLocaleString("en-IN"), name]}
+                        />
+                        <Pie
+                            data={sorted}
+                            dataKey="count"
+                            nameKey="mode"
+                            innerRadius={64}
+                            outerRadius={92}
+                            paddingAngle={4}
+                            stroke="rgba(13,17,23,0.9)"
+                        >
+                            {sorted.map((entry, index) => (
+                                <Cell key={entry.mode} fill={INDIGO_SCALE[index % INDIGO_SCALE.length]} />
+                            ))}
+                        </Pie>
+                    </PieChart>
+                </ResponsiveContainer>
+
+                <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-center">
+                    <div>
+                        <p className="text-[28px] font-semibold tracking-[-0.04em] text-white/95">{total}</p>
+                        <p className="text-[11px] uppercase tracking-[0.18em] text-white/30">Total</p>
+                    </div>
+                </div>
+            </div>
+
+            <div className="space-y-2">
+                {sorted.map((item, index) => (
+                    <div key={item.mode} className="flex items-center justify-between gap-3 text-[12px]">
+                        <span className="inline-flex items-center gap-2 text-white/65">
+                            <span
+                                className="h-2.5 w-2.5 rounded-full"
+                                style={{ backgroundColor: INDIGO_SCALE[index % INDIGO_SCALE.length] }}
+                            />
+                            {item.mode}
+                        </span>
+                        <span className="font-medium text-white/85">{item.count}</span>
+                    </div>
+                ))}
+            </div>
+        </div>
     );
 }
 
