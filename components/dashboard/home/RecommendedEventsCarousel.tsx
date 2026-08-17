@@ -9,19 +9,13 @@ import { cn } from "@/lib/utils";
 
 type Props = {
     events: DiscoverCard[];
+    compact?: boolean;
 };
 
-export function RecommendedEventsCarousel({ events }: Props) {
+export function RecommendedEventsCarousel({ events, compact = false }: Props) {
     const visibleEvents = useMemo(() => events.slice(0, 6), [events]);
     const [activeIndex, setActiveIndex] = useState(0);
     const [direction, setDirection] = useState<1 | -1>(1);
-
-    useEffect(() => {
-        setActiveIndex((current) => {
-            if (!visibleEvents.length) return 0;
-            return Math.min(current, visibleEvents.length - 1);
-        });
-    }, [visibleEvents.length]);
 
     useEffect(() => {
         if (visibleEvents.length < 2) return;
@@ -45,7 +39,7 @@ export function RecommendedEventsCarousel({ events }: Props) {
         );
     }
 
-    const activeEvent = visibleEvents[activeIndex];
+    const activeEvent = visibleEvents[activeIndex % visibleEvents.length];
 
     const goPrev = () => {
         setDirection(-1);
@@ -88,7 +82,7 @@ export function RecommendedEventsCarousel({ events }: Props) {
                         exit="exit"
                         transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
                     >
-                        <RecommendedEventCard event={activeEvent} index={activeIndex} />
+                        <RecommendedEventCard event={activeEvent} index={activeIndex} compact={compact} />
                     </motion.div>
                 </AnimatePresence>
             </div>
@@ -97,10 +91,10 @@ export function RecommendedEventsCarousel({ events }: Props) {
                 <button
                     type="button"
                     onClick={goPrev}
-                    className="inline-flex size-11 items-center justify-center rounded-full border border-white/8 bg-white/[0.04] text-white/80 transition-colors hover:border-[#332be0]/25 hover:bg-[rgba(51,43,224,0.12)]"
+                    className="inline-flex size-10 items-center justify-center rounded-full border border-white/8 bg-white/[0.04] text-white/80 transition-colors hover:border-[#332be0]/25 hover:bg-[rgba(51,43,224,0.12)] sm:size-11"
                     aria-label="Previous recommended event"
                 >
-                    <ChevronLeft size={18} />
+                    <ChevronLeft size={compact ? 16 : 18} />
                 </button>
 
                 <div className="flex items-center gap-1.5">
@@ -123,10 +117,10 @@ export function RecommendedEventsCarousel({ events }: Props) {
                 <button
                     type="button"
                     onClick={goNext}
-                    className="inline-flex size-11 items-center justify-center rounded-full border border-white/8 bg-white/[0.04] text-white/80 transition-colors hover:border-[#332be0]/25 hover:bg-[rgba(51,43,224,0.12)]"
+                    className="inline-flex size-10 items-center justify-center rounded-full border border-white/8 bg-white/[0.04] text-white/80 transition-colors hover:border-[#332be0]/25 hover:bg-[rgba(51,43,224,0.12)] sm:size-11"
                     aria-label="Next recommended event"
                 >
-                    <ChevronRight size={18} />
+                    <ChevronRight size={compact ? 16 : 18} />
                 </button>
             </div>
         </div>

@@ -83,6 +83,7 @@ export default async function DashboardPage() {
                 thisMonth: organizedAnalytics.thisMonth,
                 thisYear: organizedAnalytics.thisYear,
             }}
+            compact
         />
     );
 }

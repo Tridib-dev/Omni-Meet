@@ -9,6 +9,7 @@ export type UpcomingEventCardItem = DashboardEventCardItem;
 type Props = {
     attendedEvents: UpcomingEventCardItem[];
     organizedEvents: UpcomingEventCardItem[];
+    compact?: boolean;
 };
 
 function getRelativeLabel(date: string) {
@@ -46,15 +47,15 @@ function Row({ children }: { children: ReactNode }) {
     );
 }
 
-export function UpcomingEventsSection({ attendedEvents, organizedEvents }: Props) {
+export function UpcomingEventsSection({ attendedEvents, organizedEvents, compact = false }: Props) {
     return (
-        <section className="space-y-4">
+        <section className={compact ? "space-y-3" : "space-y-4"}>
             <div className="flex items-end justify-between gap-4">
                 <div className="min-w-0">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/30">
+                    <p className={compact ? "text-[10px] font-semibold uppercase tracking-[0.18em] text-white/30" : "text-[11px] font-semibold uppercase tracking-[0.18em] text-white/30"}>
                         Upcoming events
                     </p>
-                    <h2 className="mt-1 text-[18px] font-semibold text-white/90 sm:text-[22px]">
+                    <h2 className={compact ? "mt-1 text-[16px] font-semibold text-white/90 sm:text-[20px]" : "mt-1 text-[18px] font-semibold text-white/90 sm:text-[22px]"}>
                         Coming soon
                     </h2>
                 </div>
@@ -64,8 +65,8 @@ export function UpcomingEventsSection({ attendedEvents, organizedEvents }: Props
                 defaultValue="attended"
                 className="w-full"
                 listClassName="rounded-full border border-white/8 bg-white/[0.04] p-1"
-                triggerClassName="rounded-full px-4 py-2 text-[13px]"
-                contentClassName="mt-5"
+                triggerClassName={compact ? "rounded-full px-3.5 py-1.5 text-[12px]" : "rounded-full px-4 py-2 text-[13px]"}
+                contentClassName={compact ? "mt-4" : "mt-5"}
                 items={[
                     {
                         id: "attended",
@@ -86,6 +87,7 @@ export function UpcomingEventsSection({ attendedEvents, organizedEvents }: Props
                                             badgeLabel="Attended"
                                             topRightLabel={getRelativeLabel(event.date)}
                                             ctaLabel="Open"
+                                            compact={compact}
                                         />
                                     </div>
                                 ))}
@@ -116,6 +118,7 @@ export function UpcomingEventsSection({ attendedEvents, organizedEvents }: Props
                                             badgeLabel="Organized"
                                             topRightLabel={getRelativeLabel(event.date)}
                                             ctaLabel="Manage"
+                                            compact={compact}
                                         />
                                     </div>
                                 ))}

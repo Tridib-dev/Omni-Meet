@@ -22,6 +22,7 @@ type DashboardHomeProps = {
     };
     attendedAnalytics: Pick<AttendedAnalyticsData, "monthlyActivity" | "modeBreakdown" | "thisMonth" | "thisYear">;
     organizedAnalytics: Pick<OrganizedAnalyticsData, "monthlyActivity" | "modeBreakdown" | "thisMonth" | "thisYear">;
+    compact?: boolean;
 };
 
 export function DashboardHome({
@@ -33,45 +34,49 @@ export function DashboardHome({
     personalAnalytics,
     attendedAnalytics,
     organizedAnalytics,
+    compact = false,
 }: DashboardHomeProps) {
+    const shellWidth = compact ? "mx-auto w-full max-w-[1180px]" : "mx-auto w-full max-w-[1320px]";
+    const pageGap = compact ? "space-y-8 lg:space-y-9" : "space-y-10";
     return (
-        <div className="space-y-10">
-            <section className="space-y-4 sm:space-y-5">
+        <div className={`${shellWidth} ${pageGap}`}>
+            <section className="space-y-3 sm:space-y-4">
                 <div className="flex items-center gap-3 sm:gap-4">
-                    <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-white/[0.06] sm:size-14">
+                    <div className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-white/[0.06] sm:size-12">
                         {userImage ? (
                             <Image
                                 src={userImage}
                                 alt={userName}
-                                width={56}
-                                height={56}
+                                width={48}
+                                height={48}
                                 className="h-full w-full object-cover"
                             />
                         ) : (
-                            <span className="text-[13px] font-semibold tracking-[0.08em] text-white/80">
+                            <span className="text-[12px] font-semibold tracking-[0.08em] text-white/80">
                                 {userName.slice(0, 2).toUpperCase()}
                             </span>
                         )}
                     </div>
 
                     <div className="min-w-0">
-                        <p className="text-[12px] font-medium text-white/45 sm:text-[13px]">Welcome back</p>
-                        <h1 className="truncate text-[24px] font-semibold tracking-[-0.03em] text-white sm:text-[32px] lg:text-[40px]">
+                        <p className="text-[11px] font-medium text-white/45 sm:text-[12px]">Welcome back</p>
+                        <h1 className="truncate text-[22px] font-semibold tracking-[-0.03em] text-white sm:text-[28px] lg:text-[34px]">
                             {userName}
                         </h1>
                     </div>
                 </div>
 
-                <div className="overflow-hidden rounded-[32px] border border-white/8 bg-[radial-gradient(circle_at_top_left,rgba(51,43,224,0.18),transparent_36%),radial-gradient(circle_at_bottom_right,rgba(129,140,248,0.12),transparent_28%),rgba(255,255,255,0.025)] p-3 sm:p-4 lg:p-5">
-                    <RecommendedEventsCarousel events={recommendedEvents} />
+                <div className="overflow-hidden rounded-[28px] border border-white/8 bg-[radial-gradient(circle_at_top_left,rgba(51,43,224,0.18),transparent_36%),radial-gradient(circle_at_bottom_right,rgba(129,140,248,0.12),transparent_28%),rgba(255,255,255,0.025)] p-2.5 sm:p-3 lg:p-4">
+                    <RecommendedEventsCarousel events={recommendedEvents} compact={compact} />
                 </div>
             </section>
 
-            <HomeQuickActions />
+            <HomeQuickActions compact={compact} />
 
             <UpcomingEventsSection
                 attendedEvents={attendedEvents}
                 organizedEvents={organizedEvents}
+                compact={compact}
             />
 
             <PersonalAnalyticsSummary
@@ -79,15 +84,16 @@ export function DashboardHome({
                 organized={personalAnalytics.organized}
                 spendings={personalAnalytics.spendings}
                 revenue={personalAnalytics.revenue}
+                compact={compact}
             />
 
-            <section className="space-y-4">
+            <section className={compact ? "space-y-3" : "space-y-4"}>
                 <div className="flex items-end justify-between gap-4">
                     <div className="min-w-0">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/30">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/30 sm:text-[11px]">
                             Monthly Overview
                         </p>
-                        <h2 className="mt-1 text-[16px] font-semibold text-white/90 sm:text-[18px]">
+                        <h2 className="mt-1 text-[15px] font-semibold text-white/90 sm:text-[18px]">
                             Event rhythm at a glance
                         </h2>
                     </div>
@@ -97,8 +103,8 @@ export function DashboardHome({
                     defaultValue="attended"
                     className="w-full"
                     listClassName="rounded-full border border-white/8 bg-white/[0.04] p-1"
-                    triggerClassName="rounded-full px-4 py-2 text-[13px]"
-                    contentClassName="mt-5"
+                    triggerClassName="rounded-full px-3.5 py-1.5 text-[12px] sm:px-4 sm:py-2 sm:text-[13px]"
+                    contentClassName="mt-4 sm:mt-5"
                     items={[
                         {
                             id: "attended",
@@ -112,6 +118,7 @@ export function DashboardHome({
                                     thisMonth={attendedAnalytics.thisMonth}
                                     thisYear={attendedAnalytics.thisYear}
                                     totalLabel="Attended"
+                                    compact={compact}
                                 />
                             ),
                         },
@@ -127,6 +134,7 @@ export function DashboardHome({
                                     thisMonth={organizedAnalytics.thisMonth}
                                     thisYear={organizedAnalytics.thisYear}
                                     totalLabel="Organized"
+                                    compact={compact}
                                 />
                             ),
                         },
