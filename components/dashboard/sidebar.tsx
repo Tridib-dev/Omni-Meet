@@ -147,13 +147,19 @@ function isNavItemActive(pathname: string | null, href: string) {
 }
 
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
-export default function DashboardSidebar() {
+export default function DashboardSidebar({
+    mobile = false,
+    onNavigate,
+}: {
+    mobile?: boolean;
+    onNavigate?: () => void;
+} = {}) {
     const [collapsed, setCollapsed] = useState(false);
     const [mode, setMode] = useState<Mode>("dark");
     const pathname = usePathname();
     const { user } = useUser();
 
-    const W = collapsed ? 56 : 220;
+    const W = mobile ? "100%" : collapsed ? 56 : 220;
     const t = THEME[mode];
 
     // CSS custom properties scoped to the sidebar. Tailwind's arbitrary-value
@@ -176,10 +182,10 @@ export default function DashboardSidebar() {
             <motion.aside
                 animate={{ width: W }}
                 transition={{ type: "spring", stiffness: 340, damping: 30, mass: 0.8 }}
-                className="relative flex flex-col flex-shrink-0 h-screen z-20"
+                className="relative z-20 flex h-dvh flex-shrink-0 flex-col"
                 style={{
                     background: "var(--sidebar-bg)",
-                    borderRight: "1px solid var(--sidebar-border)",
+                    borderRight: mobile ? "none" : "1px solid var(--sidebar-border)",
                     ...themeVars,
                 }}
             >
@@ -188,7 +194,7 @@ export default function DashboardSidebar() {
                     className="flex items-center h-[52px] px-3 flex-shrink-0 overflow-hidden"
                     style={{ borderBottom: "1px solid var(--sidebar-border)" }}
                 >
-                    <Link href="/" className="flex items-center gap-2.5 min-w-0">
+                    <Link href="/" onClick={onNavigate} className="flex items-center gap-2.5 min-w-0">
                         <Image
                             src="/icons/logo.png"
                             alt="DevEvent"
@@ -211,6 +217,7 @@ export default function DashboardSidebar() {
                     {/* Back to site */}
                     <Link
                         href="/"
+                        onClick={onNavigate}
                         className="group flex items-center gap-2.5 px-2 py-1.5 rounded-md text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--hover-bg)] transition-colors duration-150"
                     >
                         <span className="flex-shrink-0">{Icon.home}</span>
@@ -257,6 +264,7 @@ export default function DashboardSidebar() {
 
                                             <Link
                                                 href={item.href}
+                                                onClick={onNavigate}
                                                 className={`group relative flex items-center gap-2.5 px-2 py-1.5 rounded-md transition-colors duration-150 ${
                                                     isActive
                                                         ? "text-[var(--text-primary)]"
@@ -293,6 +301,7 @@ export default function DashboardSidebar() {
                     {/* User row */}
                     <Link
                         href="/dashboard/profile"
+                        onClick={onNavigate}
                         className="flex items-center gap-2.5 px-2 py-2 rounded-md hover:bg-[var(--hover-bg)] transition-colors duration-150 min-w-0"
                     >
                         <div
@@ -338,41 +347,43 @@ export default function DashboardSidebar() {
                     </button>
 
                     {/* Collapse toggle */}
-                    <button
-                        onClick={() => setCollapsed((p) => !p)}
-                        className="flex items-center gap-2.5 px-2 py-1.5 w-full rounded-md hover:bg-[var(--hover-bg)] transition-colors duration-150 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
-                    >
-                        <motion.span
-                            animate={{ rotate: collapsed ? 180 : 0 }}
-                            transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                            className="flex-shrink-0 ml-0.5"
+                    {!mobile && (
+                        <button
+                            onClick={() => setCollapsed((p) => !p)}
+                            className="flex items-center gap-2.5 px-2 py-1.5 w-full rounded-md hover:bg-[var(--hover-bg)] transition-colors duration-150 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
                         >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="20"
-                                height="20"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
+                            <motion.span
+                                animate={{ rotate: collapsed ? 180 : 0 }}
+                                transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                                className="flex-shrink-0 ml-0.5"
                             >
-                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                <path d="M4 6a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2l0 -12" />
-                                <path d="M9 4v16" />
-                                <path d="M15 10l-2 2l2 2" />
-                            </svg>
-                        </motion.span>
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="20"
+                                    height="20"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                >
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                    <path d="M4 6a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2l0 -12" />
+                                    <path d="M9 4v16" />
+                                    <path d="M15 10l-2 2l2 2" />
+                                </svg>
+                            </motion.span>
 
-                        <motion.span
-                            animate={{ opacity: collapsed ? 0 : 1, width: collapsed ? 0 : "auto" }}
-                            transition={{ duration: 0.12 }}
-                            className="text-[12px] overflow-hidden whitespace-nowrap"
-                        >
-                            Collapse
-                        </motion.span>
-                    </button>
+                            <motion.span
+                                animate={{ opacity: collapsed ? 0 : 1, width: collapsed ? 0 : "auto" }}
+                                transition={{ duration: 0.12 }}
+                                className="text-[12px] overflow-hidden whitespace-nowrap"
+                            >
+                                Collapse
+                            </motion.span>
+                        </button>
+                    )}
                 </div>
             </motion.aside>
         </LayoutGroup>

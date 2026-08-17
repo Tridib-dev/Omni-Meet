@@ -45,6 +45,18 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* Event Dashboard tokens */
+  --ed-accent: #332be0;
+  --ed-accent-muted: rgba(51, 43, 224, 0.12);
+  --ed-canvas: #080c10;
+  --ed-panel: rgba(255, 255, 255, 0.03);
+  --ed-panel-border: rgba(255, 255, 255, 0.08);
+  --ed-elevated: rgba(255, 255, 255, 0.05);
+  --ed-text-primary: rgba(255, 255, 255, 0.92);
+  --ed-text-secondary: rgba(255, 255, 255, 0.58);
+  --ed-radius-panel: 28px;
+  --ed-radius-card: 16px;
 }
 
 @theme inline {
@@ -172,21 +184,21 @@
     position : relative;
   }
 
-  main {
+  main:not([data-dashboard-main]) {
     @apply mx-auto container flex flex-col sm:px-10 px-5;
     padding-top: 100px !important;   /* Increased for navbar + breathing room */
     min-height: 100vh;
   }
 
-  h1 {
+  main:not([data-dashboard-main]) h1 {
     @apply text-gradient text-6xl font-semibold max-sm:text-4xl;
   }
 
-  h3 {
+  main:not([data-dashboard-main]) h3 {
     @apply font-schibsted-grotesk text-2xl font-bold;
   }
 
-  ul {
+  main:not([data-dashboard-main]) ul {
     @apply list-disc list-inside;
   }
 }

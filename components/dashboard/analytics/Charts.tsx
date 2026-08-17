@@ -21,6 +21,14 @@ const tooltipStyle = {
     padding: "6px 10px",
 };
 
+type TrendPoint = {
+    month: string;
+    count?: number;
+    attendees?: number;
+    revenue?: number;
+    [key: string]: number | string | undefined;
+};
+
 // ─── CategoryRadar ────────────────────────────────────────────────────────────
 export function CategoryRadar({
     data,
@@ -64,12 +72,12 @@ export function TrendChart({
     color = "#06b6d4",
     label = "Events",
 }: {
-    data: { month: string; count?: number; attendees?: number; revenue?: number }[];
-    dataKey?: string;
+    data: TrendPoint[];
+    dataKey?: keyof TrendPoint;
     color?: string;
     label?: string;
 }) {
-    if (!data.some((d: any) => (d[dataKey] ?? 0) > 0)) {
+    if (!data.some((d) => Number(d[dataKey] ?? 0) > 0)) {
         return <EmptyChart label="No trend data yet" />;
     }
 

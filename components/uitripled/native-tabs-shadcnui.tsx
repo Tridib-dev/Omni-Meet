@@ -34,27 +34,29 @@ export function NativeTabs({
       onValueChange={setActiveTab}
       className={cn("w-full", className)}
     >
-      <TabsList
-        className={cn(
-          "inline-flex h-auto w-fit items-center gap-1 rounded-2xl border border-white/10 bg-white/5 p-1",
-          listClassName
-        )}
-      >
-        {items.map((tab) => {
-          return (
-            <TabsTrigger
-              key={tab.id}
-              value={tab.id}
-              className={cn(
-                "rounded-xl px-3 py-2 text-[13px] font-medium text-white/40 transition-colors data-[state=active]:bg-white/8 data-[state=active]:text-white/90 data-[state=inactive]:hover:text-white/65",
-                triggerClassName
-              )}
-            >
-              {tab.label}
-            </TabsTrigger>
-          );
-        })}
-      </TabsList>
+      <div className="-mx-1 overflow-x-auto px-1 pb-1">
+        <TabsList
+          className={cn(
+            "inline-flex h-auto min-w-max items-center gap-1 rounded-lg border border-white/10 bg-white/5 p-1",
+            listClassName
+          )}
+        >
+          {items.map((tab) => {
+            return (
+              <TabsTrigger
+                key={tab.id}
+                value={tab.id}
+                className={cn(
+                  "shrink-0 rounded-md px-3 py-2 text-[13px] font-medium text-white/40 transition-colors data-[state=active]:bg-white/8 data-[state=active]:text-white/90 data-[state=inactive]:hover:text-white/65",
+                  triggerClassName
+                )}
+              >
+                {tab.label}
+              </TabsTrigger>
+            );
+          })}
+        </TabsList>
+      </div>
       {items.map((item) => (
         <TabsContent
           key={item.id}

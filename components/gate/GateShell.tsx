@@ -30,6 +30,10 @@ export interface GateShellProps {
   eventTitle: string;
   eventMode: "online" | "offline" | "hybrid";
   eventSlug: string;
+  /** When set, back arrow links here instead of the public event page. */
+  backHref?: string;
+  /** Dashboard embed: drop full-page min-height. */
+  embedded?: boolean;
 }
 
 function LiveClock() {
@@ -47,7 +51,14 @@ function LiveClock() {
   );
 }
 
-export default function GateShell({ eventId, eventTitle, eventMode, eventSlug }: GateShellProps) {
+export default function GateShell({
+  eventId,
+  eventTitle,
+  eventMode,
+  eventSlug,
+  backHref,
+  embedded = false,
+}: GateShellProps) {
   const [activeTab, setActiveTab] = useState<GateTab>("scanner");
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -55,7 +66,7 @@ export default function GateShell({ eventId, eventTitle, eventMode, eventSlug }:
 
   return (
     <div
-      className={`${display.variable} ${mono.variable} min-h-screen bg-[var(--gv-bg)] text-[var(--gv-ink)]`}
+      className={`${display.variable} ${mono.variable} ${embedded ? "min-h-0" : "min-h-screen"} bg-[var(--gv-bg)] text-[var(--gv-ink)] rounded-2xl border border-white/8 overflow-hidden`}
       style={
         {
           "--gv-bg": "#0A0C10",
@@ -76,9 +87,9 @@ export default function GateShell({ eventId, eventTitle, eventMode, eventSlug }:
         <div className="mx-auto flex max-w-2xl items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-2">
             <Link
-              href={`/events/${eventSlug}`}
+              href={backHref ?? `/events/${eventSlug}`}
               className="shrink-0 rounded-full p-1.5 text-[var(--gv-ink-dim)] hover:bg-[var(--gv-panel-2)] hover:text-[var(--gv-ink)] transition-colors"
-              aria-label="Back to event"
+              aria-label={backHref ? "Back to dashboard" : "Back to event"}
             >
               <ArrowLeft size={18} />
             </Link>

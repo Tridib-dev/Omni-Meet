@@ -71,7 +71,7 @@ export default function MetricCard({
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.07, duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
             whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
-            className="px-5 py-4 rounded-2xl flex flex-col justify-between cursor-default"
+            className="flex cursor-default flex-col justify-between rounded-xl px-4 py-4 sm:px-5"
             style={{
                 background: "rgba(255,255,255,0.03)",
                 border: "1px solid rgba(255,255,255,0.07)",
@@ -86,7 +86,7 @@ export default function MetricCard({
             </div>
 
             <div>
-                <div className="text-[28px] md:text-[32px] leading-none" style={{ color, letterSpacing: "-0.02em" }}>
+                <div className="truncate text-[26px] leading-none sm:text-[30px]" style={{ color }}>
                     <NativeCounterUp
                         value={visible ? value : 0}
                         duration={1.1 + index * 0.08}

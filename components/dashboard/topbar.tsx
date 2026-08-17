@@ -28,9 +28,16 @@ const CRUMB_MAP: Record<string, string> = {
     attended: "My Tickets",
     saved: "Saved",
     organized: "My Events",
+    events: "Events",
     analytics: "Analytics",
     profile: "Profile",
     settings: "Settings",
+    overview: "Overview",
+    applicants: "Applicants",
+    organizers: "Organizers",
+    operations: "Operations",
+    gate: "Gate",
+    room: "Room",
 };
 
 // Monochrome line-icon set for the command palette — consistent with the
@@ -83,18 +90,47 @@ const QUICK_NAV = [
     { label: "Settings", href: "/dashboard/settings", icon: NavIcon.settings },
 ];
 
+type RecentEventNav = {
+    label: string;
+    href: string;
+    role: string;
+};
+
+function buildRecentEventNav(
+    events: Array<{ id: string; title: string; role: string }>
+): RecentEventNav[] {
+    return events.slice(0, 6).map((event) => ({
+        label: event.title,
+        href: `/dashboard/events/${event.id}/overview`,
+        role: event.role === "creator" ? "Organizer" : "Co-organizer",
+    }));
+}
+
 function useBreadcrumbs() {
     const pathname = usePathname() ?? "";
     const segments = pathname.split("/").filter(Boolean);
     return segments.map((seg, i) => {
-        const isEventAnalyticsRoute =
+        const isLegacyEventAnalyticsRoute =
             segments[0] === "dashboard" &&
             segments[1] === "organized" &&
             segments.length === 3 &&
             i === 2;
 
+        const isEventIdSegment =
+            segments[0] === "dashboard" &&
+            segments[1] === "events" &&
+            i === 2 &&
+            segments.length >= 3;
+
+        let label = CRUMB_MAP[seg] ?? seg;
+        if (isLegacyEventAnalyticsRoute) {
+            label = "Event Analytics";
+        } else if (isEventIdSegment) {
+            label = "Event";
+        }
+
         return {
-            label: isEventAnalyticsRoute ? "Event Analytics" : (CRUMB_MAP[seg] ?? seg),
+            label,
             href: "/" + segments.slice(0, i + 1).join("/"),
             isLast: i === segments.length - 1,
         };
@@ -104,15 +140,17 @@ function useBreadcrumbs() {
 type Props = {
     /** Wire this to open your mobile sidebar drawer. Hamburger only renders if provided. */
     onMenuClick?: () => void;
+    recentEvents?: Array<{ id: string; title: string; role: string }>;
 };
 
-export default function DashboardTopbar({ onMenuClick }: Props = {}) {
+export default function DashboardTopbar({ onMenuClick, recentEvents = [] }: Props = {}) {
     const crumbs = useBreadcrumbs();
     const [cmdOpen, setCmdOpen] = useState(false);
     const [query, setQuery] = useState("");
     const [scrolled, setScrolled] = useState(false);
 
     const pageTitle = crumbs[crumbs.length - 1]?.label ?? "Dashboard";
+    const eventNav = buildRecentEventNav(recentEvents);
 
     const handleKeyDown = useCallback((e: KeyboardEvent) => {
         if ((e.metaKey || e.ctrlKey) && e.key === "k") {
@@ -301,6 +339,30 @@ export default function DashboardTopbar({ onMenuClick }: Props = {}) {
 
                             {/* Quick nav links */}
                             <div className="py-2 overflow-y-auto flex-1">
+                                {eventNav.length > 0 && (
+                                    <>
+                                        <p className="text-[10px] font-semibold uppercase tracking-[0.12em] px-4 py-1.5" style={{ color: COLOR.textTertiary }}>
+                                            Recent event dashboards
+                                        </p>
+                                        {eventNav.filter((item) =>
+                                            query === "" || item.label.toLowerCase().includes(query.toLowerCase())
+                                        ).map((item) => (
+                                            <Link
+                                                key={item.href}
+                                                href={item.href}
+                                                onClick={() => { setCmdOpen(false); setQuery(""); }}
+                                                className="flex items-center gap-3 px-4 py-3 sm:py-2.5 transition-colors duration-150 hover:bg-white/[0.05] active:bg-white/[0.08]"
+                                                style={{ color: COLOR.textSecondary }}
+                                            >
+                                                <span className="flex-shrink-0">{NavIcon.calendar}</span>
+                                                <span className="min-w-0 flex-1">
+                                                    <span className="block truncate text-[14px] sm:text-[13.5px]">{item.label}</span>
+                                                    <span className="block text-[10px] text-white/30">{item.role}</span>
+                                                </span>
+                                            </Link>
+                                        ))}
+                                    </>
+                                )}
                                 <p className="text-[10px] font-semibold uppercase tracking-[0.12em] px-4 py-1.5" style={{ color: COLOR.textTertiary }}>
                                     Navigation
                                 </p>

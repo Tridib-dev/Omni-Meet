@@ -178,7 +178,9 @@ export default function RoomGate({
         eventTitle={eventTitle}
         bannerUrl={bannerUrl}
         scheduledStart={start}
-        onCountdownComplete={refetch}
+        onCountdownComplete=
+        
+        {refetch}
         canModerate={isOrganizerTier}
       />
     );

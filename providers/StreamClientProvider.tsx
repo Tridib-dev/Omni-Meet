@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useEffect, useMemo } from "react";
+import { ReactNode, useEffect, useMemo, useSyncExternalStore } from "react";
 import { StreamVideo, StreamVideoClient } from "@stream-io/video-react-sdk";
 import { useUser } from "@clerk/nextjs";
 
@@ -49,13 +49,31 @@ const StreamVideoProvider = ({ children }: { children: ReactNode }) => {
     });
   }, [isLoaded, userId, userName, userImage]);
 
+  const connectedUser = useSyncExternalStore(
+    (onStoreChange) => {
+      if (!videoClient) {
+        return () => {};
+      }
+
+      const subscription = videoClient.state.connectedUser$.subscribe(() => {
+        onStoreChange();
+      });
+
+      return () => {
+        subscription.unsubscribe();
+      };
+    },
+    () => videoClient?.state.connectedUser,
+    () => undefined,
+  );
+
   useEffect(() => {
     return () => {
       videoClient?.disconnectUser();
     };
   }, [videoClient]);
 
-  if (!videoClient) {
+  if (!videoClient || !connectedUser) {
     return (
       <div className="flex-center h-screen w-full">
         <h3>Loading...</h3>

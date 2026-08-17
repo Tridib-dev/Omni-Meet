@@ -15,7 +15,7 @@ function OrganizedStats({ events }: { events: OrganizedEventItem[] }) {
     const totalRevenue = events.reduce((s, e) => s + e.revenue, 0);
 
     return (
-        <div className="grid grid-cols-3 gap-3 mb-8">
+        <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {[
                 { label: "Live events", value: live, color: "#22c55e" },
                 { label: "Total attendees", value: totalAttendees, color: "#06b6d4" },
@@ -23,11 +23,11 @@ function OrganizedStats({ events }: { events: OrganizedEventItem[] }) {
             ].map((stat) => (
                 <div
                     key={stat.label}
-                    className="px-4 py-3 rounded-xl"
+                    className="rounded-xl px-4 py-3"
                     style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
                 >
                     <p className="text-[11px] text-white/35 mb-1">{stat.label}</p>
-                    <p className="text-[22px] font-semibold tracking-tight" style={{ color: stat.color }}>
+                        <p className="truncate text-[21px] font-semibold" style={{ color: stat.color }}>
                         {stat.value}
                     </p>
                 </div>
@@ -67,14 +67,14 @@ function OrganizedEventGrid({
     }
 
     return (
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="grid gap-3 lg:grid-cols-2">
             {events.map((ev) => (
                 <div
                     key={ev.id}
-                    className="flex flex-col rounded-xl overflow-hidden group"
+                    className="group flex min-w-0 flex-col overflow-hidden rounded-xl"
                     style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
                 >
-                    <div className="relative h-36 overflow-hidden flex-shrink-0">
+                    <div className="relative h-32 flex-shrink-0 overflow-hidden sm:h-36">
                         <SafeImage
                             src={ev.image}
                             alt={ev.title}
@@ -107,11 +107,11 @@ function OrganizedEventGrid({
                         <h3 className="text-[14px] font-medium text-white/90 line-clamp-1 mb-1">
                             {ev.title}
                         </h3>
-                        <p className="text-[12px] text-white/35 mb-4">
+                        <p className="mb-4 line-clamp-2 text-[12px] text-white/35">
                             {formatDate(ev.date)} · {ev.location}
                         </p>
 
-                        <div className="flex items-center gap-4 mb-4 text-[12px]">
+                        <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px]">
                             <span className="text-white/50">
                                 <span className="text-white/90 font-medium">{ev.attendeeCount}</span> attendees
                             </span>
@@ -122,13 +122,13 @@ function OrganizedEventGrid({
                             )}
                         </div>
 
-                        <div className="flex items-center gap-2 mt-auto">
+                        <div className="mt-auto flex items-center gap-2">
                             <Link
-                                href={`/dashboard/organized/${ev.id}`}
+                                href={`/dashboard/events/${ev.id}/overview`}
                                 className="flex-1 text-center py-2 rounded-lg text-[12px] font-medium text-white/60 hover:text-white/90 transition-colors"
                                 style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
                             >
-                                View Analytics →
+                                Manage event →
                             </Link>
                             <Link
                                 href={`/events/${ev.slug}`}
@@ -161,7 +161,7 @@ export default function OrganizedEventsTabs({
         <NativeTabs
             defaultValue="organized"
             className="w-full"
-            listClassName="w-full max-w-fit mb-2"
+            listClassName="max-w-full mb-2"
             triggerClassName="min-w-[120px]"
             contentClassName="mt-2"
             items={[

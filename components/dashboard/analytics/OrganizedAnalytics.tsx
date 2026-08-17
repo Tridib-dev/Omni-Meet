@@ -16,7 +16,7 @@ function StatRow({
     accent?: string;
 }) {
     return (
-        <div className="flex items-center justify-between rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3">
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-white/8 bg-white/[0.03] px-4 py-3">
             <span className="text-[12px] text-white/40">{label}</span>
             <span className="text-[13px] font-semibold" style={{ color: accent }}>
                 {value}
@@ -30,7 +30,7 @@ export default function OrganizedAnalytics({ data }: { data: OrganizedAnalyticsD
 
     return (
         <div className="space-y-5">
-            <div className="grid gap-3 md:grid-cols-4">
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 <MetricCard
                     label="Events organized"
                     value={data.totalEvents}
@@ -66,9 +66,9 @@ export default function OrganizedAnalytics({ data }: { data: OrganizedAnalyticsD
                 <motion.section
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="rounded-[28px] border border-white/8 bg-white/[0.03] p-5"
+                    className="rounded-xl border border-white/8 bg-white/[0.03] p-4 sm:p-5"
                 >
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                             <p className="text-[11px] uppercase tracking-[0.16em] text-white/25">Growth</p>
                             <h2 className="mt-1 text-[16px] font-semibold text-white/90">Attendee growth over time</h2>
@@ -77,11 +77,11 @@ export default function OrganizedAnalytics({ data }: { data: OrganizedAnalyticsD
                     </div>
 
                     <div className="grid gap-4 lg:grid-cols-[1fr_.82fr]">
-                        <div className="rounded-2xl border border-white/8 bg-black/20 p-4">
+                        <div className="rounded-xl border border-white/8 bg-black/20 p-4">
                             <TrendChart data={data.attendeeGrowth} dataKey="attendees" color="#67e8f9" label="Attendees" />
                         </div>
                         <div className="space-y-3">
-                            <div className="rounded-2xl border border-white/8 bg-black/20 p-4">
+                            <div className="rounded-xl border border-white/8 bg-black/20 p-4">
                                 <p className="text-[12px] text-white/35 mb-3">Monthly pulse</p>
                                 <ActivityHeatmap
                                     data={data.attendeeGrowth.map((month) => ({
@@ -91,7 +91,7 @@ export default function OrganizedAnalytics({ data }: { data: OrganizedAnalyticsD
                                 />
                             </div>
 
-                            <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4 space-y-3">
+                            <div className="space-y-3 rounded-xl border border-white/8 bg-white/[0.03] p-4">
                                 <StatRow label="Avg attendees / event" value={data.avgAttendeesPerEvent.toString()} accent="#67e8f9" />
                                 <StatRow label="Avg revenue / attendee" value={`₹${data.avgRevenuePerAttendee.toLocaleString("en-IN")}`} accent="#fbbf24" />
                                 <StatRow label="Repeat attendee rate" value={`${data.repeatAttendeeRate}%`} accent="#22c55e" />
@@ -103,9 +103,9 @@ export default function OrganizedAnalytics({ data }: { data: OrganizedAnalyticsD
                 <motion.section
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="rounded-[28px] border border-white/8 bg-[radial-gradient(circle_at_top_left,rgba(103,232,249,0.12),transparent_45%),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] p-5"
+                    className="rounded-xl border border-white/8 bg-[radial-gradient(circle_at_top_left,rgba(103,232,249,0.12),transparent_45%),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] p-4 sm:p-5"
                 >
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                             <p className="text-[11px] uppercase tracking-[0.16em] text-white/25">Funnel</p>
                             <h2 className="mt-1 text-[16px] font-semibold text-white/90">From RSVP to check-in</h2>
@@ -115,7 +115,7 @@ export default function OrganizedAnalytics({ data }: { data: OrganizedAnalyticsD
 
                     <FunnelBar data={data.funnel} />
 
-                    <div className="mt-5 rounded-2xl border border-white/8 bg-black/20 p-4">
+                    <div className="mt-5 rounded-xl border border-white/8 bg-black/20 p-4">
                         <p className="text-[12px] text-white/35 mb-3">Host summary</p>
                         <div className="space-y-3">
                             <StatRow label="Sold-out events" value="0 tracked" accent="#f59e0b" />
@@ -130,9 +130,9 @@ export default function OrganizedAnalytics({ data }: { data: OrganizedAnalyticsD
                 <motion.section
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="rounded-[28px] border border-white/8 bg-white/[0.03] p-5"
+                    className="rounded-xl border border-white/8 bg-white/[0.03] p-4 sm:p-5"
                 >
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                             <p className="text-[11px] uppercase tracking-[0.16em] text-white/25">Revenue</p>
                             <h2 className="mt-1 text-[16px] font-semibold text-white/90">What each event contributed</h2>
@@ -146,9 +146,9 @@ export default function OrganizedAnalytics({ data }: { data: OrganizedAnalyticsD
                 <motion.section
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="rounded-[28px] border border-white/8 bg-[linear-gradient(180deg,rgba(34,197,94,0.08),rgba(255,255,255,0.03))] p-5"
+                    className="rounded-xl border border-white/8 bg-[linear-gradient(180deg,rgba(34,197,94,0.08),rgba(255,255,255,0.03))] p-4 sm:p-5"
                 >
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                             <p className="text-[11px] uppercase tracking-[0.16em] text-white/25">Quality</p>
                             <h2 className="mt-1 text-[16px] font-semibold text-white/90">Organizer health signals</h2>
@@ -162,7 +162,7 @@ export default function OrganizedAnalytics({ data }: { data: OrganizedAnalyticsD
                         <StatRow label="Revenue / event" value={`₹${Math.round(data.totalRevenue / Math.max(1, data.totalEvents)).toLocaleString("en-IN")}`} accent="#f59e0b" />
                     </div>
 
-                    <div className="mt-5 rounded-2xl border border-white/8 bg-black/20 p-4">
+                    <div className="mt-5 rounded-xl border border-white/8 bg-black/20 p-4">
                         <p className="text-[12px] text-white/35 mb-3">Momentum heat</p>
                         <ActivityHeatmap
                             data={data.attendeeGrowth.map((month) => ({

@@ -15,7 +15,7 @@ function MoneyLine({
     value: string;
 }) {
     return (
-        <div className="flex items-center justify-between rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3">
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-white/8 bg-white/[0.03] px-4 py-3">
             <p className="text-[12px] text-white/40">{label}</p>
             <p className="text-[13px] font-semibold text-white/85">{value}</p>
         </div>
@@ -32,7 +32,7 @@ export default function AttendedAnalytics({ data }: { data: AttendedAnalyticsDat
 
     return (
         <div className="space-y-5">
-            <div className="grid gap-3 md:grid-cols-4">
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 <MetricCard
                     label="Lifetime attended"
                     value={data.lifetime}
@@ -68,9 +68,9 @@ export default function AttendedAnalytics({ data }: { data: AttendedAnalyticsDat
                 <motion.section
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="rounded-[28px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] p-5"
+                    className="rounded-xl border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] p-4 sm:p-5"
                 >
-                    <div className="flex items-center justify-between gap-4 mb-4">
+                    <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                             <p className="text-[11px] uppercase tracking-[0.16em] text-white/25">Taste profile</p>
                             <h2 className="mt-1 text-[16px] font-semibold text-white/90">Where your attention clusters</h2>
@@ -86,9 +86,9 @@ export default function AttendedAnalytics({ data }: { data: AttendedAnalyticsDat
                 <motion.section
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="rounded-[28px] border border-white/8 bg-[radial-gradient(circle_at_top_left,rgba(103,232,249,0.14),transparent_45%),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] p-5"
+                    className="rounded-xl border border-white/8 bg-[radial-gradient(circle_at_top_left,rgba(103,232,249,0.14),transparent_45%),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] p-4 sm:p-5"
                 >
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                             <p className="text-[11px] uppercase tracking-[0.16em] text-white/25">Next pulse</p>
                             <h2 className="mt-1 text-[16px] font-semibold text-white/90">Upcoming event snapshot</h2>
@@ -98,7 +98,7 @@ export default function AttendedAnalytics({ data }: { data: AttendedAnalyticsDat
 
                     {data.nextEvent ? (
                         <div className="space-y-4">
-                            <div className="rounded-2xl border border-white/8 bg-black/20 p-4">
+                            <div className="rounded-xl border border-white/8 bg-black/20 p-4">
                                 <p className="text-[12px] text-white/35">{nextDate}</p>
                                 <Link href={`/events/${data.nextEvent.slug}`} className="mt-1 block text-[20px] font-semibold tracking-[-0.02em] text-white/95 hover:text-cyan-300 transition-colors">
                                     {data.nextEvent.title}
@@ -112,7 +112,7 @@ export default function AttendedAnalytics({ data }: { data: AttendedAnalyticsDat
                             </div>
                         </div>
                     ) : (
-                        <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.03] p-5 text-center">
+                        <div className="rounded-xl border border-dashed border-white/10 bg-white/[0.03] p-5 text-center">
                             <p className="text-[13px] text-white/45">No upcoming events on the books yet.</p>
                         </div>
                     )}
@@ -123,9 +123,9 @@ export default function AttendedAnalytics({ data }: { data: AttendedAnalyticsDat
                 <motion.section
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="rounded-[28px] border border-white/8 bg-white/[0.03] p-5"
+                    className="rounded-xl border border-white/8 bg-white/[0.03] p-4 sm:p-5"
                 >
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                             <p className="text-[11px] uppercase tracking-[0.16em] text-white/25">Momentum</p>
                             <h2 className="mt-1 text-[16px] font-semibold text-white/90">Your monthly attendance rhythm</h2>
@@ -135,7 +135,7 @@ export default function AttendedAnalytics({ data }: { data: AttendedAnalyticsDat
 
                     <div className="grid gap-4 lg:grid-cols-[1fr_.75fr]">
                         <TrendCard data={data.monthlyActivity} />
-                        <div className="rounded-2xl border border-white/8 bg-black/20 p-4">
+                        <div className="rounded-xl border border-white/8 bg-black/20 p-4">
                             <p className="text-[12px] text-white/35 mb-3">Attendance heat</p>
                             <ActivityHeatmap data={data.monthlyActivity} />
                             <div className="mt-4 space-y-2">
@@ -153,9 +153,9 @@ export default function AttendedAnalytics({ data }: { data: AttendedAnalyticsDat
                 <motion.section
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="rounded-[28px] border border-white/8 bg-[linear-gradient(180deg,rgba(245,158,11,0.07),rgba(255,255,255,0.03))] p-5"
+                    className="rounded-xl border border-white/8 bg-[linear-gradient(180deg,rgba(245,158,11,0.07),rgba(255,255,255,0.03))] p-4 sm:p-5"
                 >
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                             <p className="text-[11px] uppercase tracking-[0.16em] text-white/25">Value</p>
                             <h2 className="mt-1 text-[16px] font-semibold text-white/90">What you spend and save</h2>
@@ -164,9 +164,9 @@ export default function AttendedAnalytics({ data }: { data: AttendedAnalyticsDat
                     </div>
 
                     <div className="space-y-3">
-                        <div className="rounded-3xl border border-white/8 bg-black/20 p-5">
+                        <div className="rounded-xl border border-white/8 bg-black/20 p-4 sm:p-5">
                             <p className="text-[12px] text-white/35">Total spend</p>
-                            <p className="mt-2 text-[30px] font-semibold tracking-[-0.03em] text-amber-300">
+                            <p className="mt-2 truncate text-[26px] font-semibold text-amber-300 sm:text-[30px]">
                                 ₹{data.totalSpent.toLocaleString("en-IN")}
                             </p>
                             <p className="mt-2 text-[12px] text-white/35">
@@ -174,7 +174,7 @@ export default function AttendedAnalytics({ data }: { data: AttendedAnalyticsDat
                             </p>
                         </div>
 
-                        <div className="rounded-3xl border border-white/8 bg-white/[0.03] p-4">
+                        <div className="rounded-xl border border-white/8 bg-white/[0.03] p-4">
                             <p className="text-[12px] text-white/35 mb-3">Top organizers</p>
                             <div className="space-y-3">
                                 {data.favoriteOrganizers.length > 0 ? (
@@ -213,7 +213,7 @@ function TrendCard({ data }: { data: AttendedAnalyticsData["monthlyActivity"] })
     const max = Math.max(...data.map((item) => item.count), 1);
 
     return (
-        <div className="rounded-2xl border border-white/8 bg-black/20 p-4">
+        <div className="rounded-xl border border-white/8 bg-black/20 p-4">
             <div className="flex items-center justify-between mb-3">
                 <p className="text-[12px] text-white/35">12 month trend</p>
                 <p className="text-[12px] text-white/30">Peak {max}</p>

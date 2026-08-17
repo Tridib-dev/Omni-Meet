@@ -30,7 +30,7 @@ export default async function AnalyticsPage() {
                 }
             />
 
-            <div className="rounded-[32px] border border-white/8 bg-[radial-gradient(circle_at_top_left,rgba(103,232,249,0.10),transparent_35%),radial-gradient(circle_at_top_right,rgba(168,85,247,0.10),transparent_32%),rgba(255,255,255,0.02)] p-4 md:p-5">
+            <div className="rounded-xl border border-white/8 bg-[radial-gradient(circle_at_top_left,rgba(103,232,249,0.10),transparent_35%),radial-gradient(circle_at_top_right,rgba(168,85,247,0.10),transparent_32%),rgba(255,255,255,0.02)] p-4 sm:p-5">
                 <NativeTabs
                     defaultValue="attended"
                     items={[
@@ -45,7 +45,7 @@ export default async function AnalyticsPage() {
                             content: <OrganizedAnalytics data={organized} />,
                         },
                     ]}
-                    listClassName="rounded-full bg-white/[0.04] border border-white/8 p-1"
+                    listClassName="rounded-full border border-white/8 bg-white/[0.04] p-1"
                     triggerClassName="rounded-full px-4 py-2 text-[13px]"
                     contentClassName="mt-5"
                 />
