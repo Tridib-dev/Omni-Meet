@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Calendar, Clock, MapPin, User } from "lucide-react";
 import { motion } from "framer-motion";
+import { normalizeEventMode } from "@/lib/constants/event-mode";
 
 export type DashboardEventCardItem = {
     id: string;
@@ -16,13 +17,13 @@ export type DashboardEventCardItem = {
     time: string;
     organizer: string;
     organizerImage?: string;
+    mode: string;
     scope: "attended" | "organized" | "recent";
 };
 
 type Props = {
     event: DashboardEventCardItem;
     badgeLabel: string;
-    topRightLabel: string;
     ctaLabel: string;
     compact?: boolean;
 };
@@ -35,7 +36,10 @@ function formatDateWithYear(date: string) {
     });
 }
 
-export function DashboardEventCard({ event, badgeLabel, topRightLabel, ctaLabel, compact = false }: Props) {
+export function DashboardEventCard({ event, badgeLabel, ctaLabel, compact = false }: Props) {
+    const mode = normalizeEventMode(event.mode);
+    const modeLabel = mode === "online" ? "Online" : mode === "hybrid" ? "Hybrid" : "Offline";
+
     return (
         <motion.article
             initial={{ opacity: 0, y: 8 }}
@@ -63,16 +67,18 @@ export function DashboardEventCard({ event, badgeLabel, topRightLabel, ctaLabel,
                     <div className={compact ? "absolute left-3 top-3 rounded-full border border-[#332be0]/25 bg-[#332be0]/12 px-2 py-0.5 text-[9px] font-semibold text-[#a5a0ff] backdrop-blur-md" : "absolute left-3 top-3 rounded-full border border-[#332be0]/25 bg-[#332be0]/12 px-2.5 py-1 text-[10px] font-semibold text-[#a5a0ff] backdrop-blur-md"}>
                         {badgeLabel}
                     </div>
-
-                    <div className={compact ? "absolute right-3 top-3 rounded-full border border-white/10 bg-black/40 px-2 py-0.5 text-[9px] font-semibold text-white/85 backdrop-blur-md" : "absolute right-3 top-3 rounded-full border border-white/10 bg-black/40 px-2.5 py-1 text-[10px] font-semibold text-white/85 backdrop-blur-md"}>
-                        {topRightLabel}
-                    </div>
                 </div>
 
                 <div className={compact ? "flex flex-1 flex-col p-3.5" : "flex flex-1 flex-col p-4"}>
-                    <h3 className={compact ? "line-clamp-2 text-[15px] font-semibold tracking-[-0.03em] text-white/95" : "line-clamp-2 text-[17px] font-semibold tracking-[-0.03em] text-white/95"}>
-                        {event.title}
-                    </h3>
+                    <div className="flex items-start justify-between gap-3">
+                        <h3 className={compact ? "min-w-0 text-[15px] font-semibold tracking-[-0.03em] text-white/95" : "min-w-0 text-[17px] font-semibold tracking-[-0.03em] text-white/95"}>
+                            {event.title}
+                        </h3>
+
+                        <span className={compact ? "inline-flex shrink-0 items-center rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-white/58" : "inline-flex shrink-0 items-center rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/58"}>
+                            {modeLabel}
+                        </span>
+                    </div>
 
                     <div className={compact ? "mt-2.5 space-y-1.5 text-[11px] text-white/58" : "mt-3 space-y-2 text-[12px] text-white/58"}>
                         <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
@@ -113,8 +119,8 @@ export function DashboardEventCard({ event, badgeLabel, topRightLabel, ctaLabel,
                         </div>
                     </div>
 
-                    <div className={compact ? "mt-auto flex justify-center pt-3" : "mt-auto flex justify-center pt-4"}>
-                        <span className={compact ? "inline-flex w-[92%] items-center justify-center gap-1.5 rounded-xl bg-[#332be0] px-4 py-2.5 text-[12px] font-semibold text-white shadow-[0_10px_20px_rgba(51,43,224,0.18)] transition-colors hover:bg-[#4c46ff]" : "inline-flex w-[92%] items-center justify-center gap-1.5 rounded-xl bg-[#332be0] px-4 py-3 text-[13px] font-semibold text-white shadow-[0_10px_20px_rgba(51,43,224,0.18)] transition-colors hover:bg-[#4c46ff]"}>
+                    <div className={compact ? "mt-auto pt-3" : "mt-auto pt-4"}>
+                        <span className={compact ? "inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-[#332be0] px-4 py-2.5 text-[12px] font-semibold text-white shadow-[0_10px_20px_rgba(51,43,224,0.18)] transition-colors hover:bg-[#4c46ff]" : "inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-[#332be0] px-4 py-3 text-[13px] font-semibold text-white shadow-[0_10px_20px_rgba(51,43,224,0.18)] transition-colors hover:bg-[#4c46ff]"}>
                             {ctaLabel} <ArrowRight size={compact ? 14 : 15} />
                         </span>
                     </div>

@@ -57,16 +57,10 @@ export function PersonalAnalyticsSummary({
         >
             <div className="flex items-end justify-between gap-4">
                 <div className="min-w-0">
-                    <p className={compact ? "text-[10px] font-semibold uppercase tracking-[0.18em] text-white/30" : "text-[11px] font-semibold uppercase tracking-[0.18em] text-white/30"}>
-                        Personal Analytics
-                    </p>
                     <h2 className={compact ? "mt-1 text-[15px] font-semibold text-white/90 sm:text-[17px]" : "mt-1 text-[16px] font-semibold text-white/90 sm:text-[18px]"}>
-                        A quick snapshot of your activity
+                        Personal Analytics
                     </h2>
                 </div>
-                <p className="hidden text-[12px] text-white/35 md:block">
-                    Attendance, hosting, and money at a glance.
-                </p>
             </div>
 
             <div className={compact ? "grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4" : "grid gap-3 sm:grid-cols-2 xl:grid-cols-4"}>

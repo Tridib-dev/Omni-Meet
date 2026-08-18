@@ -51,20 +51,6 @@ export function MonthlyOverviewSection({
             animate={{ opacity: 1, y: 0 }}
             className={compact ? "space-y-3" : "space-y-4"}
         >
-            <div className="flex items-end justify-between gap-4">
-                <div className="min-w-0">
-                    <p className={compact ? "text-[10px] font-semibold uppercase tracking-[0.18em] text-white/30" : "text-[11px] font-semibold uppercase tracking-[0.18em] text-white/30"}>
-                        Monthly Overview
-                    </p>
-                    <h2 className={compact ? "mt-1 text-[15px] font-semibold text-white/90 sm:text-[17px]" : "mt-1 text-[16px] font-semibold text-white/90 sm:text-[18px]"}>
-                        {title}
-                    </h2>
-                </div>
-                <p className="hidden text-[12px] text-white/35 md:block">
-                    {subtitle}
-                </p>
-            </div>
-
             <div className={compact ? "grid gap-3 lg:grid-cols-[minmax(0,1.25fr)_minmax(260px,.75fr)]" : "grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(280px,.75fr)]"}>
                 <div className={compact ? "rounded-xl border border-white/8 bg-white/[0.03] p-3.5 sm:p-4" : "rounded-xl border border-white/8 bg-white/[0.03] p-4 sm:p-5"}>
                     <div className="mb-3 flex items-center justify-between gap-3">

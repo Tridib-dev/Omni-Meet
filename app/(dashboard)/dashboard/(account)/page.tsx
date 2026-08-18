@@ -38,13 +38,14 @@ export default async function DashboardPage() {
             date: event.eventDate,
             time: event.eventTime,
             organizer: event.eventOrganizer || "Organizer",
+            mode: event.eventMode,
             scope: "attended",
         }));
 
     const upcomingOrganized: UpcomingEventCardItem[] = organizedEvents
         .filter((event) => event.status === "upcoming")
         .slice(0, 6)
-        .map((event) => ({
+            .map((event) => ({
             id: event.id,
             title: event.title,
             image: event.image,
@@ -55,6 +56,7 @@ export default async function DashboardPage() {
             time: event.time,
             organizer: displayName,
             organizerImage: clerkUser?.imageUrl ?? "",
+            mode: event.mode,
             scope: "organized",
         }));
 

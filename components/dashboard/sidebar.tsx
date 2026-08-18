@@ -196,8 +196,8 @@ export default function DashboardSidebar({
                 >
                     <Link href="/" onClick={onNavigate} className="flex items-center gap-2.5 min-w-0">
                         <Image
-                            src="/icons/logo.png"
-                            alt="DevEvent"
+                            src="/icons/logo.svg"
+                            alt="Your Lobby"
                             width={22}
                             height={22}
                             className="flex-shrink-0 opacity-90"

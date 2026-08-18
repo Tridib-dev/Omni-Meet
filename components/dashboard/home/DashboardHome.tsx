@@ -90,11 +90,8 @@ export function DashboardHome({
             <section className={compact ? "space-y-3" : "space-y-4"}>
                 <div className="flex items-end justify-between gap-4">
                     <div className="min-w-0">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/30 sm:text-[11px]">
-                            Monthly Overview
-                        </p>
                         <h2 className="mt-1 text-[15px] font-semibold text-white/90 sm:text-[18px]">
-                            Event rhythm at a glance
+                            Monthly Overview
                         </h2>
                     </div>
                 </div>
@@ -111,7 +108,7 @@ export function DashboardHome({
                             label: "Attended",
                             content: (
                                 <MonthlyOverviewSection
-                                    title="Attended events"
+                                    title=""
                                     subtitle="How your attendance moves through the year."
                                     monthlyData={attendedAnalytics.monthlyActivity}
                                     modeBreakdown={attendedAnalytics.modeBreakdown}
@@ -127,7 +124,7 @@ export function DashboardHome({
                             label: "Organized",
                             content: (
                                 <MonthlyOverviewSection
-                                    title="Organized events"
+                                    title=""
                                     subtitle="How your event schedule evolves month by month."
                                     monthlyData={organizedAnalytics.monthlyActivity}
                                     modeBreakdown={organizedAnalytics.modeBreakdown}

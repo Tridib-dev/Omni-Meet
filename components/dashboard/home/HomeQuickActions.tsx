@@ -35,11 +35,8 @@ export function HomeQuickActions({ compact = false }: Props) {
     return (
         <section className={compact ? "space-y-3" : "space-y-4"}>
             <div className="space-y-1">
-                <p className={compact ? "text-[10px] font-semibold uppercase tracking-[0.18em] text-white/30" : "text-[11px] font-semibold uppercase tracking-[0.18em] text-white/30"}>
-                    Quick actions
-                </p>
                 <h2 className={compact ? "text-[16px] font-semibold text-white/90" : "text-[18px] font-semibold text-white/90"}>
-                    Fast paths to the places you use most
+                    Quick Actions
                 </h2>
             </div>
 

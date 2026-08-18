@@ -12,24 +12,6 @@ type Props = {
     compact?: boolean;
 };
 
-function getRelativeLabel(date: string) {
-    const eventDate = new Date(date);
-    const now = new Date();
-
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const startOfEvent = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
-    const diffDays = Math.round((startOfEvent.getTime() - startOfToday.getTime()) / (1000 * 60 * 60 * 24));
-
-    if (diffDays <= 0) return "Today";
-    if (diffDays === 1) return "Tomorrow";
-    if (diffDays < 7) return `In ${diffDays} days`;
-    return new Date(date).toLocaleDateString("en-IN", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-    });
-}
-
 function EmptyState({ title, description }: { title: string; description: string }) {
     return (
         <div className="rounded-[22px] border border-dashed border-white/10 bg-white/[0.03] px-5 py-10 text-center">
@@ -52,11 +34,8 @@ export function UpcomingEventsSection({ attendedEvents, organizedEvents, compact
         <section className={compact ? "space-y-3" : "space-y-4"}>
             <div className="flex items-end justify-between gap-4">
                 <div className="min-w-0">
-                    <p className={compact ? "text-[10px] font-semibold uppercase tracking-[0.18em] text-white/30" : "text-[11px] font-semibold uppercase tracking-[0.18em] text-white/30"}>
-                        Upcoming events
-                    </p>
                     <h2 className={compact ? "mt-1 text-[16px] font-semibold text-white/90 sm:text-[20px]" : "mt-1 text-[18px] font-semibold text-white/90 sm:text-[22px]"}>
-                        Coming soon
+                        Upcoming events
                     </h2>
                 </div>
             </div>
@@ -85,7 +64,6 @@ export function UpcomingEventsSection({ attendedEvents, organizedEvents, compact
                                         <DashboardEventCard
                                             event={event}
                                             badgeLabel="Attended"
-                                            topRightLabel={getRelativeLabel(event.date)}
                                             ctaLabel="Open"
                                             compact={compact}
                                         />
@@ -116,7 +94,6 @@ export function UpcomingEventsSection({ attendedEvents, organizedEvents, compact
                                         <DashboardEventCard
                                             event={event}
                                             badgeLabel="Organized"
-                                            topRightLabel={getRelativeLabel(event.date)}
                                             ctaLabel="Manage"
                                             compact={compact}
                                         />
