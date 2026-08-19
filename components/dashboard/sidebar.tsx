@@ -1,391 +1,424 @@
 "use client";
 
-// components/dashboard/sidebar.tsx
-import { useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { motion, LayoutGroup } from "framer-motion";
-import { useUser } from "@clerk/nextjs";
 import Image from "next/image";
+import { useClerk, useUser } from "@clerk/nextjs";
+import type { ReactNode } from "react";
+import { motion } from "framer-motion";
+import {
+    ChevronLeft,
+    ChevronRight,
+    LogOut,
+    Settings2,
+    UserRound,
+} from "lucide-react";
 
-// ─── Theme tokens ─────────────────────────────────────────────────────────────
-// Notion-style neutral palette. Everything below is grayscale on purpose —
-// no accent color — so the sidebar reads as calm, high-contrast UI chrome.
-//
-// To wire this up to `next-themes` later: replace the `mode` useState below
-// with `const { resolvedTheme } = useTheme()` and use `resolvedTheme` in its
-// place. Nothing else needs to change since every color reference here
-// flows through the single `theme` object.
-type Mode = "light" | "dark";
+import { cn } from "@/lib/utils";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-const THEME: Record<Mode, Record<string, string>> = {
-    dark: {
-        bg: "#1f1f1f",
-        border: "rgba(255,255,255,0.09)",
-        textPrimary: "rgba(255,255,255,0.92)",
-        textSecondary: "rgba(255,255,255,0.58)",
-        textTertiary: "rgba(255,255,255,0.38)",
-        hoverBg: "rgba(255,255,255,0.06)",
-        activeBg: "rgba(255,255,255,0.10)",
-        avatarBg: "#3a3a3a",
-        avatarText: "rgba(255,255,255,0.85)",
-    },
-    light: {
-        bg: "#fbfbfa",
-        border: "rgba(0,0,0,0.09)",
-        textPrimary: "rgba(0,0,0,0.88)",
-        textSecondary: "rgba(0,0,0,0.55)",
-        textTertiary: "rgba(0,0,0,0.36)",
-        hoverBg: "rgba(0,0,0,0.055)",
-        activeBg: "rgba(0,0,0,0.07)",
-        avatarBg: "#e0e0de",
-        avatarText: "rgba(0,0,0,0.7)",
-    },
+type SidebarProps = {
+    mobile?: boolean;
+    collapsed?: boolean;
+    onCollapsedChange?: (next: boolean) => void;
+    onNavigate?: () => void;
 };
 
-// ─── Icons (inline SVG — no extra deps) ──────────────────────────────────────
-const Icon = {
-    ticket: (
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z"/>
-            <path d="M13 5v2M13 17v2M13 11v2"/>
-        </svg>
-    ),
-    bookmark: (
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M19 21l-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
-        </svg>
-    ),
-    calendar: (
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-            <rect width="18" height="18" x="3" y="4" rx="2"/>
-            <line x1="16" x2="16" y1="2" y2="6"/>
-            <line x1="8" x2="8" y1="2" y2="6"/>
-            <line x1="3" x2="21" y1="10" y2="10"/>
-        </svg>
-    ),
-    analytics: (
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M4 19V5"/>
-            <path d="M4 19h16"/>
-            <path d="M7 15l3-3 3 2 4-6"/>
-            <circle cx="7" cy="15" r="1"/>
-            <circle cx="10" cy="12" r="1"/>
-            <circle cx="13" cy="14" r="1"/>
-            <circle cx="17" cy="8" r="1"/>
-        </svg>
-    ),
-    user: (
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="8" r="4"/>
-            <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
-        </svg>
-    ),
-    settings: (
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
-            <circle cx="12" cy="12" r="3"/>
-        </svg>
-    ),
-    chevronLeft: (
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M15 18l-6-6 6-6"/>
-        </svg>
-    ),
-    home: (
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-            <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-            <polyline points="9 22 9 12 15 12 15 22"/>
-        </svg>
-    ),
-    sun: (
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="4"/>
-            <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>
-        </svg>
-    ),
-    moon: (
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-        </svg>
-    ),
+type NavItem = {
+    label: string;
+    href: string;
+    icon: ReactNode;
 };
 
-// ─── Nav config ───────────────────────────────────────────────────────────────
-const NAV_SECTIONS = [
+const NAV_ITEMS: NavItem[] = [
     {
-        label: "Wallet",
-        items: [
-            { label: "My Tickets", href: "/dashboard/attended", icon: Icon.ticket },
-            { label: "Saved", href: "/dashboard/saved", icon: Icon.bookmark },
-        ],
+        label: "Overview",
+        href: "/dashboard",
+        icon: (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                    d="M4 11.5L12 4l8 7.5"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                />
+                <path
+                    d="M6.5 10.5V20h11V10.5"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                />
+            </svg>
+        ),
     },
     {
-        label: "Host",
-        items: [
-            { label: "My Events", href: "/dashboard/organized", icon: Icon.calendar },
-        ],
+        label: "Saved",
+        href: "/dashboard/saved",
+        icon: (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                    d="M6.5 5.5A1.5 1.5 0 0 1 8 4h8a1.5 1.5 0 0 1 1.5 1.5V20l-5.5-3-5.5 3V5.5Z"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinejoin="round"
+                />
+            </svg>
+        ),
     },
     {
-        label: "Insights",
-        items: [
-            { label: "Analytics", href: "/dashboard/analytics", icon: Icon.analytics },
-        ],
+        label: "My Events",
+        href: "/dashboard/organized",
+        icon: (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <rect x="4" y="5" width="16" height="15" rx="3" stroke="currentColor" strokeWidth="1.8" />
+                <path d="M8 3.5V6M16 3.5V6M4 9h16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+        ),
     },
     {
-        label: "Account",
-        items: [
-            { label: "Profile", href: "/dashboard/profile", icon: Icon.user },
-            { label: "Settings", href: "/dashboard/settings", icon: Icon.settings },
-        ],
+        label: "My Tickets",
+        href: "/dashboard/attended",
+        icon: (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                    d="M4 9a2 2 0 0 0 0 6v2a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-2a2 2 0 0 0 0-6V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2z"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinejoin="round"
+                />
+                <path d="M12 6.5v11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+        ),
+    },
+    {
+        label: "Analytics",
+        href: "/dashboard/analytics",
+        icon: (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M4 19V5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                <path d="M4 19h16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                <path d="M7 15l3-3 3 2 4-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+        ),
+    },
+    {
+        label: "Create Event",
+        href: "/create_event",
+        icon: (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+        ),
+    },
+    {
+        label: "Discover",
+        href: "/events/discover",
+        icon: (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                    d="M12 4l5.5 2.5L20 12l-2.5 5.5L12 20l-5.5-2.5L4 12l2.5-5.5L12 4Z"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinejoin="round"
+                />
+                <path
+                    d="M10.5 13.5 13.5 10.5"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                />
+            </svg>
+        ),
     },
 ];
 
-function isNavItemActive(pathname: string | null, href: string) {
+const isActiveHref = (pathname: string | null, href: string) => {
     if (!pathname) return false;
     return pathname === href || pathname.startsWith(`${href}/`);
+};
+
+function BrandMark() {
+    return (
+        <div className="grid size-10 place-items-center rounded-2xl bg-slate-900 text-white shadow-[0_10px_24px_rgba(15,23,42,0.16)]">
+            <Image src="/icons/logo.svg" alt="DevEvent" width={24} height={24} className="size-6" />
+        </div>
+    );
 }
 
-// ─── Sidebar ──────────────────────────────────────────────────────────────────
-export default function DashboardSidebar({
-    mobile = false,
+function NavIcon({ icon }: { icon: ReactNode }) {
+    return (
+        <span className="grid size-[24px] shrink-0 place-items-center rounded-xl bg-white text-slate-500 ring-1 ring-slate-200/80 transition-colors group-hover:bg-slate-50">
+            {icon}
+        </span>
+    );
+}
+
+function SidebarNavItem({
+    item,
+    active,
+    collapsed,
     onNavigate,
 }: {
-    mobile?: boolean;
+    item: NavItem;
+    active: boolean;
+    collapsed: boolean;
     onNavigate?: () => void;
-} = {}) {
-    const [collapsed, setCollapsed] = useState(false);
-    const [mode, setMode] = useState<Mode>("dark");
-    const pathname = usePathname();
-    const { user } = useUser();
-
-    const W = mobile ? "100%" : collapsed ? 56 : 220;
-    const t = THEME[mode];
-
-    // CSS custom properties scoped to the sidebar. Tailwind's arbitrary-value
-    // syntax (e.g. `hover:bg-[var(--hover-bg)]`) reads these directly, which is
-    // what lets hover states react to the theme without duplicating classes
-    // per-mode. Swap `t` for values from a theme provider later and everything
-    // downstream keeps working unchanged.
-    const themeVars = {
-        "--sidebar-bg": t.bg,
-        "--sidebar-border": t.border,
-        "--text-primary": t.textPrimary,
-        "--text-secondary": t.textSecondary,
-        "--text-tertiary": t.textTertiary,
-        "--hover-bg": t.hoverBg,
-        "--active-bg": t.activeBg,
-    } as React.CSSProperties;
-
+}) {
     return (
-        <LayoutGroup id="sidebar">
-            <motion.aside
-                animate={{ width: W }}
-                transition={{ type: "spring", stiffness: 340, damping: 30, mass: 0.8 }}
-                className="relative z-20 flex h-dvh flex-shrink-0 flex-col"
-                style={{
-                    background: "var(--sidebar-bg)",
-                    borderRight: mobile ? "none" : "1px solid var(--sidebar-border)",
-                    ...themeVars,
-                }}
+        <li>
+            <Link
+                href={item.href}
+                onClick={onNavigate}
+                title={collapsed ? item.label : undefined}
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                    "group flex items-center gap-1.5 rounded-2xl border px-2 py-[6px] transition-all duration-200",
+                    collapsed ? "justify-center px-0" : "justify-start",
+                    active
+                        ? "border-blue-200/80 bg-[rgba(59,130,246,0.10)] text-slate-950 shadow-[0_10px_24px_rgba(59,130,246,0.10)]"
+                        : "border-transparent bg-transparent text-slate-500 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-950"
+                )}
             >
-                {/* Logo */}
-                <div
-                    className="flex items-center h-[52px] px-3 flex-shrink-0 overflow-hidden"
-                    style={{ borderBottom: "1px solid var(--sidebar-border)" }}
+                <NavIcon icon={item.icon} />
+                <motion.span
+                    animate={{ opacity: collapsed ? 0 : 1, width: collapsed ? 0 : "auto" }}
+                    transition={{ duration: 0.16 }}
+                    className="min-w-0 overflow-hidden whitespace-nowrap text-[10px] font-medium"
                 >
-                    <Link href="/" onClick={onNavigate} className="flex items-center gap-2.5 min-w-0">
-                        <Image
-                            src="/icons/logo.svg"
-                            alt="Your Lobby"
-                            width={22}
-                            height={22}
-                            className="flex-shrink-0 opacity-90"
-                        />
-                        <motion.span
-                            animate={{ opacity: collapsed ? 0 : 1 }}
-                            transition={{ duration: 0.15 }}
-                            className="text-[13.5px] font-semibold text-[var(--text-primary)] whitespace-nowrap overflow-hidden"
-                        >
-                            DevEvent
-                        </motion.span>
-                    </Link>
+                    {item.label}
+                </motion.span>
+            </Link>
+        </li>
+    );
+}
+
+function SidebarPromo({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
+    return (
+        <div
+            className={cn(
+                "relative overflow-hidden rounded-[22px] border border-blue-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.96)_0%,rgba(239,246,255,0.98)_100%)] shadow-[0_16px_30px_rgba(15,23,42,0.06)]",
+                collapsed ? "mx-[6px] p-2" : "mx-[6px] p-[10px]"
+            )}
+        >
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.18),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(15,23,42,0.06),transparent_40%)]" />
+            <div className="relative space-y-1.5">
+                <div className="flex items-center gap-1">
+                    <span className="rounded-full border border-blue-200 bg-blue-50 px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-[0.12em] text-blue-700">
+                        Spotlight
+                    </span>
+                    <span className="rounded-full border border-slate-200 bg-white px-1.5 py-0.5 text-[8px] text-slate-500">
+                        Ad slot
+                    </span>
                 </div>
 
-                {/* Nav */}
-                <nav className="flex-1 overflow-y-auto overflow-x-hidden py-3 px-2 space-y-4">
-                    {/* Back to site */}
-                    <Link
-                        href="/"
-                        onClick={onNavigate}
-                        className="group flex items-center gap-2.5 px-2 py-1.5 rounded-md text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--hover-bg)] transition-colors duration-150"
+                <div className={collapsed ? "space-y-1.5" : "space-y-2"}>
+                    <h3 className={collapsed ? "text-[11px] font-semibold leading-tight text-slate-900" : "text-[12px] font-semibold leading-tight text-slate-900"}>
+                        Promote your next event
+                    </h3>
+                    <p
+                        className={cn(
+                            "text-[10px] leading-4 text-slate-600",
+                            collapsed ? "line-clamp-2" : "line-clamp-3"
+                        )}
                     >
-                        <span className="flex-shrink-0">{Icon.home}</span>
-                        <motion.span
-                            animate={{ opacity: collapsed ? 0 : 1, width: collapsed ? 0 : "auto" }}
-                            transition={{ duration: 0.12 }}
-                            className="text-[12.5px] overflow-hidden whitespace-nowrap"
-                        >
-                            Back to site
-                        </motion.span>
-                    </Link>
+                        Use this card for an ad, a campaign note, or a quick todo list with a strong CTA.
+                    </p>
+                </div>
 
-                    {/* Divider */}
-                    <div style={{ height: 1, background: "var(--sidebar-border)", margin: "4px 8px" }} />
-
-                    {NAV_SECTIONS.map((section) => (
-                        <div key={section.label}>
-                            {/* Section label */}
-                            <motion.p
-                                animate={{ opacity: collapsed ? 0 : 1, height: collapsed ? 0 : "auto" }}
-                                transition={{ duration: 0.12 }}
-                                className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)] px-2 mb-1 overflow-hidden whitespace-nowrap"
-                            >
-                                {section.label}
-                            </motion.p>
-
-                            <ul className="list-none p-0 m-0 space-y-px">
-                                {section.items.map((item) => {
-                                    const isActive = isNavItemActive(pathname, item.href);
-
-                                    return (
-                                        <li key={item.href} className="relative">
-                                            {isActive && (
-                                                <motion.span
-                                                    layoutId="sidebar-active-pill"
-                                                    className="absolute inset-0 rounded-md bg-[var(--active-bg)]"
-                                                    transition={{
-                                                        type: "spring",
-                                                        stiffness: 420,
-                                                        damping: 34,
-                                                    }}
-                                                />
-                                            )}
-
-                                            <Link
-                                                href={item.href}
-                                                onClick={onNavigate}
-                                                className={`group relative flex items-center gap-2.5 px-2 py-1.5 rounded-md transition-colors duration-150 ${
-                                                    isActive
-                                                        ? "text-[var(--text-primary)]"
-                                                        : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--hover-bg)]"
-                                                }`}
-                                            >
-                                                <span className="flex-shrink-0">{item.icon}</span>
-
-                                                <motion.span
-                                                    animate={{
-                                                        opacity: collapsed ? 0 : 1,
-                                                        width: collapsed ? 0 : "auto",
-                                                        fontWeight: isActive ? 500 : 400,
-                                                    }}
-                                                    transition={{ duration: 0.12 }}
-                                                    className="text-[13px] overflow-hidden whitespace-nowrap"
-                                                >
-                                                    {item.label}
-                                                </motion.span>
-                                            </Link>
-                                        </li>
-                                    );
-                                })}
-                            </ul>
-                        </div>
-                    ))}
-                </nav>
-
-                {/* Footer */}
-                <div
-                    className="flex-shrink-0 px-2 py-2 space-y-0.5 overflow-hidden"
-                    style={{ borderTop: "1px solid var(--sidebar-border)" }}
+                <Link
+                    href="/create_event"
+                    onClick={onNavigate}
+                    className={cn(
+                        "inline-flex items-center justify-center gap-1.5 rounded-full bg-slate-900 text-white transition-colors hover:bg-slate-800",
+                        collapsed ? "h-7 w-full px-3 text-[10px]" : "h-8 px-3.5 text-[11px]"
+                    )}
                 >
-                    {/* User row */}
-                    <Link
-                        href="/dashboard/profile"
-                        onClick={onNavigate}
-                        className="flex items-center gap-2.5 px-2 py-2 rounded-md hover:bg-[var(--hover-bg)] transition-colors duration-150 min-w-0"
-                    >
-                        <div
-                            className="w-6 h-6 rounded-full flex-shrink-0 overflow-hidden flex items-center justify-center text-[9px] font-bold"
-                            style={{ background: t.avatarBg, color: t.avatarText }}
-                        >
+                    Create event
+                    <ChevronRight size={12} />
+                </Link>
+            </div>
+        </div>
+    );
+}
+
+function ProfileMenu({ onNavigate }: { onNavigate?: () => void }) {
+    const router = useRouter();
+    const clerk = useClerk();
+    const { user, isSignedIn } = useUser();
+
+    const name = user?.fullName || user?.firstName || "You";
+    const email = user?.primaryEmailAddress?.emailAddress || "Dashboard member";
+
+    const handleGo = (href: string) => {
+        onNavigate?.();
+        router.push(href);
+    };
+
+    const handleSignOut = async () => {
+        onNavigate?.();
+        await clerk.signOut({ redirectUrl: "/" });
+    };
+
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <button
+                    type="button"
+                    className="mx-[6px] mb-[6px] mt-1 flex w-[calc(100%-12px)] items-center gap-2 rounded-[18px] border border-slate-200 bg-white px-2 py-[7px] text-left shadow-[0_12px_28px_rgba(15,23,42,0.05)] transition-colors hover:bg-slate-50"
+                    title={name}
+                >
+                    <div className="relative shrink-0">
+                        <div className="grid size-[34px] place-items-center overflow-hidden rounded-2xl bg-slate-100 text-[11px] font-semibold text-slate-600 ring-1 ring-slate-200">
                             {user?.imageUrl ? (
                                 <Image
                                     src={user.imageUrl}
-                                    alt="avatar"
-                                    width={24}
-                                    height={24}
-                                    className="w-full h-full object-cover"
+                                    alt={name}
+                                    width={34}
+                                    height={34}
+                                    className="size-full object-cover"
                                 />
                             ) : (
-                                user?.firstName?.slice(0, 2).toUpperCase() ?? "ME"
+                                <UserRound size={14} />
                             )}
                         </div>
-                        <motion.div
-                            animate={{ opacity: collapsed ? 0 : 1, width: collapsed ? 0 : "auto" }}
-                            transition={{ duration: 0.12 }}
-                            className="overflow-hidden min-w-0"
-                        >
-                            <p className="text-[12.5px] font-medium text-[var(--text-primary)] truncate leading-tight">
-                                {user?.fullName ?? user?.firstName ?? "You"}
-                            </p>
-                        </motion.div>
-                    </Link>
+                    </div>
 
-                    {/* Theme toggle */}
-                    <button
-                        onClick={() => setMode((m) => (m === "dark" ? "light" : "dark"))}
-                        className="flex items-center gap-2.5 px-2 py-1.5 w-full rounded-md hover:bg-[var(--hover-bg)] transition-colors duration-150 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
-                    >
-                        <span className="flex-shrink-0">{mode === "dark" ? Icon.sun : Icon.moon}</span>
+                    <motion.div animate={{ opacity: 1, width: "auto" }} className="min-w-0 flex-1">
+                        <p className="truncate text-[11px] font-semibold text-slate-900">{name}</p>
+                        <p className="truncate text-[9px] text-slate-500">{isSignedIn ? email : "Profile menu"}</p>
+                    </motion.div>
+
+                    <span className="grid size-[26px] shrink-0 place-items-center rounded-full bg-slate-100 text-slate-500">
+                        <ChevronRight size={12} />
+                    </span>
+                </button>
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent
+                align="end"
+                side="right"
+                sideOffset={10}
+                className="w-72 rounded-[24px] border border-slate-200 bg-white/96 p-2 shadow-[0_22px_60px_rgba(15,23,42,0.16)] backdrop-blur-xl"
+            >
+                <DropdownMenuLabel className="px-2 py-2">
+                    <div className="space-y-1">
+                        <p className="text-[13px] font-semibold text-slate-900">{name}</p>
+                        <p className="text-[11px] text-slate-500">{email}</p>
+                    </div>
+                </DropdownMenuLabel>
+
+                <DropdownMenuSeparator className="my-1 bg-slate-200" />
+
+                <DropdownMenuItem
+                    onSelect={() => handleGo("/dashboard/profile")}
+                    className="cursor-pointer rounded-2xl px-3 py-2 text-[13px] text-slate-700 focus:bg-slate-100 focus:text-slate-950"
+                >
+                    <UserRound size={14} />
+                    Profile
+                </DropdownMenuItem>
+
+                <DropdownMenuItem
+                    onSelect={() => handleGo("/dashboard/settings")}
+                    className="cursor-pointer rounded-2xl px-3 py-2 text-[13px] text-slate-700 focus:bg-slate-100 focus:text-slate-950"
+                >
+                    <Settings2 size={14} />
+                    Settings
+                </DropdownMenuItem>
+
+                <DropdownMenuSeparator className="my-1 bg-slate-200" />
+
+                <DropdownMenuItem
+                    onSelect={handleSignOut}
+                    className="cursor-pointer rounded-2xl px-3 py-2 text-[13px] text-rose-600 focus:bg-rose-50 focus:text-rose-700"
+                >
+                    <LogOut size={14} />
+                    Sign out
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+}
+
+export default function DashboardSidebar({
+    mobile = false,
+    collapsed = false,
+    onCollapsedChange,
+    onNavigate,
+}: SidebarProps = {}) {
+    const pathname = usePathname();
+    const effectiveCollapsed = mobile ? false : collapsed;
+
+    return (
+        <motion.aside
+            animate={{ width: mobile ? "100%" : effectiveCollapsed ? 80 : 232 }}
+            transition={{ type: "spring", stiffness: 340, damping: 32, mass: 0.9 }}
+            className={cn(
+                "relative z-20 flex h-full min-h-0 flex-shrink-0 flex-col overflow-visible rounded-[15px] border border-slate-200/80 bg-white/85 shadow-[0_24px_70px_rgba(15,23,42,0.12)] backdrop-blur-xl",
+                mobile && "rounded-none border-0 shadow-none"
+            )}
+        >
+            <div className="flex h-11 items-center gap-2 px-2.5 pt-1">
+                <Link
+                    href="/"
+                    onClick={onNavigate}
+                    className={cn("flex min-w-0 items-center gap-2", effectiveCollapsed && "justify-center")}
+                >
+                    <BrandMark />
+                    {!effectiveCollapsed && (
                         <motion.span
-                            animate={{ opacity: collapsed ? 0 : 1, width: collapsed ? 0 : "auto" }}
-                            transition={{ duration: 0.12 }}
-                            className="text-[12px] overflow-hidden whitespace-nowrap"
+                            animate={{ opacity: 1, width: "auto" }}
+                            transition={{ duration: 0.16 }}
+                            className="min-w-0 overflow-hidden whitespace-nowrap text-[12px] font-semibold tracking-[-0.02em] text-slate-900"
                         >
-                            {mode === "dark" ? "Light mode" : "Dark mode"}
+                            DevEvent
                         </motion.span>
-                    </button>
+                    )}
+                </Link>
+            </div>
 
-                    {/* Collapse toggle */}
+            <nav className="flex min-h-0 flex-1 flex-col px-2 pb-1">
+                <ul className="space-y-0.5 pt-4">
+                    {NAV_ITEMS.map((item) => (
+                        <SidebarNavItem
+                            key={item.href}
+                            item={item}
+                            active={isActiveHref(pathname, item.href)}
+                            collapsed={effectiveCollapsed}
+                            onNavigate={onNavigate}
+                        />
+                    ))}
+                </ul>
+
+                <div className="mt-auto flex flex-col">
                     {!mobile && (
                         <button
-                            onClick={() => setCollapsed((p) => !p)}
-                            className="flex items-center gap-2.5 px-2 py-1.5 w-full rounded-md hover:bg-[var(--hover-bg)] transition-colors duration-150 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
+                            type="button"
+                            aria-label={effectiveCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                            onClick={() => onCollapsedChange?.(!effectiveCollapsed)}
+                            className="absolute right-[-10px] top-[96px] z-30 grid size-[22px] place-items-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-[0_10px_24px_rgba(15,23,42,0.12)] transition-colors hover:bg-slate-50 hover:text-slate-900"
                         >
-                            <motion.span
-                                animate={{ rotate: collapsed ? 180 : 0 }}
-                                transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                                className="flex-shrink-0 ml-0.5"
-                            >
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="20"
-                                    height="20"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                >
-                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                    <path d="M4 6a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2l0 -12" />
-                                    <path d="M9 4v16" />
-                                    <path d="M15 10l-2 2l2 2" />
-                                </svg>
-                            </motion.span>
-
-                            <motion.span
-                                animate={{ opacity: collapsed ? 0 : 1, width: collapsed ? 0 : "auto" }}
-                                transition={{ duration: 0.12 }}
-                                className="text-[12px] overflow-hidden whitespace-nowrap"
-                            >
-                                Collapse
-                            </motion.span>
+                            {effectiveCollapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
                         </button>
                     )}
+
+                    {!effectiveCollapsed && (
+                        <div className="pb-0">
+                            <SidebarPromo collapsed={effectiveCollapsed} onNavigate={onNavigate} />
+                        </div>
+                    )}
                 </div>
-            </motion.aside>
-        </LayoutGroup>
+            </nav>
+
+            <ProfileMenu onNavigate={onNavigate} />
+        </motion.aside>
     );
 }
