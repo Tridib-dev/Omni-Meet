@@ -32,13 +32,13 @@ export default function EventSwitcher({ compact = false }: { compact?: boolean }
         <DropdownMenu>
             <DropdownMenuTrigger
                 className={cn(
-                    "flex max-w-full items-center gap-2 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[#332be0]/40",
+                    "flex max-w-full items-center gap-2 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[#332be0]/20",
                     compact
-                        ? "h-11 w-11 justify-center rounded-xl border border-white/8 bg-white/[0.04] hover:bg-white/[0.06]"
-                        : "w-full rounded-xl border border-white/8 bg-white/[0.04] px-2.5 py-2 hover:bg-white/[0.06]"
+                        ? "h-11 w-11 justify-center rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-950"
+                        : "w-full rounded-xl border border-slate-200 bg-white px-2.5 py-2 hover:bg-slate-50"
                 )}
             >
-                <div className={cn("relative flex-shrink-0 overflow-hidden rounded-md border border-white/10", compact ? "h-7 w-7" : "h-8 w-8")}>
+                <div className={cn("relative flex-shrink-0 overflow-hidden rounded-md border border-slate-200", compact ? "h-7 w-7" : "h-8 w-8")}>
                     <Image
                         src={context.image || "https://placehold.co/64x64/111318/666?text=E"}
                         alt={context.title}
@@ -49,17 +49,17 @@ export default function EventSwitcher({ compact = false }: { compact?: boolean }
                 {!compact && (
                     <>
                         <div className="min-w-0">
-                            <p className="truncate text-[13px] font-medium text-white/90">{context.title}</p>
-                            <p className="truncate text-[11px] text-white/40">{formatDate(context.date)}</p>
+                            <p className="truncate text-[13px] font-medium text-slate-900">{context.title}</p>
+                            <p className="truncate text-[11px] text-slate-500">{formatDate(context.date)}</p>
                         </div>
-                        <ChevronDown size={14} className="ml-auto flex-shrink-0 text-white/40" />
+                        <ChevronDown size={14} className="ml-auto flex-shrink-0 text-slate-400" />
                     </>
                 )}
             </DropdownMenuTrigger>
 
-            <DropdownMenuContent align="start" className="w-[320px] border-white/10 bg-[#171a21] text-white">
-                <DropdownMenuLabel className="text-white/50">Switch event</DropdownMenuLabel>
-                <DropdownMenuSeparator className="bg-white/10" />
+            <DropdownMenuContent align="start" className="w-[320px] border-slate-200 bg-white text-slate-900 shadow-[0_24px_70px_rgba(15,23,42,0.16)]">
+                <DropdownMenuLabel className="text-slate-500">Switch event</DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-slate-200" />
                 {accessibleEvents.length === 0 ? (
                     <DropdownMenuItem disabled>No accessible events</DropdownMenuItem>
                 ) : (
@@ -69,7 +69,7 @@ export default function EventSwitcher({ compact = false }: { compact?: boolean }
                             <DropdownMenuItem
                                 key={event.id}
                                 asChild
-                                className="rounded-md hover:bg-[#1f2430] focus:bg-[#1f2430] data-[highlighted]:bg-[#1f2430] focus:text-white"
+                                className="rounded-md hover:bg-slate-50 focus:bg-slate-50 data-[highlighted]:bg-slate-50 focus:text-slate-900"
                             >
                                 <Link
                                     href={`/dashboard/events/${event.id}/overview`}
@@ -83,7 +83,7 @@ export default function EventSwitcher({ compact = false }: { compact?: boolean }
                                     }}
                                     className="flex items-center gap-3 py-2"
                                 >
-                                    <div className="relative h-9 w-9 overflow-hidden rounded-md border border-white/10">
+                                    <div className="relative h-9 w-9 overflow-hidden rounded-md border border-slate-200">
                                         <Image
                                             src={event.image || "https://placehold.co/64x64/111318/666?text=E"}
                                             alt={event.title}
@@ -93,7 +93,7 @@ export default function EventSwitcher({ compact = false }: { compact?: boolean }
                                     </div>
                                     <div className="min-w-0 flex-1">
                                         <p className="truncate text-[13px] font-medium">{event.title}</p>
-                                        <p className="truncate text-[11px] text-white/40">
+                                        <p className="truncate text-[11px] text-slate-500">
                                             {formatDate(event.date)} · {event.location}
                                         </p>
                                     </div>

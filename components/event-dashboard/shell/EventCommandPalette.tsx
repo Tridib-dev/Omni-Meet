@@ -62,30 +62,30 @@ export default function EventCommandPalette({
                     className="fixed inset-0 z-50 flex items-start justify-center px-4 pt-[12vh]"
                     onClick={() => onOpenChange(false)}
                 >
-                    <div className="absolute inset-0 bg-black/60 backdrop-blur-md" />
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.97, y: 8 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.97, y: 8 }}
-                        className="relative flex max-h-[70vh] w-full max-w-[560px] flex-col overflow-hidden rounded-xl border border-white/10 bg-[#171a21] shadow-2xl"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div className="flex items-center gap-3 border-b border-white/10 px-4 py-3.5">
-                            <input
-                                autoFocus
-                                value={query}
-                                onChange={(e) => setQuery(e.target.value)}
-                                placeholder="Search pages and actions…"
-                                className="flex-1 bg-transparent text-[14px] text-white outline-none placeholder:text-white/30"
-                            />
-                            <button
-                                onClick={() => onOpenChange(false)}
-                                className="rounded border border-white/10 px-1.5 py-0.5 font-mono text-[10px] text-white/40"
-                            >
-                                ESC
-                            </button>
-                        </div>
-                        <div className="overflow-y-auto py-2">
+                    <div className="absolute inset-0 bg-slate-900/20 backdrop-blur-[2px]" />
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.97, y: 8 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.97, y: 8 }}
+                    className="relative flex max-h-[70vh] w-full max-w-[560px] flex-col overflow-hidden rounded-[18px] border border-slate-200 bg-white shadow-[0_24px_70px_rgba(15,23,42,0.18)]"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <div className="flex items-center gap-3 border-b border-slate-200 px-4 py-3.5">
+                        <input
+                            autoFocus
+                            value={query}
+                            onChange={(e) => setQuery(e.target.value)}
+                            placeholder="Search pages and actions…"
+                            className="flex-1 bg-transparent text-[14px] text-slate-900 outline-none placeholder:text-slate-400"
+                        />
+                        <button
+                            onClick={() => onOpenChange(false)}
+                            className="rounded border border-slate-200 px-1.5 py-0.5 font-mono text-[10px] text-slate-500"
+                        >
+                            ESC
+                        </button>
+                    </div>
+                    <div className="overflow-y-auto py-2">
                             {filtered.map((item) => (
                                 <Link
                                     key={item.href}
@@ -98,11 +98,11 @@ export default function EventCommandPalette({
                                         });
                                         onOpenChange(false);
                                     }}
-                                    className="block px-4 py-2.5 transition-colors hover:bg-white/[0.05]"
+                                    className="block px-4 py-2.5 transition-colors hover:bg-slate-50"
                                 >
-                                    <p className="text-[13px] font-medium text-white/85">{item.label}</p>
+                                    <p className="text-[13px] font-medium text-slate-900">{item.label}</p>
                                     {"description" in item && item.description && (
-                                        <p className="text-[11px] text-white/35">{item.description}</p>
+                                        <p className="text-[11px] text-slate-500">{item.description}</p>
                                     )}
                                 </Link>
                             ))}

@@ -2,112 +2,83 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { UserButton } from "@clerk/nextjs";
-import { Search } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ChevronRight, Menu, Search } from "lucide-react";
+
 import EventCommandPalette from "@/components/event-dashboard/shell/EventCommandPalette";
-import NotificationsBell from "@/components/dashboard/notifications-bell";
+import { NotificationsBellTrigger } from "@/components/dashboard/notifications-bell";
 import { useEventDashboard } from "@/components/event-dashboard/shell/EventDashboardProvider";
 import { getEventDashboardNav } from "@/lib/event-dashboard/navigation";
-import {
-    Breadcrumb,
-    BreadcrumbItem,
-    BreadcrumbLink,
-    BreadcrumbList,
-    BreadcrumbPage,
-    BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import { useState } from "react";
 
 export default function EventTopbar({ onMenuClick }: { onMenuClick?: () => void }) {
     const pathname = usePathname() ?? "";
     const { context } = useEventDashboard();
     const [cmdOpen, setCmdOpen] = useState(false);
-    const nav = getEventDashboardNav(context.eventId, context.normalizedMode);
-    const current = nav.find((item) => pathname === item.href || pathname.startsWith(`${item.href}/`));
+    const nav = useMemo(() => getEventDashboardNav(context.eventId, context.normalizedMode), [context.eventId, context.normalizedMode]);
+    const currentNav = nav.find((item) => pathname === item.href || pathname.startsWith(`${item.href}/`));
+    const pageLabel = currentNav?.label ?? "Overview";
 
     return (
         <>
             <header
-                className="sticky top-0 z-30 flex h-[52px] flex-shrink-0 items-center gap-3 border-b border-white/8 px-3 sm:px-4 lg:px-6"
-                style={{
-                    background: "rgba(17,19,24,0.85)",
-                    backdropFilter: "blur(16px)",
-                }}
+                className="sticky top-0 z-30"
             >
-                {onMenuClick && (
-                    <button
-                        onClick={onMenuClick}
-                        className="flex h-9 w-9 items-center justify-center rounded-md text-white/60 hover:bg-white/[0.06] md:hidden"
-                        aria-label="Open menu"
-                    >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                            <path d="M4 6h16M4 12h16M4 18h16" />
-                        </svg>
-                    </button>
-                )}
+                <div className="relative flex h-[52px] items-center rounded-[16px] border border-slate-200/80 bg-white/95 px-3 shadow-[0_18px_42px_rgba(15,23,42,0.12)] backdrop-blur-xl sm:px-4">
+                    <div className="relative z-10 flex min-w-0 flex-1 items-center gap-2">
+                        {onMenuClick && (
+                            <button
+                                type="button"
+                                onClick={onMenuClick}
+                                aria-label="Open menu"
+                                className="grid size-[34px] place-items-center rounded-[12px] border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 md:hidden"
+                            >
+                                <Menu size={17} />
+                            </button>
+                        )}
 
-                <div className="flex min-w-0 flex-1 items-center gap-2 lg:gap-3">
-                    <Breadcrumb className="min-w-0 flex-1">
-                        <BreadcrumbList className="text-[12px] text-white/40">
-                            <BreadcrumbItem className="lg:hidden">
-                                <BreadcrumbLink asChild>
-                                    <Link href="/dashboard/organized" className="text-white/40 hover:text-white/70">
-                                        My Events
-                                    </Link>
-                                </BreadcrumbLink>
-                            </BreadcrumbItem>
-                            <BreadcrumbSeparator className="text-white/25 lg:hidden" />
-                            <BreadcrumbItem className="hidden lg:flex">
-                                <BreadcrumbLink asChild>
-                                    <Link href="/dashboard" className="text-white/40 hover:text-white/70">
-                                        Dashboard
-                                    </Link>
-                                </BreadcrumbLink>
-                            </BreadcrumbItem>
-                            <BreadcrumbSeparator className="hidden text-white/25 lg:flex" />
-                            <BreadcrumbItem className="hidden lg:flex">
-                                <BreadcrumbLink asChild>
-                                    <Link href="/dashboard/organized" className="text-white/40 hover:text-white/70">
-                                        My Events
-                                    </Link>
-                                </BreadcrumbLink>
-                            </BreadcrumbItem>
-                            <BreadcrumbSeparator className="hidden text-white/25 lg:flex" />
-                            <BreadcrumbItem className="min-w-0">
-                                <BreadcrumbPage className="truncate font-medium text-white/80">
-                                    {current?.label ?? "Overview"}
-                                </BreadcrumbPage>
-                            </BreadcrumbItem>
-                        </BreadcrumbList>
-                    </Breadcrumb>
+                        <div className="min-w-0 overflow-hidden whitespace-nowrap text-[11px] text-slate-500">
+                            <div className="flex min-w-0 items-center gap-1.5">
+                                <Link href="/dashboard" className="truncate transition-colors hover:text-slate-900">
+                                    Dashboard
+                                </Link>
+                                <ChevronRight size={11} className="text-slate-300" />
+                                <Link href="/dashboard/organized" className="truncate transition-colors hover:text-slate-900">
+                                    My Events
+                                </Link>
+                                <ChevronRight size={11} className="text-slate-300" />
+                                <span className="truncate text-slate-700">
+                                    {pageLabel}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-16">
+                        <h1 className="min-w-0 truncate text-center text-[14px] font-semibold tracking-[-0.02em] text-slate-900 sm:text-[15px]">
+                            {pageLabel}
+                        </h1>
+                    </div>
+
+                    <div className="relative z-10 flex items-center justify-end gap-2">
+                        <Link
+                            href={`/events/${context.slug}`}
+                            className="hidden h-8 items-center rounded-[12px] border border-[#332be0]/18 bg-[#332be0]/10 px-3 text-[12px] text-[#332be0] transition-colors hover:bg-[#332be0]/15 sm:inline-flex"
+                        >
+                            View public page
+                        </Link>
+
+                        <button
+                            type="button"
+                            onClick={() => setCmdOpen(true)}
+                            aria-label="Search event"
+                            className="grid size-8 place-items-center rounded-[12px] border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
+                        >
+                            <Search size={15} />
+                        </button>
+
+                        <NotificationsBellTrigger variant="light" />
+                    </div>
                 </div>
-
-                <button
-                    onClick={() => setCmdOpen(true)}
-                    className="hidden h-9 min-w-[200px] items-center gap-2 rounded-lg border border-white/8 bg-white/[0.04] px-3 text-[13px] text-white/40 transition-colors hover:text-white/60 lg:flex xl:min-w-[280px]"
-                >
-                    <Search size={14} />
-                    <span className="flex-1 text-left">Search this event…</span>
-                    <kbd className="rounded border border-white/10 px-1.5 py-0.5 font-mono text-[10px]">⌘K</kbd>
-                </button>
-
-                <button
-                    onClick={() => setCmdOpen(true)}
-                    className="flex h-9 w-9 items-center justify-center rounded-md text-white/60 hover:bg-white/[0.06] lg:hidden"
-                    aria-label="Search"
-                >
-                    <Search size={17} />
-                </button>
-
-                <Link
-                    href={`/events/${context.slug}`}
-                    className="hidden rounded-full border border-[#332be0]/25 bg-[#332be0]/10 px-3 py-1.5 text-[12px] text-[#a5a0ff] transition-colors hover:bg-[#332be0]/15 sm:inline-flex"
-                >
-                    View public event
-                </Link>
-
-                <NotificationsBell />
-                <UserButton />
             </header>
 
             <EventCommandPalette open={cmdOpen} onOpenChange={setCmdOpen} />

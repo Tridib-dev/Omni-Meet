@@ -151,6 +151,10 @@ function NotificationContent({
 }
 
 export default function NotificationsBell() {
+    return <NotificationsBellTrigger variant="light" />;
+}
+
+export function NotificationsBellTrigger({ variant = "light" }: { variant?: "light" | "dark" }) {
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
@@ -316,12 +320,22 @@ export default function NotificationsBell() {
         <Drawer open={open} onOpenChange={setOpen} direction="bottom">
             <button
                 onClick={() => setOpen((current) => !current)}
-                className="relative flex h-8 w-8 items-center justify-center rounded-[12px] border border-slate-200 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-900"
+                className={
+                    variant === "light"
+                        ? "relative flex h-8 w-8 items-center justify-center rounded-[12px] border border-slate-200 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-900"
+                        : "relative flex h-8 w-8 items-center justify-center rounded-[12px] border border-white/10 bg-white/[0.04] text-white/70 shadow-sm transition-colors hover:bg-white/[0.08] hover:text-white"
+                }
                 aria-label="Open notifications"
             >
                 <Bell className="h-4 w-4" />
                 {unreadVisible && (
-                    <span className="absolute right-0.5 top-0.5 h-2.5 min-w-2.5 rounded-full bg-cyan-500 ring-2 ring-white" />
+                    <span
+                        className={
+                            variant === "light"
+                                ? "absolute right-0.5 top-0.5 h-2.5 min-w-2.5 rounded-full bg-cyan-500 ring-2 ring-white"
+                                : "absolute right-0.5 top-0.5 h-2.5 min-w-2.5 rounded-full bg-cyan-400 ring-2 ring-[#080c10]"
+                        }
+                    />
                 )}
             </button>
 
