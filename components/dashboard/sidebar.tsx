@@ -184,7 +184,7 @@ function SidebarNavItem({
                     "group flex items-center gap-1.5 rounded-2xl border px-2 py-[6px] transition-all duration-200",
                     collapsed ? "justify-center px-0" : "justify-start",
                     active
-                        ? "border-blue-200/80 bg-[rgba(59,130,246,0.10)] text-slate-950 shadow-[0_10px_24px_rgba(59,130,246,0.10)]"
+                        ? "border- bg-[rgba(59,130,246,0.10)] text-slate-950 shadow-[0_10px_24px_rgba(59,130,246,0.10)]"
                         : "border-transparent bg-transparent text-slate-500 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-950"
                 )}
             >

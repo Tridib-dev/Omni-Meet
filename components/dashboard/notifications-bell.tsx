@@ -217,7 +217,11 @@ export default function NotificationsBell() {
 
     useEffect(() => {
         if (open) {
-            void loadNotifications(activeTab);
+            const timer = window.setTimeout(() => {
+                void loadNotifications(activeTab);
+            }, 0);
+
+            return () => window.clearTimeout(timer);
         }
     }, [open, activeTab, loadNotifications]);
 
@@ -312,12 +316,12 @@ export default function NotificationsBell() {
         <Drawer open={open} onOpenChange={setOpen} direction="bottom">
             <button
                 onClick={() => setOpen((current) => !current)}
-                className="relative flex h-7 w-7 items-center justify-center rounded-md text-white/30 transition-colors hover:bg-white/5 hover:text-white/60"
+                className="relative flex h-8 w-8 items-center justify-center rounded-[12px] border border-slate-200 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-900"
                 aria-label="Open notifications"
             >
-                <Bell className="h-3.5 w-3.5" />
+                <Bell className="h-4 w-4" />
                 {unreadVisible && (
-                    <span className="absolute right-0.5 top-0.5 h-2.5 min-w-2.5 rounded-full bg-cyan-400 ring-2 ring-[#080c10]" />
+                    <span className="absolute right-0.5 top-0.5 h-2.5 min-w-2.5 rounded-full bg-cyan-500 ring-2 ring-white" />
                 )}
             </button>
 

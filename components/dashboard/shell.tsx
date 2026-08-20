@@ -60,8 +60,7 @@ export default function DashboardShell({
 
     return (
         <div
-            className="h-dvh overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.08),transparent_28%),linear-gradient(180deg,#0b1118_0%,#070b10_100%)] p-2.5 sm:p-3"
-            style={{ backgroundColor: "#070b10" }}
+            className="h-dvh overflow-hidden bg-[#F1F5F9] p-2.5 sm:p-3"
         >
             <div className="flex h-full min-h-0 gap-2.5 sm:gap-3">
                 <div className="hidden md:block">
@@ -87,7 +86,7 @@ export default function DashboardShell({
                     <main
                         ref={mainRef}
                         data-dashboard-main
-                        className="min-h-0 flex-1 overscroll-y-none overflow-y-auto overflow-x-hidden rounded-[32px] border border-white/8 bg-[#0b1017] shadow-[0_24px_80px_rgba(2,6,23,0.28)]"
+                        className="min-h-0 flex-1 overscroll-y-none overflow-y-auto overflow-x-hidden rounded-[15px] border border-white/8 bg-[#0b1017] shadow-[0_24px_80px_rgba(2,6,23,0.28)]"
                         style={{ overflowAnchor: "none", scrollBehavior: "auto" }}
                     >
                         <AnimatePresence mode="wait">
@@ -97,7 +96,7 @@ export default function DashboardShell({
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -6 }}
                                 transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-                                className="w-full px-3.5 pb-20 pt-0 sm:px-4 lg:px-5 xl:px-7"
+                                className="-mt-10 w-full px-3.5 pb-20 pt-0 sm:-mt-11 sm:px-4 lg:-mt-12 lg:px-5 xl:px-7"
                             >
                                 <div className="space-y-8">
                                     {children}

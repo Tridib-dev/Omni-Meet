@@ -63,6 +63,7 @@ function UniversalSearch({ recentEvents = [] }: { recentEvents?: Array<{ id: str
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState("");
     const inputRef = useRef<HTMLInputElement | null>(null);
+    const panelRef = useRef<HTMLDivElement | null>(null);
     const portalRoot = useMemo(() => {
         if (typeof document === "undefined") return null;
 
@@ -76,9 +77,28 @@ function UniversalSearch({ recentEvents = [] }: { recentEvents?: Array<{ id: str
         return root;
     }, []);
 
+    function close() {
+        setOpen(false);
+        setQuery("");
+    }
+
     useEffect(() => {
         if (!open) return;
         inputRef.current?.focus();
+    }, [open]);
+
+    useEffect(() => {
+        if (!open) return;
+
+        const handlePointerDown = (event: PointerEvent) => {
+            const panel = panelRef.current;
+            if (panel && !panel.contains(event.target as Node)) {
+                close();
+            }
+        };
+
+        document.addEventListener("pointerdown", handlePointerDown, true);
+        return () => document.removeEventListener("pointerdown", handlePointerDown, true);
     }, [open]);
 
     useEffect(() => {
@@ -88,8 +108,7 @@ function UniversalSearch({ recentEvents = [] }: { recentEvents?: Array<{ id: str
                 setOpen(true);
             }
             if (event.key === "Escape") {
-                setOpen(false);
-                setQuery("");
+                close();
             }
         };
 
@@ -139,11 +158,6 @@ function UniversalSearch({ recentEvents = [] }: { recentEvents?: Array<{ id: str
         [query]
     );
 
-    const close = () => {
-        setOpen(false);
-        setQuery("");
-    };
-
     const overlay =
         open &&
         portalRoot &&
@@ -163,6 +177,7 @@ function UniversalSearch({ recentEvents = [] }: { recentEvents?: Array<{ id: str
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: 10, scale: 0.98 }}
                             transition={{ duration: 0.18, ease: "easeOut" }}
+                            ref={panelRef}
                             className="relative w-full max-w-[640px] overflow-hidden rounded-[24px] border border-slate-200/80 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.2)]"
                             onClick={(event) => event.stopPropagation()}
                             role="dialog"

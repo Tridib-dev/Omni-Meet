@@ -37,10 +37,10 @@ export function DashboardHome({
     compact = false,
 }: DashboardHomeProps) {
     const shellWidth = compact ? "mx-auto w-full max-w-[1180px]" : "mx-auto w-full max-w-[1320px]";
-    const pageGap = compact ? "space-y-8 lg:space-y-9" : "space-y-10";
+    const pageGap = compact ? "space-y-6 lg:space-y-7" : "space-y-10";
     return (
         <div className={`${shellWidth} ${pageGap}`}>
-            <section className="space-y-3 sm:space-y-4">
+            <section className="space-y-2 sm:space-y-">
                 <div className="flex items-center gap-3 sm:gap-4">
                     <div className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-white/[0.06] sm:size-12">
                         {userImage ? (
@@ -66,7 +66,7 @@ export function DashboardHome({
                     </div>
                 </div>
 
-                <div className="overflow-hidden rounded-[28px] border border-white/8 bg-[radial-gradient(circle_at_top_left,rgba(51,43,224,0.18),transparent_36%),radial-gradient(circle_at_bottom_right,rgba(129,140,248,0.12),transparent_28%),rgba(255,255,255,0.025)] p-2.5 sm:p-3 lg:p-4">
+                <div className="overflow-hidden rounded-[15px] border-0 bg-[radial-gradient(circle_at_top_left,rgba(51,43,224,0.18),transparent_36%),radial-gradient(circle_at_bottom_right,rgba(129,140,248,0.12),transparent_28%),rgba(255,255,255,0.025)] p-2.5 sm:p-3 lg:p-4">
                     <RecommendedEventsCarousel events={recommendedEvents} compact={compact} />
                 </div>
             </section>
