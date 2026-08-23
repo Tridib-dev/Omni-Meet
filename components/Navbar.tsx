@@ -101,8 +101,8 @@ const Navbar = () => {
             <nav className={cn("navbar-floating", scrolled && "navbar-scrolled")} aria-label="Primary">
                 {/* Logo - Left */}
                 <Link href="/" className="logo">
-                    <Image src="/icons/logo.png" alt="DevEvent" width={24} height={24} />
-                    <p>DevEvent</p>
+                    <Image src="/icons/logo.svg" alt="DevEvent" width={45} height={45} />
+                    <p>Lobby</p>
                 </Link>
 
                 {/* Desktop Navigation - Center */}
