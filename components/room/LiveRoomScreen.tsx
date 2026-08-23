@@ -54,19 +54,9 @@ type VoteState = {
   myVote: "up" | "down" | null;
 };
 
-type StageEventKind = "emoji" | "hand";
-
-type StageEventPayload = {
-  kind: StageEventKind;
-  emoji?: string;
-  isRaised?: boolean;
-  participantId?: string;
-  clientEventId?: string;
-};
-
 type StageEvent = {
   id: string;
-  kind: StageEventKind;
+  kind: "emoji" | "hand";
   emoji?: string;
   displayName: string;
   role: string;
@@ -126,9 +116,36 @@ type DiscussionQuestionApiItem = {
 };
 
 const STAGE_REACTION_OPTIONS = ["👍", "❤️", "🎉", "😂", "🙌"] as const;
+const STAGE_REACTION_CODE_MAP: Record<(typeof STAGE_REACTION_OPTIONS)[number], string> = {
+  "👍": ":like:",
+  "❤️": ":heart:",
+  "🎉": ":fireworks:",
+  "😂": ":smile:",
+  "🙌": ":raise-hand:",
+};
+const REACTION_CODE_TO_EMOJI: Record<string, string> = {
+  ":like:": "👍",
+  ":heart:": "❤️",
+  ":fireworks:": "🎉",
+  ":smile:": "😂",
+  ":dislike:": "👎",
+  ":raise-hand:": "✋",
+};
 
 function makeId() {
   return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function reactionDisplayEmoji(emojiCode?: string) {
+  if (!emojiCode) return "✨";
+  return REACTION_CODE_TO_EMOJI[emojiCode] ?? emojiCode;
+}
+
+function participantHasRaisedHand(participant: StreamVideoParticipant) {
+  const reaction = participant.reaction;
+  if (!reaction) return false;
+  if (reaction.type !== "raised-hand" && reaction.emoji_code !== ":raise-hand:") return false;
+  return reaction.custom?.status !== "off";
 }
 
 function InitialsAvatar({ name }: { name?: string }) {
@@ -163,10 +180,6 @@ function participantRoleLabel(participant: StreamVideoParticipant) {
 function participantRoleBadge(role: string) {
   if (role === "organizer" || role === "co-organizer") return "host";
   return role;
-}
-
-function participantKey(participant: StreamVideoParticipant) {
-  return participant.userId || participant.sessionId || participant.name || "";
 }
 
 // "Admin tier" = organizers and co-organizers. Stream's call-level "admin" role
@@ -253,7 +266,7 @@ function StageReactionOverlay({ events }: { events: StageEvent[] }) {
               >
                 <div className="flex items-center gap-2 rounded-full border border-[#4f46e5]/35 bg-linear-to-r from-[#4f46e5]/30 via-[#11161D]/90 to-[#33D6A0]/25 px-3.5 py-2.5 text-sm font-semibold text-white shadow-[0_16px_40px_rgba(0,0,0,0.45),0_0_0_1px_rgba(255,255,255,0.08)] ring-1 ring-white/10 backdrop-blur-md">
                   <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/15 text-base leading-none shadow-inner shadow-white/10">
-                    {isHand ? "✋" : event.emoji}
+                    {isHand ? "✋" : reactionDisplayEmoji(event.emoji)}
                   </span>
                   <span className="max-w-32 truncate text-white/95">{event.displayName}</span>
                   <span className="rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-[#D9F7FF]">
@@ -443,11 +456,9 @@ function AdminParticipantCard({
 function ParticipantsPanel({
   canModerate,
   onTogglePin,
-  raisedHands,
 }: {
   canModerate: boolean;
   onTogglePin: (participant: StreamVideoParticipant) => void;
-  raisedHands: Record<string, boolean>;
 }) {
   const { useParticipants, usePinnedParticipants, useLocalParticipant } = useCallStateHooks();
   const participants = useParticipants();
@@ -456,6 +467,9 @@ function ParticipantsPanel({
 
   const orderParticipants = (list: StreamVideoParticipant[]) =>
     [...list].sort((a, b) => {
+      const aRaisedHand = participantHasRaisedHand(a) ? 1 : 0;
+      const bRaisedHand = participantHasRaisedHand(b) ? 1 : 0;
+      if (aRaisedHand !== bRaisedHand) return bRaisedHand - aRaisedHand;
       const aPinned = isPinned(a) ? 1 : 0;
       const bPinned = isPinned(b) ? 1 : 0;
       if (aPinned !== bPinned) return bPinned - aPinned;
@@ -518,14 +532,14 @@ function ParticipantsPanel({
                 participant={participant}
                 canModerate={canModerate}
                 onTogglePin={onTogglePin}
-                handRaised={Boolean(raisedHands[participantKey(participant)])}
+                handRaised={participantHasRaisedHand(participant)}
               />
             ))
           : attendeeParticipants.map((participant) => (
               <ParticipantCard
                 key={participant.sessionId}
                 participant={participant}
-                handRaised={Boolean(raisedHands[participantKey(participant)])}
+                handRaised={participantHasRaisedHand(participant)}
               />
             ))}
       </div>
@@ -1365,8 +1379,7 @@ type LiveRoomScreenContentProps = LiveRoomScreenProps & {
   answerQuestion: (questionId: string) => void;
   sendVote: (kind: "message" | "question", targetId: string, direction: "up" | "down") => void;
   sendStageEmoji: (emoji: string) => void;
-  raisedHands: Record<string, boolean>;
-  sendStageEvent: (payload: StageEventPayload) => Promise<void> | void;
+  setDrawerError: (value: string | null) => void;
   chatUnseen: boolean;
   qaUnseen: boolean;
   chatPulsing: boolean;
@@ -1403,8 +1416,7 @@ function LiveRoomScreenContent({
   answerQuestion,
   sendVote,
   sendStageEmoji,
-  raisedHands,
-  sendStageEvent,
+  setDrawerError,
   chatUnseen,
   qaUnseen,
   chatPulsing,
@@ -1419,6 +1431,7 @@ function LiveRoomScreenContent({
   const pinnedParticipants = usePinnedParticipants();
   const localParticipant = useLocalParticipant();
   const hasOngoingScreenShare = useHasOngoingScreenShare();
+  const handRaised = Boolean(localParticipant && participantHasRaisedHand(localParticipant));
   const autoStartDevicesRef = useRef(false);
   const autoStopDevicesRef = useRef(false);
   const [stageViewMode, setStageViewMode] = useState<StageViewMode>("normal");
@@ -1456,8 +1469,6 @@ function LiveRoomScreenContent({
     observer.observe(container, { childList: true, subtree: true });
     return () => observer.disconnect();
   }, []);
-  const localParticipantKey = useMemo(() => (localParticipant ? participantKey(localParticipant) : ""), [localParticipant]);
-  const handRaised = Boolean(localParticipantKey && raisedHands[localParticipantKey]);
 
   useEffect(() => {
     if (canModerate) {
@@ -1496,6 +1507,22 @@ function LiveRoomScreenContent({
         console.error("[LiveRoomScreen] screen share toggle failed", err);
       });
   }
+
+  const onRaiseHand = useCallback(async () => {
+    setDrawerError(null);
+    try {
+      await call.sendReaction({
+        type: "raised-hand",
+        emoji_code: ":raise-hand:",
+        custom: {
+          status: handRaised ? "off" : "on",
+        },
+      });
+    } catch (err) {
+      console.error("[LiveRoomScreen] raise hand failed", err);
+      setDrawerError("Could not update your hand state. Please try again.");
+    }
+  }, [call, handRaised, setDrawerError]);
 
   // Pinning must be visible to everyone in the room, not just the person who
   // clicked — call.pin()/unpin() are LOCAL to the caller's own view only.
@@ -1563,7 +1590,7 @@ function LiveRoomScreenContent({
                   label: "Participants",
                   icon: <Users size={20} />,
                   content: (
-                    <ParticipantsPanel canModerate={canModerate} onTogglePin={togglePin} raisedHands={raisedHands} />
+                    <ParticipantsPanel canModerate={canModerate} onTogglePin={togglePin} />
                   ),
                 },
                 {
@@ -1630,11 +1657,7 @@ function LiveRoomScreenContent({
           onLeave={onLeave}
           onToggleScreenShare={handleToggleScreenShare}
           onSendStageEmoji={sendStageEmoji}
-          onRaiseHand={() => {
-            if (!localParticipantKey) return;
-            const nextValue = !handRaised;
-            void sendStageEvent({ kind: "hand", isRaised: nextValue, participantId: localParticipantKey });
-          }}
+          onRaiseHand={onRaiseHand}
           showDeviceControls={showDeviceControls}
           canModerate={canModerate}
           screenShareActive={screenShareActive}
@@ -1660,12 +1683,9 @@ export default function LiveRoomScreen({ call, onLeave, eventId, showDeviceContr
   const [sendingAnswerId, setSendingAnswerId] = useState<string | null>(null);
   const [sendingVoteKey, setSendingVoteKey] = useState<string | null>(null);
   const [stageEvents, setStageEvents] = useState<StageEvent[]>([]);
-  const [raisedHands, setRaisedHands] = useState<Record<string, boolean>>({});
   const [answerDrafts, setAnswerDrafts] = useState<Record<string, string>>({});
-  const realtimeSocketRef = useRef<WebSocket | null>(null);
-  const realtimeReconnectRef = useRef<number | null>(null);
-  const realtimeRetryRef = useRef(0);
   const stageEventExpiryRef = useRef<Map<string, number>>(new Map());
+  const discussionAccessRevokedRef = useRef(false);
 
   // --- New chat/Q&A notification dot ---
   // `Unseen` = persistent dot, cleared once that drawer is opened.
@@ -1743,8 +1763,6 @@ export default function LiveRoomScreen({ call, onLeave, eventId, showDeviceContr
 
     stageEventExpiryRef.current.set(nextEvent.id, timeoutId);
   }, []);
-
-  const discussionAccessRevokedRef = useRef(false);
 
   const syncDiscussion = useCallback(async (signal?: AbortSignal) => {
     try {
@@ -1882,177 +1900,65 @@ export default function LiveRoomScreen({ call, onLeave, eventId, showDeviceContr
     [eventId, syncDiscussion]
   );
 
-  const sendStageEvent = useCallback(
-    async (payload: StageEventPayload) => {
+  const sendStageEmoji = useCallback(
+    async (emoji: string) => {
       setDrawerError(null);
-      const clientEventId = makeId();
-      const participantId = payload.participantId;
-      const nextRaised = payload.kind === "hand" ? Boolean(payload.isRaised ?? true) : undefined;
-      const previousRaised = participantId && payload.kind === "hand"
-        ? Boolean(raisedHands[participantId])
-        : undefined;
+      const emojiCode = STAGE_REACTION_CODE_MAP[emoji as keyof typeof STAGE_REACTION_CODE_MAP];
+      if (!emojiCode) return;
 
       try {
-        if (payload.kind === "hand" && participantId) {
-          setRaisedHands((current) => {
-            const next = { ...current };
-            if (nextRaised) {
-              next[participantId] = true;
-            } else {
-              delete next[participantId];
-            }
-            return next;
-          });
-        }
-
-        const optimistic: StageEvent = {
-          id: clientEventId,
-          kind: payload.kind,
-          emoji: payload.emoji,
-          displayName: "You",
-          role: canModerate ? "organizer" : "attendee",
-          createdAt: Date.now(),
-          isRaised: nextRaised,
-          participantId,
-        };
-        pushStageEvent(optimistic);
-
-        const res = await fetch(`/api/rooms/${eventId}/stage-events`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...payload, clientEventId }),
+        await call.sendReaction({
+          type: "reaction",
+          emoji_code: emojiCode,
         });
-        const data = await res.json();
-        if (!res.ok || !data?.success) {
-          throw new Error(data?.message ?? "Failed to send stage event.");
-        }
       } catch (err) {
-        if (payload.kind === "hand" && participantId) {
-          setRaisedHands((current) => {
-            const next = { ...current };
-            if (previousRaised) {
-              next[participantId] = true;
-            } else {
-              delete next[participantId];
-            }
-            return next;
-          });
-        }
-        setStageEvents((current) => current.filter((item) => item.id !== clientEventId));
-        console.error("[LiveRoomScreen] stage event failed", err);
+        console.error("[LiveRoomScreen] reaction failed", err);
         setDrawerError("Could not send the reaction. Please try again.");
       }
     },
-    [canModerate, eventId, pushStageEvent, raisedHands]
+    [call]
   );
 
   useEffect(() => {
     const stageEventExpiryMap = stageEventExpiryRef.current;
-    let active = true;
+    const unsubscribe = call.on("call.reaction_new", (event) => {
+      const reaction = event?.reaction;
+      if (!reaction) return;
 
-    function clearReconnectTimer() {
-      if (realtimeReconnectRef.current !== null) {
-        window.clearTimeout(realtimeReconnectRef.current);
-        realtimeReconnectRef.current = null;
+      const displayName = reaction.user?.name?.trim() || reaction.user?.id || "Someone";
+      const role = reaction.custom?.role ? String(reaction.custom.role) : "attendee";
+      const createdAt = new Date(String(event.created_at ?? Date.now())).getTime();
+
+      if (reaction.type === "raised-hand" || reaction.emoji_code === ":raise-hand:") {
+        if (reaction.custom?.status === "off") return;
+        pushStageEvent({
+          id: String(event.created_at ?? makeId()),
+          kind: "hand",
+          displayName,
+          role,
+          createdAt,
+          isRaised: true,
+          participantId: reaction.user?.id,
+        });
+        return;
       }
-    }
 
-    function scheduleReconnect() {
-      if (!active) return;
-      clearReconnectTimer();
-      const delay = Math.min(1000 * 2 ** realtimeRetryRef.current, 15_000);
-      realtimeRetryRef.current = Math.min(realtimeRetryRef.current + 1, 4);
-      realtimeReconnectRef.current = window.setTimeout(() => {
-        void connect();
-      }, delay);
-    }
-
-    async function connect() {
-      if (!active) return;
-
-      try {
-        const response = await fetch(`/api/rooms/${eventId}/realtime/token`, { cache: "no-store" });
-        const payload = (await response.json()) as { token?: string; message?: string };
-
-        if (!response.ok || typeof payload?.token !== "string") {
-          throw new Error(payload?.message ?? "Failed to fetch realtime token.");
-        }
-
-        if (!active) return;
-
-        realtimeRetryRef.current = 0;
-        const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-        const socketUrl = `${protocol}//${window.location.host}/api/rooms/${eventId}/realtime?token=${encodeURIComponent(
-          payload.token
-        )}`;
-
-        const socket = new WebSocket(socketUrl);
-        realtimeSocketRef.current = socket;
-
-        socket.onmessage = (event) => {
-          try {
-            const data = JSON.parse(String(event.data));
-            if (data?.type === "room.discussion.updated" && data?.roomId) {
-              void syncDiscussion();
-            } else if (data?.type === "room.stage.event" && data?.roomId) {
-              const participantId = typeof data.participantId === "string" ? data.participantId : undefined;
-              if (data.kind === "hand" && participantId) {
-                setRaisedHands((current) => {
-                  const next = { ...current };
-                  if (data.isRaised === false) {
-                    delete next[participantId];
-                  } else {
-                    next[participantId] = true;
-                  }
-                  return next;
-                });
-              }
-              pushStageEvent({
-                id: String(data.id ?? data.clientEventId ?? makeId()),
-                kind: data.kind === "hand" ? "hand" : "emoji",
-                emoji: typeof data.emoji === "string" ? data.emoji : undefined,
-                displayName: String(data.displayName ?? "Someone"),
-                role: String(data.role ?? "attendee"),
-                createdAt: new Date(String(data.createdAt ?? Date.now())).getTime(),
-                isRaised: typeof data.isRaised === "boolean" ? data.isRaised : undefined,
-                participantId,
-              });
-            }
-          } catch {
-            // Ignore malformed control frames.
-          }
-        };
-
-        socket.onopen = () => {
-          realtimeRetryRef.current = 0;
-        };
-
-        socket.onerror = () => {
-          socket.close();
-        };
-
-        socket.onclose = () => {
-          if (!active) return;
-          scheduleReconnect();
-        };
-      } catch (error) {
-        if (!active) return;
-        console.warn("[LiveRoomScreen] realtime connect failed", error);
-        scheduleReconnect();
-      }
-    }
-
-    void connect();
+      pushStageEvent({
+        id: String(event.created_at ?? makeId()),
+        kind: "emoji",
+        emoji: reaction.emoji_code,
+        displayName,
+        role,
+        createdAt,
+      });
+    });
 
     return () => {
-      active = false;
-      clearReconnectTimer();
-      realtimeSocketRef.current?.close();
-      realtimeSocketRef.current = null;
+      unsubscribe?.();
       stageEventExpiryMap.forEach((timeoutId) => window.clearTimeout(timeoutId));
       stageEventExpiryMap.clear();
     };
-  }, [eventId, pushStageEvent, syncDiscussion]);
+  }, [call, pushStageEvent]);
 
   function sendChat() {
     const body = chatDraft.trim();
@@ -2188,17 +2094,14 @@ export default function LiveRoomScreen({ call, onLeave, eventId, showDeviceContr
         askQuestion={askQuestion}
         answerQuestion={answerQuestion}
         sendVote={sendVote}
-        sendStageEmoji={(emoji) => {
-          void sendStageEvent({ kind: "emoji", emoji });
-        }}
-        raisedHands={raisedHands}
-        sendStageEvent={sendStageEvent}
+        sendStageEmoji={sendStageEmoji}
+        setDrawerError={setDrawerError}
         eventId={eventId}
         chatUnseen={chatUnseen}
         qaUnseen={qaUnseen}
         chatPulsing={chatPulsing}
         qaPulsing={qaPulsing}
-        />
+      />
     </StreamCall>
   );
 }
