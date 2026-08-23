@@ -40,7 +40,7 @@ export default function LobbyScreen({
           <CountdownTimer
             target={scheduledStart}
             onComplete={onCountdownComplete}
-            className="text-3xl font-bold text-[#4FD1FF] sm:text-4xl"
+            className="text-3xl font-bold text-[#4f46e5] sm:text-4xl"
           />
           <p className="text-xs text-[#8891A3]">
             The organizer hasn&apos;t started the meeting yet — chat and Q&amp;A are open below.

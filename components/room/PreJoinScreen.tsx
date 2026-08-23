@@ -42,17 +42,14 @@ function PreJoinScreenInner({
   const { useCameraState, useMicrophoneState } = useCallStateHooks();
   const { camera, isMute: cameraMuted, hasBrowserPermission: hasCameraPermission } = useCameraState();
   const { microphone, isMute: micMuted, hasBrowserPermission: hasMicPermission } = useMicrophoneState();
-  const [devicesReady, setDevicesReady] = useState(false);
+  const [devicesReady, setDevicesReady] = useState(() => !isOrganizerTier);
 
   // Organizer tier gets a live preview by default (camera on, mic off —
   // most people don't want to broadcast audio while they're still
   // fiddling with settings). Attendees can't publish at all, so there's
   // nothing to preview or toggle for them.
   useEffect(() => {
-    if (!isOrganizerTier) {
-      setDevicesReady(true);
-      return;
-    }
+    if (!isOrganizerTier) return;
     let cancelled = false;
     Promise.allSettled([camera.enable(), microphone.disable()]).finally(() => {
       if (!cancelled) setDevicesReady(true);
@@ -89,7 +86,7 @@ function PreJoinScreenInner({
               onClick={() => camera.toggle()}
               disabled={!devicesReady || hasCameraPermission === false}
               className={`flex h-11 w-11 items-center justify-center rounded-full ${
-                cameraMuted ? "bg-[#1B1F27] text-[#8891A3]" : "bg-[#4FD1FF] text-[#0A0C10]"
+                cameraMuted ? "bg-[#1B1F27] text-[#8891A3]" : "bg-[#4f46e5] text-[#0A0C10]"
               } disabled:opacity-50`}
               aria-pressed={!cameraMuted}
               aria-label={cameraMuted ? "Turn camera on" : "Turn camera off"}
@@ -101,7 +98,7 @@ function PreJoinScreenInner({
               onClick={() => microphone.toggle()}
               disabled={!devicesReady || hasMicPermission === false}
               className={`flex h-11 w-11 items-center justify-center rounded-full ${
-                micMuted ? "bg-[#1B1F27] text-[#8891A3]" : "bg-[#4FD1FF] text-[#0A0C10]"
+                micMuted ? "bg-[#1B1F27] text-[#8891A3]" : "bg-[#4f46e5] text-[#0A0C10]"
               } disabled:opacity-50`}
               aria-pressed={!micMuted}
               aria-label={micMuted ? "Turn mic on" : "Turn mic off"}

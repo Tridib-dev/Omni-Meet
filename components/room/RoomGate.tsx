@@ -197,7 +197,7 @@ export default function RoomGate({
           </p>
           <button
             onClick={handleRetry}
-            className="rounded-full bg-[#4FD1FF] px-4 py-2 text-sm font-semibold text-[#0A0C10]"
+            className="rounded-full bg-[#4f46e5] px-4 py-2 text-sm font-semibold text-[#0A0C10]"
           >
             Try again
           </button>
@@ -232,7 +232,7 @@ export default function RoomGate({
       // "live") — genuinely nothing to show a device preview against yet.
       screen = (
         <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-[#0A0C10] px-6 text-center text-[#F3F5F8]">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#4FD1FF] border-t-transparent" />
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#4f46e5] border-t-transparent" />
           <h1 className="text-lg font-semibold">{eventTitle}</h1>
         </div>
       );

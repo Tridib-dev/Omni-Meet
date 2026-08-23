@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { defaultMorphConfig, stageDepth, type MorphConfig } from "./config";
 import { MorphNav, type MorphNavItem } from "./MorphNav";
+import { roomTokens } from "../theme/tokens";
 
 export interface RoomMorphStageProps {
   /** The video/call UI — rendered in the remaining space next to the nav. */
@@ -76,17 +77,26 @@ export function RoomMorphStage({
   items,
   value,
   onValueChange,
-  desktopBreakpoint = 1024,
+  desktopBreakpoint = roomTokens.desktopBreakpoint,
   config: configOverrides,
   className,
 }: RoomMorphStageProps) {
   const vertical = useIsDesktop(desktopBreakpoint);
   const containerRef = useRef<HTMLDivElement>(null);
   const measuredExtent = useMeasuredExtent(containerRef, vertical ? "height" : "width");
+  const measuredWidth = useMeasuredExtent(containerRef, "width");
+  const responsivePanelSize =
+    vertical && measuredWidth > 0
+      ? Math.max(
+          roomTokens.sidebarPanelSize,
+          Math.min(roomTokens.sidebarPanelSize + 32, Math.round(measuredWidth * 0.25)),
+        )
+      : defaultMorphConfig.panelSize;
 
   const config = {
     ...defaultMorphConfig,
     ...configOverrides,
+    panelSize: configOverrides?.panelSize ?? responsivePanelSize,
     // Track the real container size instead of the hardcoded 520px default —
     // falls back to the configured/default value only until the first
     // ResizeObserver measurement comes in.

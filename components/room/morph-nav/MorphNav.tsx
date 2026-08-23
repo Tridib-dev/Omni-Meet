@@ -259,15 +259,15 @@ export function MorphNav({
               style={{ width: config.iconSize, height: config.iconSize }}
               className={cn(
                 "relative z-10 grid place-items-center rounded-full transition-colors duration-300",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4FD1FF] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0C10]",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4f46e5] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0C10]",
                 isActive
-                  ? "border border-transparent text-[#4FD1FF]"
+                  ? "border border-transparent text-[#4f46e5]"
                   : "border border-[#262B35] bg-[#14171D] text-[#8891A3] hover:text-[#F3F5F8]",
               )}
             >
               {item.icon}
               {item.badge && !isActive && (
-                <span className="absolute right-1 top-1 size-2 rounded-full bg-[#4FD1FF]" />
+                <span className="absolute right-1 top-1 size-2 rounded-full bg-[#4f46e5]" />
               )}
               <span className="sr-only">{item.label}</span>
             </button>

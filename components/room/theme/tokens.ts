@@ -1,0 +1,17 @@
+export const roomTokens = {
+  accent: "#4f46e5",
+  accentMuted: "rgba(79, 70, 229, 0.14)",
+  accentBorder: "rgba(79, 70, 229, 0.32)",
+  accentSoft: "rgba(79, 70, 229, 0.18)",
+  canvas: "#0A0C10",
+  surface: "#11161D",
+  panel: "#14171D",
+  border: "#262B35",
+  textPrimary: "#F3F5F8",
+  textSecondary: "#8891A3",
+  desktopBreakpoint: 1280,
+  sidebarPanelSize: 352,
+  sidebarPanelPadding: 20,
+  sidebarIconSize: 52,
+  sidebarIconGap: 20,
+} as const;

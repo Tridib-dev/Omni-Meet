@@ -205,8 +205,8 @@ function VoteBar({
         disabled={sendingVoteKey !== null && sendingVoteKey !== upKey}
         className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs transition ${
           votes.myVote === "up"
-            ? "border-[#4FD1FF]/40 bg-[#4FD1FF]/15 text-[#F3F5F8]"
-            : "border-[#262B35] bg-[#0A0C10] text-[#8891A3] hover:border-[#4FD1FF]/40 hover:text-[#F3F5F8]"
+            ? "border-[#4f46e5]/40 bg-[#4f46e5]/15 text-[#F3F5F8]"
+            : "border-[#262B35] bg-[#0A0C10] text-[#8891A3] hover:border-[#4f46e5]/40 hover:text-[#F3F5F8]"
         }`}
       >
         <span>▲</span>
@@ -251,7 +251,7 @@ function StageReactionOverlay({ events }: { events: StageEvent[] }) {
                   } as CSSProperties
                 }
               >
-                <div className="flex items-center gap-2 rounded-full border border-[#4FD1FF]/35 bg-linear-to-r from-[#4FD1FF]/30 via-[#11161D]/90 to-[#33D6A0]/25 px-3.5 py-2.5 text-sm font-semibold text-white shadow-[0_16px_40px_rgba(0,0,0,0.45),0_0_0_1px_rgba(255,255,255,0.08)] ring-1 ring-white/10 backdrop-blur-md">
+                <div className="flex items-center gap-2 rounded-full border border-[#4f46e5]/35 bg-linear-to-r from-[#4f46e5]/30 via-[#11161D]/90 to-[#33D6A0]/25 px-3.5 py-2.5 text-sm font-semibold text-white shadow-[0_16px_40px_rgba(0,0,0,0.45),0_0_0_1px_rgba(255,255,255,0.08)] ring-1 ring-white/10 backdrop-blur-md">
                   <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/15 text-base leading-none shadow-inner shadow-white/10">
                     {isHand ? "✋" : event.emoji}
                   </span>
@@ -313,8 +313,8 @@ function StageViewModeButton({
       title={label}
       className={`flex items-center justify-center gap-2 rounded-full border p-2.5 text-sm font-medium transition sm:px-3 sm:py-2 ${
         active
-          ? "border-[#4FD1FF]/40 bg-[#4FD1FF]/20 text-[#F3F5F8] shadow-[0_0_0_1px_rgba(255,255,255,0.08)]"
-          : "border-white/10 bg-[#11161D]/80 text-[#8891A3] hover:border-[#4FD1FF]/30 hover:text-[#F3F5F8]"
+          ? "border-[#4f46e5]/40 bg-[#4f46e5]/20 text-[#F3F5F8] shadow-[0_0_0_1px_rgba(255,255,255,0.08)]"
+          : "border-white/10 bg-[#11161D]/80 text-[#8891A3] hover:border-[#4f46e5]/30 hover:text-[#F3F5F8]"
       }`}
       aria-label={`Switch stage view to ${label.toLowerCase()}`}
     >
@@ -359,7 +359,7 @@ function ParticipantCard({
             </span>
           )}
           {participant.isLocalParticipant && (
-            <span className="rounded-full bg-[#1B1F27] px-2 py-0.5 text-[10px] uppercase tracking-wide text-[#4FD1FF]">
+            <span className="rounded-full bg-[#1B1F27] px-2 py-0.5 text-[10px] uppercase tracking-wide text-[#4f46e5]">
               you
             </span>
           )}
@@ -392,8 +392,8 @@ function AdminParticipantCard({
       onClick={() => canModerate && onTogglePin(participant)}
       className={`group flex w-full items-center gap-3 rounded-2xl border px-3 py-2.5 text-left transition-colors ${
         pinned
-          ? "border-[#4FD1FF]/70 bg-[#14171D]"
-          : "border-[#262B35] bg-[#14171D]/90 hover:border-[#4FD1FF]/50"
+          ? "border-[#4f46e5]/70 bg-[#14171D]"
+          : "border-[#262B35] bg-[#14171D]/90 hover:border-[#4f46e5]/50"
       } ${canModerate ? "cursor-pointer" : "cursor-default"}`}
     >
       {/* Deliberately no <ParticipantView> here — admin cards never show live
@@ -429,9 +429,9 @@ function AdminParticipantCard({
         >
           {cameraOn ? <Video size={12} /> : <VideoOff size={12} />}
         </span>
-        {pinned && <Pin size={13} className="text-[#4FD1FF]" />}
+        {pinned && <Pin size={13} className="text-[#4f46e5]" />}
         {participant.isLocalParticipant && (
-          <span className="rounded-full bg-[#1B1F27] px-1.5 py-0.5 text-[9px] uppercase tracking-wide text-[#4FD1FF]">
+          <span className="rounded-full bg-[#1B1F27] px-1.5 py-0.5 text-[9px] uppercase tracking-wide text-[#4f46e5]">
             you
           </span>
         )}
@@ -480,7 +480,7 @@ function ParticipantsPanel({
     <div className="flex h-full flex-col gap-3">
       <div className="flex items-center justify-between gap-2 rounded-2xl border border-[#262B35] bg-[#14171D] px-3 py-2">
         <p className="text-[11px] uppercase tracking-wide text-[#8891A3]">{participants.length} in room</p>
-        <Users size={16} className="text-[#4FD1FF]" />
+        <Users size={16} className="text-[#4f46e5]" />
       </div>
 
       <div className="flex items-center gap-1 rounded-2xl border border-[#262B35] bg-[#14171D] p-1">
@@ -488,7 +488,7 @@ function ParticipantsPanel({
           type="button"
           onClick={() => setTab("admins")}
           className={`flex-1 rounded-xl px-3 py-1.5 text-[11px] font-medium uppercase tracking-wide transition ${
-            tab === "admins" ? "bg-[#4FD1FF] text-[#081018]" : "text-[#8891A3] hover:text-[#F3F5F8]"
+            tab === "admins" ? "bg-[#4f46e5] text-[#081018]" : "text-[#8891A3] hover:text-[#F3F5F8]"
           }`}
         >
           Admins ({adminParticipants.length})
@@ -497,7 +497,7 @@ function ParticipantsPanel({
           type="button"
           onClick={() => setTab("attendees")}
           className={`flex-1 rounded-xl px-3 py-1.5 text-[11px] font-medium uppercase tracking-wide transition ${
-            tab === "attendees" ? "bg-[#4FD1FF] text-[#081018]" : "text-[#8891A3] hover:text-[#F3F5F8]"
+            tab === "attendees" ? "bg-[#4f46e5] text-[#081018]" : "text-[#8891A3] hover:text-[#F3F5F8]"
           }`}
         >
           Attendees ({attendeeParticipants.length})
@@ -610,13 +610,13 @@ function ChatPanel({
           value={draft}
           onChange={(e) => onDraftChange(e.target.value)}
           placeholder="Write a message..."
-          className="w-full rounded-xl border border-[#262B35] bg-[#0A0C10] px-3 py-2 text-sm text-[#F3F5F8] outline-none placeholder:text-[#8891A3] focus:border-[#4FD1FF]"
+          className="w-full rounded-xl border border-[#262B35] bg-[#0A0C10] px-3 py-2 text-sm text-[#F3F5F8] outline-none placeholder:text-[#8891A3] focus:border-[#4f46e5]"
         />
         <button
           type="button"
           onClick={onSend}
           disabled={sending}
-          className="shrink-0 rounded-xl bg-[#4FD1FF] px-4 py-2 text-sm font-semibold text-[#0A0C10]"
+          className="shrink-0 rounded-xl bg-[#4f46e5] px-4 py-2 text-sm font-semibold text-[#0A0C10]"
         >
           {sending ? "Sending..." : "Send"}
         </button>
@@ -700,7 +700,7 @@ function QaPanel({
                     value={answerDrafts[question.id] ?? ""}
                     onChange={(e) => onAnswerDraftChange(question.id, e.target.value)}
                     placeholder="Write an answer..."
-                    className="w-full rounded-xl border border-[#262B35] bg-[#0A0C10] px-3 py-2 text-sm text-[#F3F5F8] outline-none placeholder:text-[#8891A3] focus:border-[#4FD1FF]"
+                    className="w-full rounded-xl border border-[#262B35] bg-[#0A0C10] px-3 py-2 text-sm text-[#F3F5F8] outline-none placeholder:text-[#8891A3] focus:border-[#4f46e5]"
                   />
                   <button
                     type="button"
@@ -721,13 +721,13 @@ function QaPanel({
           value={draft}
           onChange={(e) => onDraftChange(e.target.value)}
           placeholder="Ask a question..."
-          className="w-full rounded-xl border border-[#262B35] bg-[#0A0C10] px-3 py-2 text-sm text-[#F3F5F8] outline-none placeholder:text-[#8891A3] focus:border-[#4FD1FF]"
+          className="w-full rounded-xl border border-[#262B35] bg-[#0A0C10] px-3 py-2 text-sm text-[#F3F5F8] outline-none placeholder:text-[#8891A3] focus:border-[#4f46e5]"
         />
         <button
           type="button"
           onClick={onAsk}
           disabled={sendingQuestion}
-          className="shrink-0 rounded-xl bg-[#4FD1FF] px-4 py-2 text-sm font-semibold text-[#0A0C10]"
+          className="shrink-0 rounded-xl bg-[#4f46e5] px-4 py-2 text-sm font-semibold text-[#0A0C10]"
         >
           {sendingQuestion ? "Asking..." : "Ask"}
         </button>
@@ -989,7 +989,7 @@ function ControlsBar({
             type="button"
             onClick={() => setReactionsOpen((open) => !open)}
             className={`flex h-11 w-11 items-center justify-center rounded-full border border-[#262B35] bg-[#14171D] text-[#F3F5F8] transition hover:bg-white/10 ${
-              reactionsOpen ? "border-[#4FD1FF]/40 bg-[#4FD1FF]/20 text-[#4FD1FF]" : ""
+              reactionsOpen ? "border-[#4f46e5]/40 bg-[#4f46e5]/20 text-[#4f46e5]" : ""
             }`}
             aria-label="Open reactions"
             aria-expanded={reactionsOpen}
@@ -1222,7 +1222,7 @@ function StagePanel({
         )}
         <div className="absolute inset-0 bg-linear-to-t from-[#0A0C10] via-[#0A0C10]/70 to-transparent" />
         <div className="relative z-10 max-w-md space-y-3">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#1B1F27] text-[#4FD1FF]">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#1B1F27] text-[#4f46e5]">
             <Users size={22} />
           </div>
           <p className="text-lg font-semibold text-[#F3F5F8]">
@@ -1244,7 +1244,7 @@ function StagePanel({
   return (
     <div className="relative h-full overflow-hidden rounded-3xl border border-[#262B35] bg-[#0A0C10]">
       <div className="absolute left-4 top-4 z-10 flex items-center gap-2 rounded-full border border-white/10 bg-black/50 px-3 py-1 text-xs text-white backdrop-blur">
-        <Shield size={14} className={hasOngoingScreenShare ? "text-[#33D6A0]" : "text-[#4FD1FF]"} />
+        <Shield size={14} className={hasOngoingScreenShare ? "text-[#33D6A0]" : "text-[#4f46e5]"} />
         <span className="font-medium">{role}</span>
         <span className="text-white/70">•</span>
         <span>{label}</span>
@@ -1308,8 +1308,8 @@ function StagePanel({
             }
             className={`flex items-center justify-center gap-2 rounded-full border p-2.5 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-40 sm:px-3 sm:py-2 ${
               isPipActive
-                ? "border-[#4FD1FF]/40 bg-[#4FD1FF]/20 text-[#F3F5F8] shadow-[0_0_0_1px_rgba(255,255,255,0.08)]"
-                : "border-white/10 bg-[#11161D]/80 text-[#8891A3] hover:border-[#4FD1FF]/30 hover:text-[#F3F5F8]"
+                ? "border-[#4f46e5]/40 bg-[#4f46e5]/20 text-[#F3F5F8] shadow-[0_0_0_1px_rgba(255,255,255,0.08)]"
+                : "border-white/10 bg-[#11161D]/80 text-[#8891A3] hover:border-[#4f46e5]/30 hover:text-[#F3F5F8]"
             }`}
             aria-label={isPipActive ? "Exit picture-in-picture" : "Pop out video (picture-in-picture)"}
           >
