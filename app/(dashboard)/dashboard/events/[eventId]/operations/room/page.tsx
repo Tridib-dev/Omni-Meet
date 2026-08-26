@@ -34,7 +34,7 @@ export default async function EventRoomPage({
                 description="Control the live room, stage, and online experience."
             />
 
-            <div className="space-y-4">
+            <div className="space-y-4 pb-8">
                 <Card className="overflow-hidden">
                     <CardHeader>
                         <div className="flex items-start gap-3">
@@ -47,7 +47,7 @@ export default async function EventRoomPage({
                             <div className="min-w-0">
                                 <CardTitle>Live room</CardTitle>
                                 <CardDescription>
-                                    Open the full room experience to manage stage, chat, and online attendees.
+                                    Open the full room experience to manage stage, chat, and online Participents.
                                 </CardDescription>
                             </div>
                         </div>
@@ -67,7 +67,9 @@ export default async function EventRoomPage({
                     </CardContent>
                 </Card>
 
-                <ActionCardRail items={actionItems} />
+                <div className="pt-15">
+                    <ActionCardRail items={actionItems} />
+                </div>
             </div>
         </div>
     );
