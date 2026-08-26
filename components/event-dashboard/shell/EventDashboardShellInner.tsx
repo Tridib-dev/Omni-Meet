@@ -12,6 +12,7 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 
 export default function EventDashboardShellInner({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
+    const isOverviewPage = pathname.endsWith("/overview");
     const { context } = useEventDashboard();
     const [collapsed, setCollapsed] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
@@ -95,8 +96,7 @@ export default function EventDashboardShellInner({ children }: { children: React
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -6 }}
                                 transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-                                className="w-full px-3.5 pb-20 pt-5 sm:px-5 lg:px-7 xl:px-9"
-                            >
+                                className={`w-full px-3.5 pb-20 ${isOverviewPage ? "pt-0" : "pt-5"} sm:px-5 lg:px-7 xl:px-9`}                            >
                                 {children}
                             </motion.div>
                         </AnimatePresence>
