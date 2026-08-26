@@ -11,6 +11,8 @@ import {
     ResponsiveContainer,
 } from "recharts";
 import { motion } from "framer-motion";
+import { useMemo, useState } from "react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // ─── Shared tooltip style ─────────────────────────────────────────────────────
 const tooltipStyle = {
@@ -71,46 +73,81 @@ export function CategoryRadar({
 // ─── TrendChart ───────────────────────────────────────────────────────────────
 export function TrendChart({
     data,
+    dailyData,
     dataKey = "count",
     color = "#332be0",
     label = "Events",
+    title = "Trend",
+    light = false,
 }: {
     data: TrendPoint[];
+    dailyData?: TrendPoint[];
     dataKey?: keyof TrendPoint;
     color?: string;
     label?: string;
+    title?: string;
+    light?: boolean;
 }) {
-    if (!data.some((d) => Number(d[dataKey] ?? 0) > 0)) {
-        return <EmptyChart label="No trend data yet" />;
-    }
+    const [range, setRange] = useState<"day" | "month">("month");
+    const chartData = useMemo(
+        () => (range === "day" && dailyData ? dailyData : data),
+        [dailyData, data, range]
+    );
+
+    const hasData = chartData.some((d) => Number(d[dataKey] ?? 0) > 0);
 
     return (
-        <ResponsiveContainer width="100%" height={180}>
-            <AreaChart data={data} margin={{ top: 10, right: 4, bottom: 0, left: -20 }}>
+        <div className={dailyData ? "flex h-full min-h-[220px] flex-col gap-4" : "h-[180px]"}>
+            {dailyData && (
+                <div className="flex items-center justify-between gap-3">
+                    <p className={light ? "text-base font-semibold leading-none tracking-tight text-slate-900" : "text-base font-semibold leading-none tracking-tight text-white/90"}>
+                        {title}
+                    </p>
+                    <Tabs value={range} onValueChange={(value) => setRange(value as "day" | "month")}>
+                        <TabsList className="h-8 rounded-lg border border-slate-200 bg-slate-50 p-1">
+                            <TabsTrigger
+                                value="day"
+                                className="h-6 rounded-md px-2.5 text-[11px] text-slate-500 data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm"
+                            >
+                                Day
+                            </TabsTrigger>
+                            <TabsTrigger
+                                value="month"
+                                className="h-6 rounded-md px-2.5 text-[11px] text-slate-500 data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm"
+                            >
+                                Month
+                            </TabsTrigger>
+                        </TabsList>
+                    </Tabs>
+                </div>
+            )}
+            <div className={dailyData ? "min-h-0 flex-1" : "h-full"}>
+            {hasData ? <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={chartData} margin={{ top: 10, right: 4, bottom: 0, left: -20 }}>
                 <defs>
                     <linearGradient id={`grad-${color.replace("#", "")}`} x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor={color} stopOpacity={0.3} />
                         <stop offset="100%" stopColor={color} stopOpacity={0} />
                     </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke={light ? "#e2e8f0" : "rgba(255,255,255,0.05)"} vertical={false} />
                 <XAxis
                     dataKey="month"
-                    tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 10 }}
+                    tick={{ fill: light ? "#64748b" : "rgba(255,255,255,0.3)", fontSize: 10 }}
                     axisLine={false}
                     tickLine={false}
                     interval="preserveStartEnd"
                 />
                 <YAxis
-                    tick={{ fill: "rgba(255,255,255,0.25)", fontSize: 10 }}
+                    tick={{ fill: light ? "#94a3b8" : "rgba(255,255,255,0.25)", fontSize: 10 }}
                     axisLine={false}
                     tickLine={false}
                     allowDecimals={false}
                 />
                 <Tooltip
-                    contentStyle={tooltipStyle}
-                    cursor={{ stroke: "rgba(255,255,255,0.1)", strokeWidth: 1 }}
-                    labelStyle={{ color: "rgba(255,255,255,0.5)" }}
+                    contentStyle={light ? { ...tooltipStyle, backgroundColor: "#ffffff", border: "1px solid #e2e8f0", color: "#0f172a" } : tooltipStyle}
+                    cursor={{ stroke: light ? "#cbd5e1" : "rgba(255,255,255,0.1)", strokeWidth: 1 }}
+                    labelStyle={{ color: light ? "#64748b" : "rgba(255,255,255,0.5)" }}
                 />
                 <Area
                     type="monotone"
@@ -123,7 +160,9 @@ export function TrendChart({
                     activeDot={{ r: 4, fill: color }}
                 />
             </AreaChart>
-        </ResponsiveContainer>
+        </ResponsiveContainer> : <EmptyChart label={range === "day" ? "No Booking data in last 14 Days" : "No monthly booking data yet"} light />}
+            </div>
+        </div>
     );
 }
 
@@ -320,13 +359,15 @@ export function FunnelBar({
 // Simple bar-based heatmap showing 12 months of activity
 export function ActivityHeatmap({
     data,
+    light = false,
 }: {
     data: { month: string; count: number }[];
+    light?: boolean;
 }) {
     const max = Math.max(...data.map((d) => d.count), 1);
 
     return (
-        <div className="flex items-end gap-1.5">
+        <div className="flex h-full min-h-[220px] items-end gap-1.5">
             {data.map((d, i) => {
                 const intensity = d.count / max;
                 return (
@@ -334,16 +375,16 @@ export function ActivityHeatmap({
                         <motion.div
                             className="w-full rounded-sm"
                             initial={{ height: 0 }}
-                            animate={{ height: Math.max(4, intensity * 48) }}
+                            animate={{ height: Math.max(6, intensity * 120) }}
                             transition={{ delay: i * 0.04, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                             style={{
                                 background: d.count === 0
-                                    ? "rgba(255,255,255,0.05)"
+                                    ? light ? "#e2e8f0" : "rgba(255,255,255,0.05)"
                                     : `rgba(51,43,224,${0.2 + intensity * 0.8})`,
                             }}
                         />
                         {data.length <= 7 || i % 3 === 0 ? (
-                            <span className="text-[8px] text-white/20">{d.month.split(" ")[0]}</span>
+                            <span className={light ? "text-[9px] text-slate-500" : "text-[8px] text-white/20"}>{d.month.split(" ")[0]}</span>
                         ) : null}
                     </div>
                 );
@@ -353,10 +394,10 @@ export function ActivityHeatmap({
 }
 
 // ─── Empty state ──────────────────────────────────────────────────────────────
-function EmptyChart({ label }: { label: string }) {
+function EmptyChart({ label, light = false }: { label: string; light?: boolean }) {
     return (
         <div className="h-[160px] flex items-center justify-center">
-            <p className="text-[12px] text-white/25">{label}</p>
+            <p className={light ? "text-[12px] text-slate-500" : "text-[12px] text-white/25"}>{label}</p>
         </div>
     );
 }

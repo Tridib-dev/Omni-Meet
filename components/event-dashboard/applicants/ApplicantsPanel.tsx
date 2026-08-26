@@ -1,12 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import DataTable from "@/components/event-dashboard/shared/DataTable";
 import PageSection from "@/components/event-dashboard/shared/PageSection";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { ApplicantFilter, EventApplicantsData } from "@/lib/event-dashboard/applicants";
 
 const FILTERS: { id: ApplicantFilter; label: string }[] = [
@@ -70,22 +70,23 @@ export default function ApplicantsPanel({
                 title="Applicant list"
                 description="Search and filter registrations for this event."
                 action={
-                    <div className="flex flex-wrap gap-2">
-                        {FILTERS.map((tab) => (
-                            <button
-                                key={tab.id}
-                                type="button"
-                                onClick={() => setFilter(tab.id)}
-                                className={`rounded-full px-3 py-1 text-[12px] transition-colors ${
-                                    initialFilter === tab.id
-                                        ? "bg-[#332be0]/20 text-[#a5a0ff] border border-[#332be0]/30"
-                                        : "bg-slate-50 text-slate-500 border border-slate-200 hover:text-slate-900"
-                                }`}
-                            >
-                                {tab.label}
-                            </button>
-                        ))}
-                    </div>
+                    <Tabs
+                        value={initialFilter}
+                        onValueChange={(value) => setFilter(value as ApplicantFilter)}
+                        className="w-fit self-end"
+                    >
+                        <TabsList className="inline-flex h-8 w-fit items-center justify-center rounded-lg border border-slate-200 bg-slate-50/80 p-1 shadow-sm">
+                            {FILTERS.map((tab) => (
+                                <TabsTrigger
+                                    key={tab.id}
+                                    value={tab.id}
+                                    className="h-6 flex-none justify-center rounded-md px-2 text-[11px] text-slate-500 data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm sm:px-2.5"
+                                >
+                                    {tab.label}
+                                </TabsTrigger>
+                            ))}
+                        </TabsList>
+                    </Tabs>
                 }
             >
                 <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">

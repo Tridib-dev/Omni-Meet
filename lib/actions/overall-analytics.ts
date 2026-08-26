@@ -68,6 +68,7 @@ export interface EventAnalyticsData {
     freeBookings: number;
     paidBookings: number;
     bookingTrend: { month: string; bookings: number; checkIns: number; revenue: number }[];
+    dailyBookingTrend: { month: string; bookings: number; checkIns: number; revenue: number }[];
     weekdayHeatmap: { day: string; bookings: number }[];
     recentActivity: {
         id: string;
@@ -83,6 +84,10 @@ export interface EventAnalyticsData {
 
 function monthKey(date: Date) {
     return date.toLocaleDateString("en-IN", { month: "short", year: "2-digit" });
+}
+
+function dayKey(date: Date) {
+    return date.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 }
 
 function startOf(unit: "year" | "month") {
@@ -379,6 +384,7 @@ export const getEventAnalytics = cache(async (eventId: string): Promise<EventAna
         freeBookings: 0,
         paidBookings: 0,
         bookingTrend: [],
+        dailyBookingTrend: [],
         weekdayHeatmap: [],
         recentActivity: [],
     };
@@ -446,6 +452,37 @@ export const getEventAnalytics = cache(async (eventId: string): Promise<EventAna
             ...timelineMap[month],
         }));
 
+        const dailyTimelineMap: Record<string, { bookings: number; checkIns: number; revenue: number }> = {};
+        const last14: string[] = [];
+        for (let i = 13; i >= 0; i -= 1) {
+            const d = new Date(now);
+            d.setDate(now.getDate() - i);
+            const key = dayKey(d);
+            last14.push(key);
+            dailyTimelineMap[key] = { bookings: 0, checkIns: 0, revenue: 0 };
+        }
+
+        bookings.forEach((booking) => {
+            const key = dayKey(new Date(booking.createdAt));
+            if (dailyTimelineMap[key]) {
+                dailyTimelineMap[key].bookings += 1;
+                if (booking.checkedIn) dailyTimelineMap[key].checkIns += 1;
+            }
+        });
+
+        orders.forEach((order) => {
+            const key = dayKey(new Date(order.createdAt));
+            if (dailyTimelineMap[key]) {
+                dailyTimelineMap[key].bookings += 1;
+                dailyTimelineMap[key].revenue += order.amount ?? 0;
+            }
+        });
+
+        const dailyBookingTrend = last14.map((day) => ({
+            month: day,
+            ...dailyTimelineMap[day],
+        }));
+
         const weekdayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
         const weekdayMap = weekdayNames.reduce<Record<string, number>>((acc, day) => {
             acc[day] = 0;
@@ -505,6 +542,7 @@ export const getEventAnalytics = cache(async (eventId: string): Promise<EventAna
             freeBookings: totalBookings,
             paidBookings: totalPaidOrders,
             bookingTrend,
+            dailyBookingTrend,
             weekdayHeatmap,
             recentActivity,
         };

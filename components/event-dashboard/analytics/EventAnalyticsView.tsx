@@ -1,5 +1,3 @@
-import Link from "next/link";
-import PageSection from "@/components/event-dashboard/shared/PageSection";
 import StatCard from "@/components/event-dashboard/shared/StatCard";
 import ActionCardRail from "@/components/event-dashboard/shared/ActionCardRail";
 import { ActivityHeatmap, TrendChart } from "@/components/dashboard/analytics/Charts";
@@ -47,19 +45,6 @@ export default function EventAnalyticsView({
 
     return (
         <div className="space-y-8">
-            <PageSection
-                title={data.event.title}
-                description={`${data.event.location} · ${formatDate(data.event.date)} at ${formatTime(data.event.date)}`}
-                action={
-                    <Link
-                        href={`/events/${data.event.slug}`}
-                        className="rounded-full border border-[#332be0]/30 bg-[#332be0]/10 px-3 py-1.5 text-[12px] text-[#a5a0ff] transition-colors hover:bg-[#332be0]/15"
-                    >
-                        View public event
-                    </Link>
-                }
-            />
-
             <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 <StatCard label="Bookings" value={data.totalBookings} sub="Free registrations" accent={edTokens.info} />
                 <StatCard label="Paid orders" value={data.totalPaidOrders} sub="Completed purchases" accent="#a78bfa" index={1} />
@@ -80,25 +65,31 @@ export default function EventAnalyticsView({
             </section>
 
             <div className="grid gap-4 xl:grid-cols-[1.15fr_.85fr]">
-                <Card className="overflow-hidden">
-                    <CardHeader>
-                        <CardTitle>Booking momentum</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <TrendChart data={data.bookingTrend} dataKey="bookings" color={edTokens.info} label="Tickets" />
+                <Card className="flex h-full min-h-0 flex-col overflow-hidden">
+                    <CardContent className="flex min-h-0 flex-1 flex-col p-4 sm:p-5">
+                        <TrendChart
+                            data={data.bookingTrend}
+                            dailyData={data.dailyBookingTrend}
+                            dataKey="bookings"
+                            color={edTokens.info}
+                            label="Tickets"
+                            title="Booking momentum"
+                            light
+                        />
                     </CardContent>
                 </Card>
 
-                <Card className="overflow-hidden">
+                <Card className="flex h-full min-h-0 flex-col overflow-hidden">
                     <CardHeader>
                         <CardTitle>Booking heatmap</CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="flex min-h-0 flex-1 flex-col">
                         <ActivityHeatmap
                             data={data.weekdayHeatmap.map((item) => ({
                                 month: item.day,
                                 count: item.bookings,
                             }))}
+                            light
                         />
                     </CardContent>
                 </Card>

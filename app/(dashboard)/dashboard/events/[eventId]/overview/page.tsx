@@ -7,7 +7,7 @@ import ActivityFeed from "@/components/event-dashboard/shared/ActivityFeed";
 import PageSection from "@/components/event-dashboard/shared/PageSection";
 import ModeGate from "@/components/event-dashboard/shared/ModeGate";
 import { DailyApplicationsChart } from "@/components/event-dashboard/shared/DailyApplicationsChart";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { getEventOverview } from "@/lib/event-dashboard/overview";
 import { getActionRailItems } from "@/lib/event-dashboard/navigation";
 import { edTokens } from "@/components/event-dashboard/theme/tokens";
@@ -86,11 +86,8 @@ export default async function EventOverviewPage({
             </PageSection>
 
             <div className="grid gap-4 xl:grid-cols-[1.2fr_.8fr]">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Day-by-day applications</CardTitle>
-                    </CardHeader>
-                    <CardContent>
+                <Card className="flex h-full min-h-0 flex-col">
+                    <CardContent className="flex min-h-0 flex-1 flex-col p-4 sm:p-5">
                         <DailyApplicationsChart data={data.dailyApplications} />
                     </CardContent>
                 </Card>
