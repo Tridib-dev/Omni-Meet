@@ -77,7 +77,7 @@ function SectionLink({
                 title={collapsed ? label : undefined}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                    "group relative flex items-center gap-2 rounded-[12px] border px-2 py-2 transition-colors",
+                    "group relative flex min-w-0 items-center gap-2 rounded-[12px] border px-2 py-2 transition-colors",
                     collapsed ? "justify-center px-0" : "justify-start",
                     active
                         ? "border-[#332be0]/20 bg-[#332be0]/10 text-slate-950 shadow-[0_10px_24px_rgba(51,43,224,0.08)]"
@@ -113,14 +113,14 @@ function Section({
     if (!items.length) return null;
 
     return (
-        <div className="space-y-1.5">
+        <div className="min-w-0 space-y-1.5">
             <motion.p
                 animate={{ opacity: collapsed ? 0 : 1, height: collapsed ? 0 : "auto" }}
                 className="overflow-hidden px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400"
             >
                 {label}
             </motion.p>
-            <ul className="space-y-1">
+            <ul className="min-w-0 space-y-1">
                 {items.map((item) => (
                     <SectionLink
                         key={item.id}
@@ -152,7 +152,7 @@ export default function EventSidebar({
     const pathname = usePathname() ?? "";
     const { context } = useEventDashboard();
     const nav = getEventDashboardNav(context.eventId, context.normalizedMode);
-    const width = mobile ? "100%" : collapsed ? 84 : 238;
+    const width = mobile ? "100%" : collapsed ? 72 : 238;
     const compact = collapsed && !mobile;
 
     const mainItems = nav.filter((item) => item.section === "main");
@@ -164,11 +164,11 @@ export default function EventSidebar({
             animate={{ width }}
             transition={{ type: "spring", stiffness: 340, damping: 30, mass: 0.8 }}
             className={cn(
-                "relative z-20 flex h-full min-h-0 flex-shrink-0 flex-col overflow-visible rounded-[18px] border border-slate-200/80 bg-white/90 shadow-[0_24px_70px_rgba(15,23,42,0.12)] backdrop-blur-xl",
+                "relative z-20 flex h-full min-h-0 min-w-0 flex-shrink-0 flex-col overflow-visible rounded-[18px] border border-slate-200/80 bg-white/90 shadow-[0_24px_70px_rgba(15,23,42,0.12)] backdrop-blur-xl",
                 mobile && "rounded-none border-0 shadow-none"
             )}
         >
-            <div className="flex h-14 items-center gap-2 px-2.5 pt-2">
+            <div className="flex h-14 items-center gap-2 px-2 pt-2">
                 <Link
                     href="/dashboard/organized"
                     onClick={onNavigate}
@@ -186,8 +186,8 @@ export default function EventSidebar({
                 </Link>
             </div>
 
-            <nav className="flex min-h-0 flex-1 flex-col gap-3 px-2 pb-1">
-                <div>
+            <nav className="flex min-h-0 min-w-0 flex-1 flex-col gap-3 px-1.5 pb-1">
+                <div className="min-w-0">
                     <EventSwitcher compact={compact} />
                 </div>
 

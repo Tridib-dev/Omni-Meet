@@ -49,7 +49,7 @@ export default function DataTable<T>({
                         <TableBody>
                             {rows.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={columns.length} className="py-10 text-center text-white/40">
+                                    <TableCell colSpan={columns.length} className="py-10 text-center text-slate-500">
                                         {emptyMessage}
                                     </TableCell>
                                 </TableRow>

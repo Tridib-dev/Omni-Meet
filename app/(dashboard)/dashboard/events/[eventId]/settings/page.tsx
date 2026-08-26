@@ -24,7 +24,7 @@ function SettingsSection({
                 <button
                     type="button"
                     disabled
-                    className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] text-white/35"
+                    className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] text-slate-400"
                     title="Coming soon"
                 >
                     Edit — Coming soon
@@ -38,8 +38,8 @@ function SettingsSection({
 function Field({ label, value }: { label: string; value: string }) {
     return (
         <div>
-            <p className="text-[11px] uppercase tracking-[0.12em] text-white/30">{label}</p>
-            <p className="mt-1 text-[13px] text-white/85">{value || "—"}</p>
+            <p className="text-[11px] uppercase tracking-[0.12em] text-slate-500">{label}</p>
+            <p className="mt-1 text-[13px] text-slate-800">{value || "—"}</p>
         </div>
     );
 }
@@ -66,7 +66,7 @@ export default async function EventSettingsPage({
                 action={
                     <Link
                         href={`/events/${settings.slug}`}
-                        className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[12px] text-white/60 transition-colors hover:text-white/90"
+                        className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[12px] text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
                     >
                         View public event
                     </Link>

@@ -39,12 +39,12 @@ export default function ActionCard({
                         href,
                     });
                 }}
-                className="flex h-full min-h-[136px] min-w-[220px] flex-col justify-between rounded-xl border border-white/8 bg-white/[0.03] p-4 transition-colors hover:border-[#332be0]/30 hover:bg-[#332be0]/8 sm:p-5"
+                className="flex h-full min-h-[136px] min-w-[220px] flex-col justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-colors hover:border-indigo-300 hover:bg-indigo-50/60 sm:p-5"
             >
                 <div className="space-y-1">
-                    <p className="line-clamp-1 text-[14px] font-semibold text-white/90">{title}</p>
+                    <p className="line-clamp-1 text-[14px] font-semibold text-slate-900">{title}</p>
                     {description && (
-                        <p className="line-clamp-2 text-[12px] leading-relaxed text-white/40">{description}</p>
+                        <p className="line-clamp-2 text-[12px] leading-relaxed text-slate-500">{description}</p>
                     )}
                 </div>
                 <div className="mt-4 flex items-center gap-1 text-[12px] font-medium" style={{ color: edTokens.accent }}>

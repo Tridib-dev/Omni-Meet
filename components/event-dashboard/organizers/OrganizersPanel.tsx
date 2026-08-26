@@ -8,6 +8,7 @@ import DataTable from "@/components/event-dashboard/shared/DataTable";
 import PageSection from "@/components/event-dashboard/shared/PageSection";
 import EmptyState from "@/components/event-dashboard/shared/EmptyState";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { removeCoOrganizer } from "@/lib/actions/gate.actions";
 import type { EventOrganizersData } from "@/lib/event-dashboard/organizers";
 import { AddCoOrganizerModal } from "@/components/profileCard";
@@ -89,46 +90,80 @@ export default function OrganizersPanel({
     const tabs: { id: TabId; label: string; count: number }[] = [
         { id: "all", label: "All", count: allRows.length },
         { id: "active", label: "Active", count: data.active.length },
-        { id: "pending", label: "Pending invites", count: data.pending.length },
+        { id: "pending", label: "Pending", count: data.pending.length },
         { id: "declined", label: "Declined", count: data.denied.length },
     ];
 
     return (
         <div className="space-y-6">
             <PageSection
-                title="Committee"
+                title="Team Members"
                 description="Manage co-organizers and track invite status."
+                titleClassName="whitespace-nowrap"
+                descriptionClassName="hidden sm:block"
+                headerClassName="flex-row items-center justify-between sm:items-start"
                 action={
-                    <div className="flex flex-col items-end gap-5">
+                    <>
                         {isCreator && (
                             <button
                                 type="button"
                                 onClick={() => setInviteOpen(true)}
-                                className="inline-flex items-center gap-2 rounded-xl border border-[#332be0]/30 bg-[#332be0] px-4 py-2.5 text-[13px] font-semibold text-white shadow-[0_8px_20px_rgba(51,43,224,0.22)] transition-colors hover:bg-[#2b24c8]"
+                                className="inline-flex shrink-0 whitespace-nowrap items-center gap-2 rounded-xl border border-indigo-600 bg-indigo-600 px-3.5 py-2 text-[12px] font-semibold text-white shadow-[0_8px_20px_rgba(51,43,224,0.22)] transition-colors hover:bg-indigo-700 sm:hidden"
                             >
-                                Add co-organizer
+                                + Add co-organizer
                             </button>
                         )}
-                        <div className="flex flex-wrap items-center justify-end gap-2.5">
-                            {tabs.map((item) => (
+                        <div className="hidden flex-col items-end gap-5 sm:flex">
+                            {isCreator && (
                                 <button
-                                    key={item.id}
                                     type="button"
-                                    onClick={() => setTab(item.id)}
-                                    className={`rounded-full px-3 py-1 text-[12px] transition-colors ${
-                                        tab === item.id
-                                            ? "bg-[#332be0]/20 text-[#a5a0ff] border border-[#332be0]/30"
-                                            : "bg-white/5 text-white/50 border border-white/8 hover:text-white/75"
-                                    }`}
+                                    onClick={() => setInviteOpen(true)}
+                                    className="inline-flex items-center gap-2 rounded-xl border border-indigo-600 bg-indigo-600 px-4 py-2.5 text-[13px] font-semibold text-white shadow-[0_8px_20px_rgba(51,43,224,0.22)] transition-colors hover:bg-indigo-700"
                                 >
-                                    {item.label} ({item.count})
+                                    + Add co-organizer
                                 </button>
-                            ))}
+                            )}
+                            <Tabs
+                                value={tab}
+                                onValueChange={(value) => setTab(value as TabId)}
+                                className="w-fit self-end"
+                            >
+                                <TabsList className="inline-flex h-8 w-fit items-center justify-center rounded-lg border border-slate-200 bg-slate-50/80 p-1 shadow-sm">
+                                    {tabs.map((item) => (
+                                        <TabsTrigger
+                                            key={item.id}
+                                            value={item.id}
+                                            className="h-6 flex-none justify-center rounded-md px-2 text-[11px] leading-none text-slate-500 data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm sm:px-2.5"
+                                        >
+                                            {item.label} ({item.count})
+                                        </TabsTrigger>
+                                    ))}
+                                </TabsList>
+                            </Tabs>
                         </div>
-                    </div>
+                    </>
                 }
             >
-                {tab === "all" && (
+                <div className="space-y-6 sm:space-y-0">
+                    <Tabs
+                        value={tab}
+                        onValueChange={(value) => setTab(value as TabId)}
+                        className="w-fit sm:hidden"
+                    >
+                        <TabsList className="inline-flex h-8 w-fit items-center justify-center rounded-lg border border-slate-200 bg-slate-50/80 p-1 shadow-sm">
+                            {tabs.map((item) => (
+                                <TabsTrigger
+                                    key={item.id}
+                                    value={item.id}
+                                    className="h-6 flex-none justify-center rounded-md px-2 text-[11px] leading-none text-slate-500 data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm sm:px-2.5"
+                                >
+                                    {item.label} ({item.count})
+                                </TabsTrigger>
+                            ))}
+                        </TabsList>
+                    </Tabs>
+
+                    {tab === "all" && (
                     <>
                         {allRows.length === 0 ? (
                             <EmptyState title="No co-organizers yet" description="Invite someone to help run this event." />
@@ -140,7 +175,7 @@ export default function OrganizersPanel({
                                         header: "Invitee",
                                         cell: (row: CommitteeRow) => (
                                             <div className="flex items-center gap-3">
-                                                <div className="relative h-8 w-8 overflow-hidden rounded-full border border-white/10">
+                                                <div className="relative h-8 w-8 overflow-hidden rounded-full border border-slate-200">
                                                     <Image
                                                         src={row.photo || "https://placehold.co/32x32/111318/666?text=?"}
                                                         alt={row.name}
@@ -149,8 +184,8 @@ export default function OrganizersPanel({
                                                     />
                                                 </div>
                                                 <div>
-                                                    <p className="text-[13px] text-white/85">{row.name}</p>
-                                                    {row.email && <p className="text-[11px] text-white/35">{row.email}</p>}
+                                                    <p className="text-[13px] text-slate-800">{row.name}</p>
+                                                    {row.email && <p className="text-[11px] text-slate-500">{row.email}</p>}
                                                 </div>
                                             </div>
                                         ),
@@ -160,18 +195,18 @@ export default function OrganizersPanel({
                                         header: "Status",
                                         cell: (row: CommitteeRow) =>
                                             row.status === "active" ? (
-                                                <Badge variant="outline">Active</Badge>
+                                                <Badge variant="success">Active</Badge>
                                             ) : row.status === "pending" ? (
                                                 <Badge variant="secondary">Pending</Badge>
                                             ) : (
-                                                <Badge variant="outline">Declined</Badge>
+                                                <Badge variant="destructive">Declined</Badge>
                                             ),
                                     },
                                     {
                                         key: "since",
                                         header: "Since",
                                         cell: (row: CommitteeRow) => (
-                                            <span className="text-[12px] text-white/45">
+                                            <span className="text-[12px] text-slate-500">
                                                 {row.sinceLabel} {formatDate(row.sinceValue)}
                                             </span>
                                         ),
@@ -183,7 +218,7 @@ export default function OrganizersPanel({
                     </>
                 )}
 
-                {tab === "active" && (
+                    {tab === "active" && (
                     <>
                         {data.active.length === 0 ? (
                             <EmptyState title="No co-organizers yet" description="Invite someone to help run this event." />
@@ -195,7 +230,7 @@ export default function OrganizersPanel({
                                         header: "Organizer",
                                         cell: (row) => (
                                             <div className="flex items-center gap-3">
-                                                <div className="relative h-8 w-8 overflow-hidden rounded-full border border-white/10">
+                                                <div className="relative h-8 w-8 overflow-hidden rounded-full border border-slate-200">
                                                     <Image
                                                         src={row.photo || "https://placehold.co/32x32/111318/666?text=?"}
                                                         alt={row.name}
@@ -204,8 +239,8 @@ export default function OrganizersPanel({
                                                     />
                                                 </div>
                                                 <div>
-                                                    <p className="text-[13px] text-white/85">{row.name}</p>
-                                                    <p className="text-[11px] text-white/35">{row.email}</p>
+                                                    <p className="text-[13px] text-slate-800">{row.name}</p>
+                                                    <p className="text-[11px] text-slate-500">{row.email}</p>
                                                 </div>
                                             </div>
                                         ),
@@ -214,7 +249,7 @@ export default function OrganizersPanel({
                                         key: "addedAt",
                                         header: "Added",
                                         cell: (row) => (
-                                            <span className="text-[12px] text-white/45">{formatDate(row.addedAt)}</span>
+                                            <span className="text-[12px] text-slate-500">{formatDate(row.addedAt)}</span>
                                         ),
                                     },
                                     ...(isCreator
@@ -242,7 +277,7 @@ export default function OrganizersPanel({
                     </>
                 )}
 
-                {tab === "pending" && (
+                    {tab === "pending" && (
                     <DataTable
                         columns={[
                             {
@@ -250,7 +285,7 @@ export default function OrganizersPanel({
                                 header: "Invitee",
                                 cell: (row) => (
                                     <div className="flex items-center gap-3">
-                                        <div className="relative h-8 w-8 overflow-hidden rounded-full border border-white/10">
+                                        <div className="relative h-8 w-8 overflow-hidden rounded-full border border-slate-200">
                                             <Image
                                                 src={row.photo || "https://placehold.co/32x32/111318/666?text=?"}
                                                 alt={row.name}
@@ -258,7 +293,7 @@ export default function OrganizersPanel({
                                                 className="object-cover"
                                             />
                                         </div>
-                                        <span className="text-[13px] text-white/85">{row.name}</span>
+                                        <span className="text-[13px] text-slate-800">{row.name}</span>
                                     </div>
                                 ),
                             },
@@ -271,7 +306,7 @@ export default function OrganizersPanel({
                                 key: "invitedAt",
                                 header: "Invited",
                                 cell: (row) => (
-                                    <span className="text-[12px] text-white/45">{formatDate(row.invitedAt)}</span>
+                                    <span className="text-[12px] text-slate-500">{formatDate(row.invitedAt)}</span>
                                 ),
                             },
                         ]}
@@ -280,26 +315,26 @@ export default function OrganizersPanel({
                     />
                 )}
 
-                {tab === "declined" && (
+                    {tab === "declined" && (
                     <DataTable
                         columns={[
                             {
                                 key: "name",
                                 header: "Invitee",
                                 cell: (row) => (
-                                    <span className="text-[13px] text-white/85">{row.name}</span>
+                                    <span className="text-[13px] text-slate-800">{row.name}</span>
                                 ),
                             },
                             {
                                 key: "status",
                                 header: "Status",
-                                cell: () => <Badge variant="outline">Declined</Badge>,
+                                cell: () => <Badge variant="destructive">Declined</Badge>,
                             },
                             {
                                 key: "respondedAt",
                                 header: "Responded",
                                 cell: (row) => (
-                                    <span className="text-[12px] text-white/45">
+                                    <span className="text-[12px] text-slate-500">
                                         {row.respondedAt ? formatDate(row.respondedAt) : "—"}
                                     </span>
                                 ),
@@ -308,7 +343,8 @@ export default function OrganizersPanel({
                         rows={data.denied}
                         emptyMessage="No declined invites."
                     />
-                )}
+                    )}
+                </div>
             </PageSection>
             <AddCoOrganizerModal
                 open={inviteOpen}

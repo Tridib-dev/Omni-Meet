@@ -79,7 +79,7 @@ export default function ApplicantsPanel({
                                 className={`rounded-full px-3 py-1 text-[12px] transition-colors ${
                                     initialFilter === tab.id
                                         ? "bg-[#332be0]/20 text-[#a5a0ff] border border-[#332be0]/30"
-                                        : "bg-white/5 text-white/50 border border-white/8 hover:text-white/75"
+                                        : "bg-slate-50 text-slate-500 border border-slate-200 hover:text-slate-900"
                                 }`}
                             >
                                 {tab.label}
@@ -93,12 +93,12 @@ export default function ApplicantsPanel({
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         placeholder="Search by email…"
-                        className="h-10 flex-1 rounded-lg border border-white/10 bg-white/[0.04] px-3 text-[13px] text-white outline-none placeholder:text-white/30 focus:border-[#332be0]/40"
+                        className="h-10 flex-1 rounded-lg border border-slate-200 bg-white px-3 text-[13px] text-slate-900 outline-none placeholder:text-slate-400 focus:border-indigo-400"
                     />
                     <select
                         value={ticketFilter}
                         onChange={(e) => setTicketFilter(e.target.value as "all" | "free" | "paid")}
-                        className="h-10 rounded-lg border border-white/10 bg-white/[0.04] px-3 text-[13px] text-white outline-none"
+                        className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-[13px] text-slate-900 outline-none"
                     >
                         <option value="all">All tickets</option>
                         <option value="free">Free</option>
@@ -113,7 +113,7 @@ export default function ApplicantsPanel({
                             header: "Applicant",
                             cell: (row) => (
                                 <div className="flex items-center gap-3">
-                                    <div className="relative h-8 w-8 overflow-hidden rounded-full border border-white/10">
+                                    <div className="relative h-8 w-8 overflow-hidden rounded-full border border-slate-200">
                                         <Image
                                             src={row.photo || "https://placehold.co/32x32/111318/666?text=?"}
                                             alt={row.name}
@@ -122,8 +122,8 @@ export default function ApplicantsPanel({
                                         />
                                     </div>
                                     <div>
-                                        <p className="text-[13px] text-white/85">{row.name}</p>
-                                        <p className="font-mono text-[11px] text-white/35">{row.email}</p>
+                                        <p className="text-[13px] text-slate-800">{row.name}</p>
+                                        <p className="font-mono text-[11px] text-slate-500">{row.email}</p>
                                     </div>
                                 </div>
                             ),
@@ -151,7 +151,7 @@ export default function ApplicantsPanel({
                             key: "bookedAt",
                             header: "Registered",
                             cell: (row) => (
-                                <span className="text-[12px] text-white/45">{formatDate(row.bookedAt)}</span>
+                                <span className="text-[12px] text-slate-500">{formatDate(row.bookedAt)}</span>
                             ),
                         },
                     ]}

@@ -57,7 +57,7 @@ export default async function EventApplicantsPage({
                 />
             </section>
 
-            <Suspense fallback={<div className="text-white/40">Loading applicants…</div>}>
+            <Suspense fallback={<div className="text-[13px] text-slate-500">Loading applicants...</div>}>
                 <ApplicantsPanel eventId={eventId} data={data} initialFilter={filter} />
             </Suspense>
 

@@ -36,7 +36,7 @@ export default function EventTopbar({ onMenuClick }: { onMenuClick?: () => void 
                             </button>
                         )}
 
-                        <div className="min-w-0 overflow-hidden whitespace-nowrap text-[11px] text-slate-500">
+                        <div className="hidden min-w-0 overflow-hidden whitespace-nowrap text-[11px] text-slate-500 sm:block">
                             <div className="flex min-w-0 items-center gap-1.5">
                                 <Link href="/dashboard" className="truncate transition-colors hover:text-slate-900">
                                     Dashboard

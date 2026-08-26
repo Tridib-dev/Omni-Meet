@@ -86,27 +86,27 @@ export default function EventHero({
             />
 
             <div className="relative mx-auto flex max-w-5xl flex-col items-center text-center">
-                <h1 className="max-w-4xl text-balance text-[30px] font-semibold leading-tight text-white sm:text-[40px] lg:text-[48px]">
+                <h1 className="max-w-4xl text-balance text-[30px] font-semibold leading-tight text-slate-950 sm:text-[40px] lg:text-[48px]">
                     {title}
                 </h1>
 
                 <Badge
                     variant="secondary"
-                    className="mt-4 border border-white/10 bg-white/5 px-3 py-1 text-[12px] font-medium text-white/80"
+                    className="mt-4 border border-slate-200 bg-slate-100 px-3 py-1 text-[12px] font-medium text-slate-600"
                 >
                     {category}
                 </Badge>
 
-                <p className="mt-4 text-[14px] text-white/55 sm:text-[15px]">
+                <p className="mt-4 text-[14px] text-slate-500 sm:text-[15px]">
                     <span>{formatEventDate(displayDate)}</span>
-                    {time ? <span className="mx-2 text-white/25">·</span> : null}
+                    {time ? <span className="mx-2 text-slate-300">·</span> : null}
                     {time ? <span>{time}</span> : null}
                 </p>
 
                 <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
                     {!countdown || countdown.label ? (
                         <div
-                            className="rounded-full border px-4 py-2 text-sm font-medium text-white/80"
+                            className="rounded-full border px-4 py-2 text-sm font-medium text-slate-700"
                             style={{
                                 borderColor: edTokens.accentBorder,
                                 background: edTokens.accentMuted,
@@ -118,7 +118,7 @@ export default function EventHero({
                         (["days", "hours", "minutes", "seconds"] as const).map((unit) => (
                             <div
                                 key={unit}
-                                className="min-w-[86px] rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3 text-center shadow-[0_1px_0_rgba(255,255,255,0.04)_inset]"
+                                className="min-w-[86px] rounded-2xl border border-slate-200 bg-white px-4 py-3 text-center shadow-sm"
                             >
                                 <p
                                     className="text-[26px] font-semibold tabular-nums tracking-tight sm:text-[30px]"
@@ -126,7 +126,7 @@ export default function EventHero({
                                 >
                                     {String(countdown.parts?.[unit] ?? 0).padStart(2, "0")}
                                 </p>
-                                <p className="mt-1 text-[10px] uppercase tracking-[0.16em] text-white/35">
+                                <p className="mt-1 text-[10px] uppercase tracking-[0.16em] text-slate-400">
                                     {unit}
                                 </p>
                             </div>

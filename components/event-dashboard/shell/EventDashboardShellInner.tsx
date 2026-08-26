@@ -54,8 +54,9 @@ export default function EventDashboardShellInner({ children }: { children: React
 
     return (
         <div
+            data-event-dashboard
             className="h-dvh overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.9),transparent_24%),linear-gradient(180deg,#f8fafc_0%,#eef2f7_100%)] p-2.5 sm:p-3"
-            style={{ backgroundColor: "#eef2f7", color: "#0f172a" }}
+            style={{ backgroundColor: edTokens.canvas, color: edTokens.textPrimary }}
         >
             <EventDashboardTracker eventId={context.eventId} />
             <div className="flex h-full min-h-0 gap-2.5 sm:gap-3">
@@ -67,7 +68,7 @@ export default function EventDashboardShellInner({ children }: { children: React
                     <SheetContent
                         showCloseButton={false}
                         side="left"
-                        className="!w-[90vw] !max-w-[320px] gap-0 overflow-hidden border-slate-200 bg-white p-0 md:hidden"
+                        className="!w-[75vw] !max-w-[245px] gap-0 overflow-hidden border-slate-200 bg-white p-0 md:hidden"
                     >
                         <EventSidebar
                             collapsed={false}
@@ -84,7 +85,7 @@ export default function EventDashboardShellInner({ children }: { children: React
                     <main
                         ref={mainRef}
                         data-dashboard-main
-                        className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden rounded-[18px] border border-slate-200/80 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.12)]"
+                        className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden rounded-[18px] border border-slate-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.10)]"
                         style={{ overflowAnchor: "none", scrollBehavior: "auto" }}
                     >
                         <AnimatePresence mode="wait">
@@ -94,7 +95,7 @@ export default function EventDashboardShellInner({ children }: { children: React
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -6 }}
                                 transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-                                className="w-full px-3.5 pb-20 pt-0 sm:px-4 lg:px-5 xl:px-7"
+                                className="w-full px-3.5 pb-20 pt-5 sm:px-5 lg:px-7 xl:px-9"
                             >
                                 {children}
                             </motion.div>

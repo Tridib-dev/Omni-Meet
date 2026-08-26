@@ -31,7 +31,7 @@ export default async function EventOrganizersPage({
 
             <section className="grid gap-3 sm:grid-cols-2">
                 <StatCard
-                    label="Committee size"
+                    label="Team size"
                     value={data.committeeSize}
                     sub="Active co-organizers"
                     accent={edTokens.accent}

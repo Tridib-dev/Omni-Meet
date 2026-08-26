@@ -10,8 +10,8 @@ export function DailyApplicationsChart({
 }) {
     if (!data.some((point) => point.applications > 0)) {
         return (
-            <div className="flex h-[220px] items-center justify-center rounded-2xl border border-dashed border-white/10">
-                <p className="text-[13px] text-white/35">No application data yet.</p>
+            <div className="flex h-[220px] items-center justify-center rounded-2xl border border-dashed border-slate-200">
+                <p className="text-[13px] text-slate-500">No application data yet.</p>
             </div>
         );
     }
@@ -21,26 +21,26 @@ export function DailyApplicationsChart({
     return (
         <ResponsiveContainer width="100%" height={220}>
             <BarChart data={trimmed} margin={{ top: 10, right: 8, bottom: 0, left: -18 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
                 <XAxis
                     dataKey="day"
-                    tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 10 }}
+                    tick={{ fill: "#64748b", fontSize: 10 }}
                     axisLine={false}
                     tickLine={false}
                     interval="preserveStartEnd"
                 />
                 <YAxis
-                    tick={{ fill: "rgba(255,255,255,0.25)", fontSize: 10 }}
+                    tick={{ fill: "#94a3b8", fontSize: 10 }}
                     axisLine={false}
                     tickLine={false}
                     allowDecimals={false}
                 />
                 <Tooltip
                     contentStyle={{
-                        backgroundColor: "#111318",
-                        border: "1px solid rgba(255,255,255,0.1)",
+                        backgroundColor: "#ffffff",
+                        border: "1px solid #e2e8f0",
                         borderRadius: 10,
-                        color: "rgba(255,255,255,0.85)",
+                        color: "#0f172a",
                         fontSize: 12,
                     }}
                 />

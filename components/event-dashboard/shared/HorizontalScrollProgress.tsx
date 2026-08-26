@@ -70,7 +70,7 @@ export default function HorizontalScrollProgress({
             <div
                 aria-hidden="true"
                 className={cn(
-                    "relative h-1.5 overflow-hidden rounded-full bg-slate-200/80 dark:bg-white/10 transition-opacity duration-150",
+                    "relative h-1.5 overflow-hidden rounded-full bg-slate-200 transition-opacity duration-150",
                     !hasOverflow && "pointer-events-none opacity-0"
                 )}
             >

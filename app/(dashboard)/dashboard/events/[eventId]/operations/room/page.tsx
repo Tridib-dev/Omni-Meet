@@ -39,7 +39,7 @@ export default async function EventRoomPage({
                     <CardHeader>
                         <div className="flex items-start gap-3">
                             <div
-                                className="flex size-10 items-center justify-center rounded-xl border border-white/8"
+                                className="flex size-10 items-center justify-center rounded-xl border border-slate-200"
                                 style={{ background: `${edTokens.accent}14` }}
                             >
                                 <Video size={18} style={{ color: edTokens.accent }} />

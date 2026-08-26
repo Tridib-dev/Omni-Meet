@@ -32,6 +32,7 @@ import {
   VolumeX,
   Smile,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Dock, DockIcon, DockItem, DockLabel } from "@/components/ui/dock";
 import { RoomMorphStage } from "./morph-nav/RoomMorphStage";
 import type { MorphNavItem } from "./morph-nav/MorphNav";
@@ -132,6 +133,11 @@ const REACTION_CODE_TO_EMOJI: Record<string, string> = {
   ":raise-hand:": "✋",
 };
 
+// TrackType is present in the SDK declarations but is not exported by the
+// browser runtime bundle used by Next/Turbopack. This is the SDK enum value
+// for a screen-share track.
+const SCREEN_SHARE_TRACK_TYPE = 3;
+
 function makeId() {
   return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -166,8 +172,8 @@ function formatTime(value: number) {
   });
 }
 
-function participantLabel(participant: StreamVideoParticipant) {
-  return participant.name?.trim() || participant.userId || "Unknown";
+function participantLabel(participant?: StreamVideoParticipant) {
+  return participant?.name?.trim() || participant?.userId || "Unknown";
 }
 
 function participantRoleLabel(participant: StreamVideoParticipant) {
@@ -1432,11 +1438,79 @@ function LiveRoomScreenContent({
   const localParticipant = useLocalParticipant();
   const hasOngoingScreenShare = useHasOngoingScreenShare();
   const handRaised = Boolean(localParticipant && participantHasRaisedHand(localParticipant));
+  const previousPinnedIdsRef = useRef<string[] | null>(null);
   const autoStartDevicesRef = useRef(false);
   const autoStopDevicesRef = useRef(false);
   const [stageViewMode, setStageViewMode] = useState<StageViewMode>("normal");
 
   const screenShareActive = hasOngoingScreenShare;
+
+  useEffect(() => {
+    const getParticipantName = (userId?: string, sessionId?: string) => {
+      const participant = participants.find(
+        (item) => (sessionId && item.sessionId === sessionId) || (userId && item.userId === userId),
+      );
+      return participant ? participantLabel(participant) : userId || "Someone";
+    };
+
+    const isLocalParticipant = (userId?: string, sessionId?: string) =>
+      userId === call.currentUserId || sessionId === localParticipant?.sessionId;
+
+    const unsubscribeJoined = call.on("participantJoined", (event) => {
+      const participant = event.participant;
+      if (!participant || isLocalParticipant(participant.userId, participant.sessionId)) return;
+      toast.success(`${participant.name || participant.userId} joined the room`);
+    });
+
+    const unsubscribeLeft = call.on("participantLeft", (event) => {
+      const participant = event.participant;
+      if (!participant || isLocalParticipant(participant.userId, participant.sessionId)) return;
+      toast.info(`${participant.name || participant.userId} left the room`);
+    });
+
+    const unsubscribeTrackPublished = call.on("trackPublished", (event) => {
+      if (event.type !== SCREEN_SHARE_TRACK_TYPE || isLocalParticipant(event.userId, event.sessionId)) return;
+      toast.info(`${getParticipantName(event.userId, event.sessionId)} started sharing their screen`);
+    });
+
+    const unsubscribeTrackUnpublished = call.on("trackUnpublished", (event) => {
+      if (event.type !== SCREEN_SHARE_TRACK_TYPE || isLocalParticipant(event.userId, event.sessionId)) return;
+      toast.info(`${getParticipantName(event.userId, event.sessionId)} stopped sharing their screen`);
+    });
+
+    const unsubscribeKicked = call.on("call.kicked_user", (event) => {
+      if (event.user.id === call.currentUserId) return;
+      toast.warning(`${event.user.name || event.user.id} was removed from the room`);
+    });
+
+    return () => {
+      unsubscribeJoined?.();
+      unsubscribeLeft?.();
+      unsubscribeTrackPublished?.();
+      unsubscribeTrackUnpublished?.();
+      unsubscribeKicked?.();
+    };
+  }, [call, localParticipant?.sessionId, participants]);
+
+  useEffect(() => {
+    const nextPinnedIds = pinnedParticipants.map((participant) => participant.sessionId);
+    const previousPinnedIds = previousPinnedIdsRef.current;
+    previousPinnedIdsRef.current = nextPinnedIds;
+
+    // The first snapshot describes the current room and should not create a toast.
+    if (!previousPinnedIds) return;
+
+    const addedId = nextPinnedIds.find((id) => !previousPinnedIds.includes(id));
+    const removedId = previousPinnedIds.find((id) => !nextPinnedIds.includes(id));
+
+    if (addedId) {
+      toast.success(`${participantLabel(pinnedParticipants.find((participant) => participant.sessionId === addedId))} was pinned`);
+    }
+    if (removedId) {
+      const participant = participants.find((item) => item.sessionId === removedId);
+      toast.info(`${participantLabel(participant)} was unpinned`);
+    }
+  }, [participants, pinnedParticipants]);
 
   // --- Mute this tab's incoming audio ---
   // Deliberately browser-only: toggles the `.muted` flag on whatever <audio>

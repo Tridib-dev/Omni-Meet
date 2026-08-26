@@ -113,13 +113,13 @@ export default function EventAnalyticsView({
                         {funnel.map((item) => (
                             <div key={item.label}>
                                 <div className="mb-1 flex items-center justify-between text-[12px]">
-                                    <span className="text-white/55">{item.label}</span>
-                                    <span className="font-mono text-white/80">
+                        <span className="text-slate-600">{item.label}</span>
+                        <span className="font-mono text-slate-800">
                                         {item.value.toLocaleString("en-IN")}{" "}
-                                        <span className="text-white/25">({item.pct}%)</span>
+                                        <span className="text-slate-400">({item.pct}%)</span>
                                     </span>
                                 </div>
-                                <div className="h-2 overflow-hidden rounded-full bg-white/[0.06]">
+                                <div className="h-2 overflow-hidden rounded-full bg-slate-100">
                                     <div
                                         className="h-full rounded-full bg-[#332be0]"
                                         style={{ width: `${item.pct}%` }}
@@ -136,22 +136,22 @@ export default function EventAnalyticsView({
                     </CardHeader>
                     <CardContent className="space-y-3">
                         {data.recentActivity.length === 0 ? (
-                            <p className="text-[13px] text-white/40">No activity yet.</p>
+                            <p className="text-[13px] text-slate-500">No activity yet.</p>
                         ) : (
                             data.recentActivity.slice(0, 8).map((item) => (
                                 <div
                                     key={item.id}
-                                    className="grid gap-3 rounded-xl border border-white/8 bg-black/20 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_auto]"
+                                    className="grid gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_auto]"
                                 >
                                     <div>
-                                        <p className="text-[13px] text-white/82">
+                                        <p className="text-[13px] text-slate-800">
                                             {item.kind === "payment" ? "Paid order" : item.label}
                                         </p>
-                                        <p className="text-[11px] text-white/30">
+                                        <p className="text-[11px] text-slate-500">
                                             {formatDate(item.bookedAt)} · {formatTime(item.bookedAt)}
                                         </p>
                                     </div>
-                                    <p className="text-[12px] font-semibold text-white/82 sm:text-right">
+                                    <p className="text-[12px] font-semibold text-slate-800 sm:text-right">
                                         {item.amount
                                             ? `₹${item.amount.toLocaleString("en-IN")}`
                                             : item.checkedIn
