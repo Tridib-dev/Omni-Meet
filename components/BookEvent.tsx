@@ -192,7 +192,7 @@ const StickyBookingBar = ({
         const res = await fetch("/api/razorpay/create-order", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ amount: price, eventId, eventTitle: title, eventSlug: slug }),
+            body: JSON.stringify({ eventId }),
         });
 
         if (!res.ok) {
@@ -230,9 +230,6 @@ const StickyBookingBar = ({
                     body: JSON.stringify({
                         ...response,
                         eventId,
-                        eventTitle: title,
-                        eventSlug: slug,
-                        amount: price,
                         userEmail: user?.emailAddresses?.[0]?.emailAddress ?? "",
                     }),
                 });

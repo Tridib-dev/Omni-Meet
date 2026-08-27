@@ -7,6 +7,7 @@ import { Booking } from "@/database/booking.model";
 import { Order } from "@/database/Order.model";
 import { Event } from "@/database/event.model";
 import { isGateAuthorized } from "@/lib/actions/gate.actions";
+import { paiseToRupees } from "@/lib/payments/money";
 import { getCoOrganizerCount, getEventActivityFeed } from "@/lib/event-dashboard/activity";
 import { normalizeEventMode } from "@/lib/event-dashboard/mode";
 
@@ -155,7 +156,8 @@ export const getEventOverview = cache(async (eventId: string): Promise<EventOver
     const checkedInCount = bookings.filter((b) => b.checkedIn).length;
     const checkinRate =
         totalApplicants > 0 ? Math.round((checkedInCount / totalApplicants) * 100) : 0;
-    const totalRevenue = orders.reduce((sum, order) => sum + (order.amount ?? 0), 0);
+    const totalRevenuePaise = orders.reduce((sum, order) => sum + (order.amount ?? 0), 0);
+    const totalRevenue = paiseToRupees(totalRevenuePaise);
 
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());

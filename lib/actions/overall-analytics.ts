@@ -6,6 +6,7 @@ import { cache } from "react";
 import connectToDatabase from "@/lib/mongodb";
 import { Booking } from "@/database/booking.model";
 import { Order } from "@/database/Order.model";
+import { paiseToRupees } from "@/lib/payments/money";
 import { Event } from "@/database/event.model";
 import { CoOrganizer } from "@/database/coOrganizer.model";
 
@@ -163,7 +164,7 @@ export const getAttendedAnalytics = cache(async (): Promise<AttendedAnalyticsDat
         )[0]?.event ?? null;
 
         // Money
-        const totalSpent = allEvents.reduce((s, e) => s + e.paidAmount, 0);
+        const totalSpent = paiseToRupees(allEvents.reduce((s, e) => s + e.paidAmount, 0));
         const paidCount = allEvents.filter((e) => e.paidAmount > 0).length;
         const avgTicketPrice = paidCount > 0 ? Math.round(totalSpent / paidCount) : 0;
 
@@ -268,7 +269,7 @@ export const getOrganizedAnalytics = cache(async (): Promise<OrganizedAnalyticsD
         const totalEvents = myEvents.length;
         const avgAttendeesPerEvent = totalEvents > 0 ? Math.round(totalAttendees / totalEvents) : 0;
 
-        const totalRevenue = allOrders.reduce((s, o) => s + (o.amount ?? 0), 0);
+        const totalRevenue = paiseToRupees(allOrders.reduce((s, o) => s + (o.amount ?? 0), 0));
         const avgRevenuePerAttendee = allOrders.length > 0
             ? Math.round(totalRevenue / allOrders.length)
             : 0;
@@ -299,7 +300,7 @@ export const getOrganizedAnalytics = cache(async (): Promise<OrganizedAnalyticsD
         allOrders.forEach((o) => {
             const key = o.eventId.toString();
             if (revenueByEventMap[key]) {
-                revenueByEventMap[key].revenue += o.amount ?? 0;
+                revenueByEventMap[key].revenue += paiseToRupees(o.amount ?? 0);
                 revenueByEventMap[key].attendees += 1;
             }
         });
@@ -324,7 +325,7 @@ export const getOrganizedAnalytics = cache(async (): Promise<OrganizedAnalyticsD
             const k = monthKey(new Date(item.createdAt));
             if (growthMap[k]) {
                 growthMap[k].attendees += 1;
-                if (item.amount) growthMap[k].revenue += item.amount;
+                if (item.amount) growthMap[k].revenue += paiseToRupees(item.amount);
             }
         });
         const attendeeGrowth = last12.map((month) => ({ month, ...growthMap[month] }));
@@ -416,7 +417,7 @@ export const getEventAnalytics = cache(async (eventId: string): Promise<EventAna
         const checkinRate = totalAttendees > 0
             ? Math.round((checkedInCount / totalAttendees) * 100)
             : 0;
-        const totalRevenue = orders.reduce((sum, order) => sum + (order.amount ?? 0), 0);
+        const totalRevenue = paiseToRupees(orders.reduce((sum, order) => sum + (order.amount ?? 0), 0));
         const avgOrderValue = totalPaidOrders > 0
             ? Math.round(totalRevenue / totalPaidOrders)
             : 0;
@@ -443,7 +444,7 @@ export const getEventAnalytics = cache(async (eventId: string): Promise<EventAna
             const key = monthKey(new Date(order.createdAt));
             if (timelineMap[key]) {
                 timelineMap[key].bookings += 1;
-                timelineMap[key].revenue += order.amount ?? 0;
+                timelineMap[key].revenue += paiseToRupees(order.amount ?? 0);
             }
         });
 
@@ -474,7 +475,7 @@ export const getEventAnalytics = cache(async (eventId: string): Promise<EventAna
             const key = dayKey(new Date(order.createdAt));
             if (dailyTimelineMap[key]) {
                 dailyTimelineMap[key].bookings += 1;
-                dailyTimelineMap[key].revenue += order.amount ?? 0;
+                dailyTimelineMap[key].revenue += paiseToRupees(order.amount ?? 0);
             }
         });
 
@@ -512,7 +513,7 @@ export const getEventAnalytics = cache(async (eventId: string): Promise<EventAna
                 kind: "payment" as const,
                 label: "Paid order",
                 bookedAt: order.createdAt,
-                amount: order.amount ?? 0,
+                amount: paiseToRupees(order.amount ?? 0),
             })),
         ]
             .sort((a, b) => new Date(b.bookedAt).getTime() - new Date(a.bookedAt).getTime())

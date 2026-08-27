@@ -120,7 +120,7 @@ export default function ManualLookup({ eventId, onCheckedIn, variant = "gate" }:
                 <span className={`rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide ${
                   isDashboard ? "bg-white text-slate-500" : "bg-[var(--gv-panel)] text-[var(--gv-ink-dim)]"
                 }`}>
-                  {result.ticket.price > 0 ? "paid" : "free"}
+                  {result.ticket.pricePaise > 0 ? "paid" : "free"}
                 </span>
               </div>
               {justCheckedIn ? (

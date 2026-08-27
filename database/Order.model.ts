@@ -5,7 +5,7 @@ export interface IOrder {
     eventId: Types.ObjectId;
     eventTitle: string;
     eventSlug: string;
-    amount: number;                  // in paise (INR × 100)
+    amount: number;                  // integer paise (INR × 100), never decimal rupees
     currency: string;
     razorpayOrderId: string;         // from Razorpay create-order
     razorpayPaymentId?: string;      // filled after successful payment
@@ -25,7 +25,15 @@ const orderSchema = new Schema<IOrder>(
         eventId: { type: Schema.Types.ObjectId, ref: "Event", required: true },
         eventTitle: { type: String, required: true },
         eventSlug: { type: String, required: true },
-        amount: { type: Number, required: true },
+        amount: {
+            type: Number,
+            required: true,
+            min: 0,
+            validate: {
+                validator: Number.isInteger,
+                message: "Order amount must be an integer number of paise.",
+            },
+        },
         currency: { type: String, default: "INR" },
         razorpayOrderId: { type: String, required: true, unique: true },
         razorpayPaymentId: { type: String },

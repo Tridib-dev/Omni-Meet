@@ -32,7 +32,7 @@ function isGateAttendeesResponse(value: unknown): value is GateAttendeesResponse
     return (
       typeof attendee.id === "string" &&
       typeof attendee.type === "string" &&
-      typeof attendee.price === "number" &&
+      typeof attendee.pricePaise === "number" &&
       typeof attendee.email === "string" &&
       typeof attendee.checkedIn === "boolean" &&
       typeof attendee.bookedAt === "string"
@@ -50,7 +50,7 @@ function isVerifyTicketResult(value: unknown): value is VerifyTicketResult {
     typeof value.ticket.id === "string" &&
     typeof value.ticket.type === "string" &&
     typeof value.ticket.attendeeEmail === "string" &&
-    typeof value.ticket.price === "number" &&
+    typeof value.ticket.pricePaise === "number" &&
     typeof value.ticket.checkedIn === "boolean" &&
     (value.ticket.checkedInAt === undefined || typeof value.ticket.checkedInAt === "string")
   );

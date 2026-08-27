@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "audit:order-amounts": "node --env-file=.env.local scripts/audit-order-amounts.mjs",
+    "repair:order-amounts": "node --env-file=.env.local scripts/repair-order-amounts.mjs"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.5.9",

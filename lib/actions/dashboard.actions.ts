@@ -6,6 +6,7 @@ import { cache } from "react";
 import connectToDatabase from "@/lib/mongodb";
 import { Booking } from "@/database/booking.model";
 import { Order } from "@/database/Order.model";
+import { paiseToRupees } from "@/lib/payments/money";
 import { Watchlist } from "@/database/watchlist.model";
 import { User } from "@/database/User.model";
 import { Event } from "@/database/event.model";
@@ -131,7 +132,7 @@ export const getUserTickets = cache(async (): Promise<TicketItem[]> => {
                 eventLocation: ev.location,
                 eventMode: ev.mode,
                 eventOrganizer: ev.organizer ?? "",
-                price: o.amount,
+                price: paiseToRupees(o.amount),
                 bookedAt: (o as any).createdAt,
                 checkedIn: false,
                 status: categorize(ev.date),
@@ -170,7 +171,7 @@ export const getUserStats = cache(async (): Promise<UserStats> => {
             attended: bookingCount + orders.length,
             organized: (user as any)?.eventsHostedCount ?? 0,
             saved: savedCount,
-            totalSpent: orders.reduce((sum, o) => sum + ((o as any).amount ?? 0), 0),
+            totalSpent: paiseToRupees(orders.reduce((sum, o) => sum + ((o as any).amount ?? 0), 0)),
         };
     } catch (error) {
         console.error("[getUserStats]", error);

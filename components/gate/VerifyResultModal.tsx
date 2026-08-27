@@ -80,7 +80,7 @@ export default function VerifyResultModal({ result, onDismiss }: VerifyResultMod
             <div className="space-y-1 text-[#0A0C10]">
               <p className="text-lg font-semibold">{maskEmail(result.ticket.attendeeEmail)}</p>
               <p className="text-sm uppercase tracking-wide opacity-80">
-                {result.ticket.price > 0 ? "Paid ticket" : "Free ticket"}
+                {result.ticket.pricePaise > 0 ? "Paid ticket" : "Free ticket"}
               </p>
             </div>
           ) : (

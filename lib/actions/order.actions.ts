@@ -9,7 +9,7 @@ export const createOrder = async ({
     eventId,
     eventTitle,
     eventSlug,
-    amount,
+    amountPaise,
     razorpayOrderId,
     razorpayPaymentId,
     razorpaySignature,
@@ -17,7 +17,7 @@ export const createOrder = async ({
     eventId: string;
     eventTitle: string;
     eventSlug: string;
-    amount: number;
+    amountPaise: number;
     razorpayOrderId: string;
     razorpayPaymentId: string;
     razorpaySignature: string;
@@ -25,6 +25,9 @@ export const createOrder = async ({
     try {
         const { userId } = await auth();
         if (!userId) throw new Error("Unauthorized");
+        if (!Number.isInteger(amountPaise) || amountPaise <= 0) {
+            throw new Error("Invalid payment amount");
+        }
 
         await connectToDatabase();
 
@@ -35,7 +38,7 @@ export const createOrder = async ({
                 eventId,
                 eventTitle,
                 eventSlug,
-                amount,
+                amount: amountPaise,
                 razorpayPaymentId,
                 razorpaySignature,
                 status: "paid",

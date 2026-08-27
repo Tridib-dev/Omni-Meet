@@ -16,7 +16,7 @@ export type TicketType = "booking" | "order";
 export interface GateAttendeeItem {
     id: string;
     type: TicketType;
-    price: number;
+    pricePaise: number;
     clerkId: string;
     name: string;
     email: string;
@@ -40,7 +40,7 @@ export interface VerifyTicketResult {
         id: string;
         type: TicketType;
         attendeeEmail: string;
-        price: number;
+        pricePaise: number;
         checkedIn: boolean;
         checkedInAt?: string;
     };
@@ -465,7 +465,7 @@ export async function getEventAttendees(eventId: string): Promise<GateAttendeesR
                 return {
                     id: booking._id.toString(),
                     type: "booking" as const,
-                    price: 0,
+                    pricePaise: 0,
                     clerkId: booking.clerkId,
                     name: profile?.name ?? booking.email ?? "Unknown attendee",
                     email: profile?.email ?? booking.email,
@@ -484,7 +484,7 @@ export async function getEventAttendees(eventId: string): Promise<GateAttendeesR
                 return {
                     id: order._id.toString(),
                     type: "order" as const,
-                    price: order.amount,
+                    pricePaise: order.amount,
                     clerkId: order.clerkId,
                     name: profile?.name ?? "Unknown attendee",
                     email: profile?.email ?? (await getOrderEmail(order.clerkId)),
@@ -564,7 +564,7 @@ export async function verifyTicket(ticketId: string, eventId: string): Promise<V
                         ticket.type === "booking"
                             ? ticket.doc.email
                             : await getOrderEmail(ticket.doc.clerkId),
-                    price: ticket.type === "booking" ? 0 : ticket.doc.amount,
+                    pricePaise: ticket.type === "booking" ? 0 : ticket.doc.amount,
                     checkedIn: true,
                     checkedInAt: toIso(ticket.doc.checkedInAt),
                 },
@@ -584,7 +584,7 @@ export async function verifyTicket(ticketId: string, eventId: string): Promise<V
                     ticket.type === "booking"
                         ? ticket.doc.email
                         : await getOrderEmail(ticket.doc.clerkId),
-                price: ticket.type === "booking" ? 0 : ticket.doc.amount,
+                pricePaise: ticket.type === "booking" ? 0 : ticket.doc.amount,
                 checkedIn: false,
             },
         };

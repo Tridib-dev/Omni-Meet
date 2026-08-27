@@ -95,12 +95,12 @@ export default function AttendeeList({ eventId, eventSlug, refreshKey, onChecked
         </div>
 
         <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-          <div role="table" aria-label="Event attendees and check-in status" className="min-w-[1080px]">
-            <div role="row" className="grid grid-cols-[minmax(220px,1.5fr)_100px_120px_140px_120px_130px_130px] items-center gap-0 bg-slate-50 px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+          <div role="table" aria-label="Event attendees and check-in status" className="min-w-[1180px]">
+            <div role="row" className="grid grid-cols-[minmax(280px,1.7fr)_minmax(170px,1fr)_110px_120px_110px_130px_minmax(150px,auto)] items-center gap-x-5 bg-slate-50 px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
               <span role="columnheader">Attendee</span>
+              <span role="columnheader">Ticket ID</span>
               <span role="columnheader">Status</span>
               <span role="columnheader">Ticket type</span>
-              <span role="columnheader">Ticket ID</span>
               <span role="columnheader">Price</span>
               <span role="columnheader">Registered</span>
               <span role="columnheader" className="text-right">Checked in</span>

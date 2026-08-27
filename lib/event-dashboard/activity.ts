@@ -10,6 +10,7 @@ import { CoOrganizer } from "@/database/coOrganizer.model";
 import { Notification } from "@/database/notification.model";
 import { isGateAuthorized } from "@/lib/actions/gate.actions";
 import type { EventActivityItem } from "@/lib/event-dashboard/types";
+import { paiseToRupees } from "@/lib/payments/money";
 
 export interface EventActivityFeedResult {
     items: EventActivityItem[];
@@ -48,7 +49,7 @@ export const getEventActivityFeed = cache(
                 kind: "payment" as const,
                 title: "Paid ticket purchased",
                 description: order.amount
-                    ? `₹${Number(order.amount).toLocaleString("en-IN")} order received`
+                    ? `₹${paiseToRupees(Number(order.amount)).toLocaleString("en-IN")} order received`
                     : "Paid order received",
                 timestamp: toIso(order.createdAt),
             })),

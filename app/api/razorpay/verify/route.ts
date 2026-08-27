@@ -7,13 +7,24 @@ import { sendOrderReceipt } from "@/lib/email/services/booking.email";
 import { Event } from "@/database/event.model";
 import connectToDatabase from "@/lib/mongodb";
 import { clerkClient } from "@clerk/nextjs/server";
+import Razorpay from "razorpay";
+import { isValidObjectId } from "mongoose";
+import { paiseToRupees, rupeesToPaise } from "@/lib/payments/money";
 
 type EventEmailDoc = {
+    price?: number;
+    title: string;
+    slug: string;
+    _id: { toString(): string };
     date?: string;
     time?: string;
     location?: string;
-    slug?: string;
 };
+
+const razorpay = new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID!,
+    key_secret: process.env.RAZORPAY_KEY_SECRET!,
+});
 
 
 export async function POST(req: NextRequest) {
@@ -28,36 +39,69 @@ export async function POST(req: NextRequest) {
         const userEmail = clerkUser.emailAddresses[0]?.emailAddress ?? "";
 
 
-        const {
-            razorpay_order_id,
-            razorpay_payment_id,
-            razorpay_signature,
-            eventId,
-            eventTitle,
-            eventSlug,
-            amount,
-        } = await req.json();
+        const verificationPayload = await req.json() as {
+            razorpay_order_id?: unknown;
+            razorpay_payment_id?: unknown;
+            razorpay_signature?: unknown;
+            eventId?: unknown;
+        };
+        const razorpay_order_id = typeof verificationPayload.razorpay_order_id === "string" ? verificationPayload.razorpay_order_id.trim() : "";
+        const razorpay_payment_id = typeof verificationPayload.razorpay_payment_id === "string" ? verificationPayload.razorpay_payment_id.trim() : "";
+        const razorpay_signature = typeof verificationPayload.razorpay_signature === "string" ? verificationPayload.razorpay_signature.trim() : "";
+        const eventId = typeof verificationPayload.eventId === "string" ? verificationPayload.eventId.trim() : "";
+
+        if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !isValidObjectId(eventId)) {
+            return NextResponse.json({ error: "Invalid payment verification request" }, { status: 400 });
+        }
 
         // Verify HMAC signature — this is the critical security step
-        const body = `${razorpay_order_id}|${razorpay_payment_id}`;
+        const signatureBody = `${razorpay_order_id}|${razorpay_payment_id}`;
         const expectedSignature = crypto
             .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET!)
-            .update(body)
+            .update(signatureBody)
             .digest("hex");
 
-        if (expectedSignature !== razorpay_signature) {
+        const expected = Buffer.from(expectedSignature, "utf8");
+        const received = Buffer.from(razorpay_signature, "utf8");
+        if (expected.length !== received.length || !crypto.timingSafeEqual(expected, received)) {
             return NextResponse.json(
                 { error: "Payment verification failed — invalid signature" },
                 { status: 400 }
             );
         }
 
-        // Signature valid — persist the order
+        await connectToDatabase();
+        const eventDoc = await Event.findById(eventId)
+            .select("price title slug date time location")
+            .lean<EventEmailDoc | null>();
+        if (!eventDoc) return NextResponse.json({ error: "Event not found" }, { status: 404 });
+
+        const razorpayOrder = await razorpay.orders.fetch(razorpay_order_id);
+        const razorpayPayment = await razorpay.payments.fetch(razorpay_payment_id);
+        const amountPaise = Number(razorpayOrder.amount);
+        const notes = razorpayOrder.notes ?? {};
+        const expectedAmountPaise = rupeesToPaise(eventDoc.price ?? 0);
+
+        if (
+            razorpayOrder.currency !== "INR" ||
+            !Number.isInteger(amountPaise) ||
+            amountPaise <= 0 ||
+            razorpayOrder.status !== "paid" ||
+            amountPaise !== expectedAmountPaise ||
+            razorpayPayment.order_id !== razorpay_order_id ||
+            razorpayPayment.status !== "captured" ||
+            (notes.eventId && notes.eventId !== eventId) ||
+            (notes.clerkId && notes.clerkId !== userId) ||
+            (notes.amountPaise && Number(notes.amountPaise) !== amountPaise)
+        ) {
+            return NextResponse.json({ error: "Payment details could not be verified" }, { status: 400 });
+        }
+
         const result = await createOrder({
             eventId,
-            eventTitle,
-            eventSlug,
-            amount,
+            eventTitle: eventDoc.title,
+            eventSlug: eventDoc.slug,
+            amountPaise,
             razorpayOrderId: razorpay_order_id,
             razorpayPaymentId: razorpay_payment_id,
             razorpaySignature: razorpay_signature,
@@ -69,21 +113,16 @@ export async function POST(req: NextRequest) {
 
         // Send confirmation email — fire and forget
         if (userEmail) {
-            await connectToDatabase();
-            const eventDoc = await Event.findById(eventId)
-                .select("date time location slug")
-                .lean<EventEmailDoc>();
-        
             await sendOrderReceipt({
                 to: userEmail,
-                eventTitle,
+                eventTitle: eventDoc.title,
                 eventDate: eventDoc?.date ?? "",
                 eventTime: eventDoc?.time ?? "",
                 eventLocation: eventDoc?.location ?? "",
                 ticketId: result.order._id.toString(),
                 paymentId: razorpay_payment_id,
-                amount,
-                eventSlug: eventDoc?.slug ?? eventSlug,
+                amount: paiseToRupees(amountPaise),
+                eventSlug: eventDoc.slug,
             });
         }
         
