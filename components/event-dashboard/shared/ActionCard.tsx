@@ -13,6 +13,7 @@ export default function ActionCard({
     index = 0,
     eventId,
     pageId,
+    compact = false,
 }: {
     title: string;
     description?: string;
@@ -20,6 +21,7 @@ export default function ActionCard({
     index?: number;
     eventId?: string;
     pageId?: string;
+    compact?: boolean;
 }) {
     return (
         <motion.div
@@ -39,15 +41,23 @@ export default function ActionCard({
                         href,
                     });
                 }}
-                className="flex h-full min-h-[136px] min-w-[220px] flex-col justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-colors hover:border-indigo-300 hover:bg-indigo-50/60 sm:p-5"
+                className={
+                    compact
+                        ? "flex h-full min-h-[120px] min-w-0 flex-col justify-between rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition-colors hover:border-indigo-300 hover:bg-indigo-50/60 sm:p-4"
+                        : "flex h-full min-h-[136px] min-w-[220px] flex-col justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-colors hover:border-indigo-300 hover:bg-indigo-50/60 sm:p-5"
+                }
             >
                 <div className="space-y-1">
-                    <p className="line-clamp-1 text-[14px] font-semibold text-slate-900">{title}</p>
+                    <p className={compact ? "line-clamp-1 text-[13px] font-semibold text-slate-900" : "line-clamp-1 text-[14px] font-semibold text-slate-900"}>
+                        {title}
+                    </p>
                     {description && (
-                        <p className="line-clamp-2 text-[12px] leading-relaxed text-slate-500">{description}</p>
+                        <p className={compact ? "line-clamp-2 text-[11px] leading-relaxed text-slate-500" : "line-clamp-2 text-[12px] leading-relaxed text-slate-500"}>
+                            {description}
+                        </p>
                     )}
                 </div>
-                <div className="mt-4 flex items-center gap-1 text-[12px] font-medium" style={{ color: edTokens.accent }}>
+                <div className={compact ? "mt-3 flex items-center gap-1 text-[11px] font-medium" : "mt-4 flex items-center gap-1 text-[12px] font-medium"} style={{ color: edTokens.accent }}>
                     Open <ArrowRight size={14} />
                 </div>
             </Link>

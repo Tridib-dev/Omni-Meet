@@ -69,10 +69,9 @@ export default function EventHero({
     time: string;
 }) {
     const { displayDate, startDate } = useMemo(() => parseEventDate(date, time), [date, time]);
-    const [countdown, setCountdown] = useState<ReturnType<typeof formatCountdown> | null>(null);
+    const [countdown, setCountdown] = useState<ReturnType<typeof formatCountdown>>(() => formatCountdown(startDate));
 
     useEffect(() => {
-        setCountdown(formatCountdown(startDate));
         const id = setInterval(() => setCountdown(formatCountdown(startDate)), 1000);
         return () => clearInterval(id);
     }, [startDate]);
@@ -103,7 +102,7 @@ export default function EventHero({
                     {time ? <span>{time}</span> : null}
                 </p>
 
-                <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+                <div className="mt-6 grid w-full max-w-[520px] grid-cols-4 gap-2 sm:gap-3">
                     {!countdown || countdown.label ? (
                         <div
                             className="rounded-full border px-4 py-2 text-sm font-medium text-slate-700"
@@ -118,15 +117,15 @@ export default function EventHero({
                         (["days", "hours", "minutes", "seconds"] as const).map((unit) => (
                             <div
                                 key={unit}
-                                className="min-w-[86px] rounded-2xl border border-slate-200 bg-white px-4 py-3 text-center shadow-sm"
+                                className="min-w-0 rounded-2xl border border-slate-200 bg-white px-2 py-2 text-center shadow-sm sm:px-4 sm:py-3"
                             >
                                 <p
-                                    className="text-[26px] font-semibold tabular-nums tracking-tight sm:text-[30px]"
+                                    className="text-[clamp(1.25rem,5vw,1.875rem)] font-semibold tabular-nums tracking-tight"
                                     style={{ color: edTokens.accent }}
                                 >
                                     {String(countdown.parts?.[unit] ?? 0).padStart(2, "0")}
                                 </p>
-                                <p className="mt-1 text-[10px] uppercase tracking-[0.16em] text-slate-400">
+                                <p className="mt-1 truncate text-[8px] uppercase tracking-[0.1em] text-slate-400 sm:text-[10px] sm:tracking-[0.16em]">
                                     {unit}
                                 </p>
                             </div>

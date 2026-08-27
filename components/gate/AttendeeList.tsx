@@ -14,6 +14,7 @@ export interface AttendeeListProps {
   eventSlug: string;
   refreshKey: number;
   onCheckedIn: (ticketId: string) => void;
+  variant?: "gate" | "dashboard";
 }
 
 type Filter = "all" | "checked-in" | "remaining";
@@ -24,7 +25,7 @@ const FILTERS: { id: Filter; label: string }[] = [
   { id: "remaining", label: "Remaining" },
 ];
 
-export default function AttendeeList({ eventId, eventSlug, refreshKey, onCheckedIn }: AttendeeListProps) {
+export default function AttendeeList({ eventId, eventSlug, refreshKey, onCheckedIn, variant = "gate" }: AttendeeListProps) {
   const [attendees, setAttendees] = useState<GateAttendeeItem[]>([]);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
@@ -48,7 +49,7 @@ export default function AttendeeList({ eventId, eventSlug, refreshKey, onChecked
     return attendees.filter((a) => {
       if (filter === "checked-in" && !a.checkedIn) return false;
       if (filter === "remaining" && a.checkedIn) return false;
-      if (q && !a.email.toLowerCase().includes(q)) return false;
+      if (q && !a.email.toLowerCase().includes(q) && !a.name.toLowerCase().includes(q)) return false;
       return true;
     });
   }, [attendees, query, filter]);
@@ -58,6 +59,67 @@ export default function AttendeeList({ eventId, eventSlug, refreshKey, onChecked
       prev.map((a) => (a.id === id ? { ...a, checkedIn: true, checkedInAt: new Date().toISOString() } : a))
     );
     onCheckedIn(id);
+  }
+
+  if (variant === "dashboard") {
+    return (
+      <div className="space-y-3">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="relative min-w-0 flex-1 lg:max-w-sm">
+            <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search name or email…"
+              aria-label="Search attendees by name or email"
+              className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+            />
+          </div>
+          <div className="flex shrink-0 gap-1.5 overflow-x-auto pb-1 lg:pb-0">
+            {FILTERS.map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => setFilter(f.id)}
+                aria-pressed={filter === f.id}
+                className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+                  filter === f.id
+                    ? "border-indigo-600 bg-indigo-50 text-indigo-700"
+                    : "border-slate-200 bg-white text-slate-500 hover:text-slate-900"
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+          <div role="table" aria-label="Event attendees and check-in status" className="min-w-[1080px]">
+            <div role="row" className="grid grid-cols-[minmax(220px,1.5fr)_100px_120px_140px_120px_130px_130px] items-center gap-0 bg-slate-50 px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+              <span role="columnheader">Attendee</span>
+              <span role="columnheader">Status</span>
+              <span role="columnheader">Ticket type</span>
+              <span role="columnheader">Ticket ID</span>
+              <span role="columnheader">Price</span>
+              <span role="columnheader">Registered</span>
+              <span role="columnheader" className="text-right">Checked in</span>
+            </div>
+            {loading ? (
+              <div className="space-y-2 p-4">
+                {Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-14 animate-pulse rounded-lg bg-slate-100" />)}
+              </div>
+            ) : filtered.length === 0 ? (
+              <p className="px-4 py-12 text-center text-sm text-slate-500">No attendees match.</p>
+            ) : (
+              filtered.map((attendee) => (
+                <AttendeeRow key={`${attendee.type}-${attendee.id}`} attendee={attendee} eventId={eventId} onCheckedIn={handleLocalCheckIn} variant="dashboard" />
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

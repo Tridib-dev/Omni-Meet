@@ -89,17 +89,17 @@ export default function ApplicantsPanel({
                     </Tabs>
                 }
             >
-                <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+                <div className="mb-4 flex items-center gap-2 sm:gap-3">
                     <input
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         placeholder="Search by email…"
-                        className="h-10 flex-1 rounded-lg border border-slate-200 bg-white px-3 text-[13px] text-slate-900 outline-none placeholder:text-slate-400 focus:border-indigo-400"
+                        className="h-10 min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 text-[13px] text-slate-900 outline-none placeholder:text-slate-400 focus:border-indigo-400"
                     />
                     <select
                         value={ticketFilter}
                         onChange={(e) => setTicketFilter(e.target.value as "all" | "free" | "paid")}
-                        className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-[13px] text-slate-900 outline-none"
+                        className="h-10 w-[38%] min-w-0 rounded-lg border border-slate-200 bg-white px-2 text-[13px] text-slate-900 outline-none sm:w-auto sm:min-w-[140px] sm:px-3"
                     >
                         <option value="all">All tickets</option>
                         <option value="free">Free</option>

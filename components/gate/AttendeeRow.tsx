@@ -9,19 +9,20 @@
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { checkInTicketClient } from "./gate-client";
-import { maskEmail, formatShortTime } from "./gate-format";
+import { maskEmail, formatShortTime, verifyReasonMessage } from "./gate-format";
 import type { GateAttendeeItem } from "@/lib/actions/gate.actions";
 
 export interface AttendeeRowProps {
   attendee: GateAttendeeItem;
   eventId: string;
   onCheckedIn: (id: string) => void;
+  variant?: "gate" | "dashboard";
 }
 
-export default function AttendeeRow({ attendee, eventId, onCheckedIn }: AttendeeRowProps) {
+export default function AttendeeRow({ attendee, eventId, onCheckedIn, variant = "gate" }: AttendeeRowProps) {
   const [pending, setPending] = useState(false);
   const [optimisticIn, setOptimisticIn] = useState(false);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const checkedIn = attendee.checkedIn || optimisticIn;
 
@@ -29,7 +30,7 @@ export default function AttendeeRow({ attendee, eventId, onCheckedIn }: Attendee
     if (checkedIn || pending) return;
 
     setPending(true);
-    setError(false);
+    setError(null);
     setOptimisticIn(true); // optimistic
 
     const res = await checkInTicketClient(attendee.id, attendee.type, eventId);
@@ -38,10 +39,57 @@ export default function AttendeeRow({ attendee, eventId, onCheckedIn }: Attendee
       onCheckedIn(attendee.id);
     } else {
       setOptimisticIn(false);
-      setError(true);
-      setTimeout(() => setError(false), 2000);
+      const message = verifyReasonMessage(res.reason, res.ticket?.checkedInAt);
+      setError(message);
+      setTimeout(() => setError(null), 3000);
     }
     setPending(false);
+  }
+
+  if (variant === "dashboard") {
+    return (
+      <div role="row" className="grid min-w-[1080px] grid-cols-[minmax(220px,1.5fr)_100px_120px_140px_120px_130px_130px] items-center border-t border-slate-100 px-4 py-3 text-sm first:border-t-0">
+        <div className="flex min-w-0 items-center gap-3">
+          {attendee.photo ? (
+            <img src={attendee.photo} alt="" className="h-9 w-9 shrink-0 rounded-full object-cover" />
+          ) : (
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-xs font-semibold text-indigo-700">
+              {(attendee.name || attendee.email).slice(0, 1).toUpperCase()}
+            </span>
+          )}
+          <div className="min-w-0">
+            <p className="truncate font-medium text-slate-900">{attendee.name || "Unnamed attendee"}</p>
+            <p className="truncate text-xs text-slate-500">{attendee.email}</p>
+          </div>
+        </div>
+        <span className={`w-fit rounded-full px-2 py-1 text-[10px] font-semibold ${
+          checkedIn ? "bg-green-50 text-green-700" : "bg-slate-100 text-slate-600"
+        }`}>
+          {checkedIn ? "Checked in" : "Registered"}
+        </span>
+        <span className="text-slate-600">{attendee.type === "order" ? "Paid" : "Free"}</span>
+        <span className="truncate pr-3 font-mono text-xs text-slate-500" title={attendee.id}>{attendee.id}</span>
+        <span className="text-slate-600">{attendee.price > 0 ? `₹${attendee.price.toLocaleString("en-IN")}` : "Free"}</span>
+        <span className="text-xs text-slate-500">{formatShortTime(attendee.bookedAt)}</span>
+        <div className="flex justify-end">
+          {checkedIn ? (
+            <span className="text-xs text-slate-500">{attendee.checkedInAt ? formatShortTime(attendee.checkedInAt) : "-"}</span>
+          ) : (
+            <button
+              type="button"
+              onClick={handleCheckIn}
+              disabled={pending}
+              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-60 ${
+                error ? "bg-red-50 text-red-700" : "bg-indigo-600 text-white hover:bg-indigo-700"
+              }`}
+              title={error ?? undefined}
+            >
+              {pending ? <Loader2 size={13} className="animate-spin" /> : error ? "Retry" : "Check in"}
+            </button>
+          )}
+        </div>
+      </div>
+    );
   }
 
   return (

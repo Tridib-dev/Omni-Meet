@@ -45,18 +45,19 @@ export default function EventAnalyticsView({
 
     return (
         <div className="space-y-8">
-            <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <section className="grid grid-cols-4 gap-1">
                 <StatCard label="Bookings" value={data.totalBookings} sub="Free registrations" accent={edTokens.info} />
-                <StatCard label="Paid orders" value={data.totalPaidOrders} sub="Completed purchases" accent="#a78bfa" index={1} />
+                <StatCard label="Orders" value={data.totalPaidOrders} sub="Completed purchases" accent="#a78bfa" index={1} />
                 <StatCard
                     label="Revenue"
                     value={`₹${data.totalRevenue.toLocaleString("en-IN")}`}
                     sub="Ticket revenue"
                     accent={edTokens.warning}
                     index={2}
+                    valueClassName="text-[clamp(0.8rem,3.5vw,1.9rem)] tracking-[-0.04em] sm:text-[clamp(1.5rem,3.5vw,2rem)] sm:tracking-normal"
                 />
                 <StatCard
-                    label="Check-ins"
+                    label="Check In"
                     value={`${data.checkedInCount} / ${data.totalAttendees}`}
                     sub={`${data.checkinRate}% of total reach`}
                     accent={edTokens.success}

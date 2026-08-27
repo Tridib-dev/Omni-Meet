@@ -39,7 +39,7 @@ export default async function EventApplicantsPage({
                 description="Registrations, check-ins, and ticket types for this event."
             />
 
-            <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <section className="grid grid-cols-3 gap-3">
                 <StatCard label="Total" value={data.total} sub="All registrations" accent={edTokens.info} />
                 <StatCard
                     label="Check-in rate"

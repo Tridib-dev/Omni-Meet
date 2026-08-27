@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import PageSection from "@/components/event-dashboard/shared/PageSection";
 import ActionCardRail from "@/components/event-dashboard/shared/ActionCardRail";
-import GateShell from "@/components/gate/GateShell";
+import DashboardGate from "@/components/gate/DashboardGate";
 import { getEventDashboardContext } from "@/lib/event-dashboard/access";
 import { getActionRailItems } from "@/lib/event-dashboard/navigation";
 import { isOperationAvailable } from "@/lib/event-dashboard/mode";
@@ -22,7 +22,6 @@ export default async function EventGatePage({
     }
 
     const actionItems = getActionRailItems(eventId, context.normalizedMode, "gate");
-    const base = `/dashboard/events/${eventId}`;
 
     return (
         <div className="space-y-8">
@@ -31,14 +30,7 @@ export default async function EventGatePage({
                 description="Scan tickets, verify attendees, and manage check-ins."
             />
 
-            <GateShell
-                eventId={context.eventId}
-                eventTitle={context.title}
-                eventMode={context.normalizedMode}
-                eventSlug={context.slug}
-                backHref={`${base}/overview`}
-                embedded
-            />
+            <DashboardGate eventId={context.eventId} eventSlug={context.slug} />
 
             <ActionCardRail items={actionItems} />
         </div>

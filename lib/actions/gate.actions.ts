@@ -16,6 +16,7 @@ export type TicketType = "booking" | "order";
 export interface GateAttendeeItem {
     id: string;
     type: TicketType;
+    price: number;
     clerkId: string;
     name: string;
     email: string;
@@ -464,6 +465,7 @@ export async function getEventAttendees(eventId: string): Promise<GateAttendeesR
                 return {
                     id: booking._id.toString(),
                     type: "booking" as const,
+                    price: 0,
                     clerkId: booking.clerkId,
                     name: profile?.name ?? booking.email ?? "Unknown attendee",
                     email: profile?.email ?? booking.email,
@@ -482,6 +484,7 @@ export async function getEventAttendees(eventId: string): Promise<GateAttendeesR
                 return {
                     id: order._id.toString(),
                     type: "order" as const,
+                    price: order.amount,
                     clerkId: order.clerkId,
                     name: profile?.name ?? "Unknown attendee",
                     email: profile?.email ?? (await getOrderEmail(order.clerkId)),

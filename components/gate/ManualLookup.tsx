@@ -15,9 +15,11 @@ import type { VerifyTicketResult } from "@/lib/actions/gate.actions";
 export interface ManualLookupProps {
   eventId: string;
   onCheckedIn: () => void;
+  variant?: "gate" | "dashboard";
 }
 
-export default function ManualLookup({ eventId, onCheckedIn }: ManualLookupProps) {
+export default function ManualLookup({ eventId, onCheckedIn, variant = "gate" }: ManualLookupProps) {
+  const isDashboard = variant === "dashboard";
   const [value, setValue] = useState("");
   const [loading, setLoading] = useState(false);
   const [checkingIn, setCheckingIn] = useState(false);
@@ -80,12 +82,19 @@ export default function ManualLookup({ eventId, onCheckedIn }: ManualLookupProps
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleLookup()}
           placeholder="Paste ticket ID…"
-          className="w-full rounded-lg border border-[var(--gv-line)] bg-[var(--gv-panel-2)] px-3 py-2 text-sm text-[var(--gv-ink)] placeholder:text-[var(--gv-ink-dim)] focus:outline-none focus:ring-2 focus:ring-[var(--gv-scan)]"
+          className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
+            isDashboard
+              ? "border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:ring-indigo-500/30"
+              : "border-[var(--gv-line)] bg-[var(--gv-panel-2)] text-[var(--gv-ink)] placeholder:text-[var(--gv-ink-dim)] focus:ring-[var(--gv-scan)]"
+          }`}
         />
         <button
+          type="button"
           onClick={handleLookup}
           disabled={loading || !value.trim()}
-          className="flex shrink-0 items-center gap-1.5 rounded-lg bg-[var(--gv-scan)] px-3 py-2 text-sm font-medium text-[#0A0C10] transition-opacity disabled:opacity-40"
+          className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-opacity disabled:opacity-40 ${
+            isDashboard ? "bg-indigo-600 text-white hover:bg-indigo-700" : "bg-[var(--gv-scan)] text-[#0A0C10]"
+          }`}
         >
           {loading ? <Loader2 size={15} className="animate-spin" /> : <Search size={15} />}
           Look up
@@ -93,37 +102,45 @@ export default function ManualLookup({ eventId, onCheckedIn }: ManualLookupProps
       </div>
 
       {requestError && (
-        <p className="rounded-lg border border-[var(--gv-stop)]/40 bg-[var(--gv-stop)]/10 px-3 py-2 text-sm text-[var(--gv-stop)]">
+        <p className={`rounded-lg border px-3 py-2 text-sm ${
+          isDashboard ? "border-red-200 bg-red-50 text-red-700" : "border-[var(--gv-stop)]/40 bg-[var(--gv-stop)]/10 text-[var(--gv-stop)]"
+        }`}>
           {requestError}
         </p>
       )}
 
       {result && (
-        <div className="rounded-lg border border-[var(--gv-line)] bg-[var(--gv-panel-2)] p-3 text-sm">
+        <div className={`rounded-lg border p-3 text-sm ${
+          isDashboard ? "border-slate-200 bg-slate-50 text-slate-900" : "border-[var(--gv-line)] bg-[var(--gv-panel-2)]"
+        }`}>
           {result.valid && result.ticket ? (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="font-medium">{maskEmail(result.ticket.attendeeEmail)}</span>
-                <span className="rounded-full bg-[var(--gv-panel)] px-2 py-0.5 text-[10px] uppercase tracking-wide text-[var(--gv-ink-dim)]">
+                <span className={`rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide ${
+                  isDashboard ? "bg-white text-slate-500" : "bg-[var(--gv-panel)] text-[var(--gv-ink-dim)]"
+                }`}>
                   {result.ticket.price > 0 ? "paid" : "free"}
                 </span>
               </div>
               {justCheckedIn ? (
-                <p className="flex items-center gap-1.5 text-[var(--gv-go)]">
+                  <p className={`flex items-center gap-1.5 ${isDashboard ? "text-green-600" : "text-[var(--gv-go)]"}`}>
                   <CheckCircle2 size={15} /> Checked in
                 </p>
               ) : (
                 <button
                   onClick={handleCheckIn}
                   disabled={checkingIn}
-                  className="w-full rounded-md bg-[var(--gv-go)] py-2 text-sm font-medium text-[#0A0C10] disabled:opacity-50"
+                  className={`w-full rounded-md py-2 text-sm font-medium disabled:opacity-50 ${
+                    isDashboard ? "bg-green-600 text-white hover:bg-green-700" : "bg-[var(--gv-go)] text-[#0A0C10]"
+                  }`}
                 >
                   {checkingIn ? "Checking in…" : "Check in"}
                 </button>
               )}
             </div>
           ) : (
-            <p className="text-[var(--gv-stop)]">
+            <p className={isDashboard ? "text-red-700" : "text-[var(--gv-stop)]"}>
               {verifyReasonMessage(result.reason, result.ticket?.checkedInAt)}
             </p>
           )}

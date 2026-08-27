@@ -17,11 +17,13 @@ import BarcodeInput from "./BarcodeInput";
 import ManualLookup from "./ManualLookup";
 import VerifyResultModal from "./VerifyResultModal";
 import { verifyTicketClient, checkInTicketClient } from "./gate-client";
+import { normalizeScanValue } from "./gate-format";
 import type { VerifyTicketResult } from "@/lib/actions/gate.actions";
 
 export interface ScannerPanelProps {
   eventId: string;
   onCheckedIn: () => void;
+  variant?: "gate" | "dashboard";
 }
 
 type SubTab = "qr" | "barcode" | "manual";
@@ -32,14 +34,14 @@ const SUB_TABS: { id: SubTab; label: string; icon: typeof QrCode }[] = [
   { id: "manual", label: "Manual", icon: Search },
 ];
 
-export default function ScannerPanel({ eventId, onCheckedIn }: ScannerPanelProps) {
+export default function ScannerPanel({ eventId, onCheckedIn, variant = "gate" }: ScannerPanelProps) {
   const [subTab, setSubTab] = useState<SubTab>("qr");
   const [result, setResult] = useState<VerifyTicketResult | null>(null);
   const busyRef = useRef(false);
 
   const handleScan = useCallback(
     async (ticketId: string) => {
-      const cleanId = ticketId.trim();
+      const cleanId = normalizeScanValue(ticketId);
       if (!cleanId || busyRef.current) return;
 
       busyRef.current = true;
@@ -75,18 +77,25 @@ export default function ScannerPanel({ eventId, onCheckedIn }: ScannerPanelProps
 
   return (
     <div className="space-y-4">
-      <div className="inline-flex w-full gap-1 rounded-lg border border-[var(--gv-line)] bg-[var(--gv-panel)] p-1">
-        {SUB_TABS.map((tab) => {
+      <div className={`inline-flex w-full gap-1 rounded-lg border p-1 ${
+        variant === "dashboard" ? "border-slate-200 bg-slate-100" : "border-[var(--gv-line)] bg-[var(--gv-panel)]"
+      }`}>
+        {SUB_TABS.filter((tab) => variant !== "dashboard" || tab.id !== "manual").map((tab) => {
           const Icon = tab.icon;
           const isActive = subTab === tab.id;
           return (
             <button
               key={tab.id}
+              type="button"
               onClick={() => setSubTab(tab.id)}
               className={`flex flex-1 items-center justify-center gap-1.5 rounded-md py-2 text-xs font-medium transition-colors ${
-                isActive
-                  ? "bg-[var(--gv-panel-2)] text-[var(--gv-ink)]"
-                  : "text-[var(--gv-ink-dim)] hover:text-[var(--gv-ink)]"
+                variant === "dashboard"
+                  ? isActive
+                    ? "bg-white text-slate-900 shadow-sm"
+                    : "text-slate-500 hover:text-slate-900"
+                  : isActive
+                    ? "bg-[var(--gv-panel-2)] text-[var(--gv-ink)]"
+                    : "text-[var(--gv-ink-dim)] hover:text-[var(--gv-ink)]"
               }`}
             >
               <Icon size={14} />
@@ -96,7 +105,9 @@ export default function ScannerPanel({ eventId, onCheckedIn }: ScannerPanelProps
         })}
       </div>
 
-      <div className="rounded-xl border border-[var(--gv-line)] bg-[var(--gv-panel)] p-3">
+      <div className={`rounded-xl border p-3 ${
+        variant === "dashboard" ? "border-slate-200 bg-white" : "border-[var(--gv-line)] bg-[var(--gv-panel)]"
+      }`}>
         {subTab === "qr" && <QRScanner onScan={handleScan} active={subTab === "qr"} />}
         {subTab === "barcode" && <BarcodeInput onScan={handleScan} active={subTab === "barcode"} />}
         {subTab === "manual" && <ManualLookup eventId={eventId} onCheckedIn={onCheckedIn} />}

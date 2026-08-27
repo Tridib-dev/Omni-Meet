@@ -12,6 +12,19 @@ export function maskEmail(email: string): string {
   return `${name.slice(0, 2)}***@${domain}`;
 }
 
+/** Accept either a QR verification URL or the compact barcode value. */
+export function normalizeScanValue(rawValue: string): string | null {
+  const value = rawValue.trim();
+  if (!value) return null;
+
+  try {
+    const url = new URL(value);
+    return url.searchParams.get("id")?.trim() || url.searchParams.get("ticketId")?.trim() || null;
+  } catch {
+    return value;
+  }
+}
+
 export function formatClockTime(date: Date = new Date()): string {
   return date.toLocaleTimeString(undefined, {
     hour: "2-digit",

@@ -32,6 +32,7 @@ function isGateAttendeesResponse(value: unknown): value is GateAttendeesResponse
     return (
       typeof attendee.id === "string" &&
       typeof attendee.type === "string" &&
+      typeof attendee.price === "number" &&
       typeof attendee.email === "string" &&
       typeof attendee.checkedIn === "boolean" &&
       typeof attendee.bookedAt === "string"

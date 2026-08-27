@@ -29,7 +29,7 @@ export default async function EventOrganizersPage({
                 description="Co-organizers and invite status for your event committee."
             />
 
-            <section className="grid gap-3 sm:grid-cols-2">
+            <section className="grid grid-cols-2 gap-3">
                 <StatCard
                     label="Team size"
                     value={data.committeeSize}

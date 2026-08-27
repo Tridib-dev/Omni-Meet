@@ -5,11 +5,11 @@ import ActionCard from "@/components/event-dashboard/shared/ActionCard";
 import ActionCardRail from "@/components/event-dashboard/shared/ActionCardRail";
 import ActivityFeed from "@/components/event-dashboard/shared/ActivityFeed";
 import PageSection from "@/components/event-dashboard/shared/PageSection";
-import ModeGate from "@/components/event-dashboard/shared/ModeGate";
 import { DailyApplicationsChart } from "@/components/event-dashboard/shared/DailyApplicationsChart";
 import { Card, CardContent } from "@/components/ui/card";
 import { getEventOverview } from "@/lib/event-dashboard/overview";
 import { getActionRailItems } from "@/lib/event-dashboard/navigation";
+import { getOperationsForMode } from "@/lib/event-dashboard/mode";
 import { edTokens } from "@/components/event-dashboard/theme/tokens";
 
 export const metadata = { title: "Overview — Event Dashboard" };
@@ -26,6 +26,7 @@ export default async function EventOverviewPage({
 
     const base = `/dashboard/events/${eventId}`;
     const actionItems = getActionRailItems(eventId, data.event.normalizedMode, "overview");
+    const operations = getOperationsForMode(data.event.normalizedMode);
 
     return (
         <div className="space-y-7">
@@ -36,7 +37,7 @@ export default async function EventOverviewPage({
                 time={data.event.time}
             />
 
-            <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <section className="grid grid-cols-3 gap-3">
                 <StatCard
                     label="Applicants"
                     value={data.applicantCount}
@@ -45,9 +46,9 @@ export default async function EventOverviewPage({
                     accent={edTokens.info}
                 />
                 <StatCard
-                    label="Analytics score"
+                    label="Analytics"
                     value={data.analyticsScore}
-                    sub="Overall event health"
+                    sub="Overall Score"
                     href={`${base}/analytics`}
                     accent={edTokens.accent}
                     index={1}
@@ -63,25 +64,27 @@ export default async function EventOverviewPage({
             </section>
 
             <PageSection title="Operations" description="Run day-of event workflows from here.">
-                <div className="grid gap-3 sm:grid-cols-2">
-                    <ModeGate mode={data.event.normalizedMode} operation="gate">
+                <div className={`grid gap-3 ${operations.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
+                    {operations.includes("gate") && (
                         <ActionCard
                             title="Gate"
                             description="Scan tickets, verify attendees, and manage check-ins."
                             href={`${base}/operations/gate`}
                             eventId={eventId}
                             pageId="overview"
+                            compact
                         />
-                    </ModeGate>
-                    <ModeGate mode={data.event.normalizedMode} operation="room">
+                    )}
+                    {operations.includes("room") && (
                         <ActionCard
                             title="Room"
                             description="Control the live room, stage, and online experience."
                             href={`${base}/operations/room`}
                             eventId={eventId}
                             pageId="overview"
+                            compact
                         />
-                    </ModeGate>
+                    )}
                 </div>
             </PageSection>
 

@@ -11,6 +11,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { CameraOff } from "lucide-react";
 import CameraPermissionDrawer from "./CameraPermissionDrawer";
+import { normalizeScanValue } from "./gate-format";
 
 export interface QRScannerProps {
   onScan: (ticketId: string) => void;
@@ -18,16 +19,6 @@ export interface QRScannerProps {
 }
 
 const REGION_ID = "gate-qr-region";
-
-function extractTicketId(rawValue: string): string | null {
-  try {
-    const url = new URL(rawValue);
-    return url.searchParams.get("id") ?? url.searchParams.get("ticketId");
-  } catch {
-    // Not a URL — assume the raw scanned value IS the ticket id.
-    return rawValue.trim() || null;
-  }
-}
 
 export default function QRScanner({ onScan, active }: QRScannerProps) {
   const scannerRef = useRef<import("html5-qrcode").Html5Qrcode | null>(null);
@@ -68,7 +59,7 @@ export default function QRScanner({ onScan, active }: QRScannerProps) {
             }
             lastScanRef.current = { value: decodedText, at: now };
 
-            const ticketId = extractTicketId(decodedText);
+            const ticketId = normalizeScanValue(decodedText);
             if (ticketId) onScanRef.current(ticketId);
           },
           () => {
