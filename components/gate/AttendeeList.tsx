@@ -5,6 +5,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Search } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AttendeeRow from "./AttendeeRow";
 import { fetchAttendees } from "./gate-client";
 import type { GateAttendeeItem } from "@/lib/actions/gate.actions";
@@ -21,8 +22,8 @@ type Filter = "all" | "checked-in" | "remaining";
 
 const FILTERS: { id: Filter; label: string }[] = [
   { id: "all", label: "All" },
-  { id: "checked-in", label: "Checked in" },
-  { id: "remaining", label: "Remaining" },
+  { id: "checked-in", label: "Checked-in" },
+  { id: "remaining", label: "Pending" },
 ];
 
 export default function AttendeeList({ eventId, eventSlug, refreshKey, onCheckedIn, variant = "gate" }: AttendeeListProps) {
@@ -75,34 +76,34 @@ export default function AttendeeList({ eventId, eventSlug, refreshKey, onChecked
               className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
             />
           </div>
-          <div className="flex shrink-0 gap-1.5 overflow-x-auto pb-1 lg:pb-0">
-            {FILTERS.map((f) => (
-              <button
-                key={f.id}
-                type="button"
-                onClick={() => setFilter(f.id)}
-                aria-pressed={filter === f.id}
-                className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
-                  filter === f.id
-                    ? "border-indigo-600 bg-indigo-50 text-indigo-700"
-                    : "border-slate-200 bg-white text-slate-500 hover:text-slate-900"
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
+          <Tabs
+            value={filter}
+            onValueChange={(value) => setFilter(value as Filter)}
+            className="min-w-0 shrink-0"
+          >
+            <TabsList className="inline-flex h-8 w-fit items-center justify-center rounded-lg border border-slate-200 bg-slate-50/80 p-1 shadow-sm">
+              {FILTERS.map((f) => (
+                <TabsTrigger
+                  key={f.id}
+                  value={f.id}
+                  className="h-6 flex-none justify-center rounded-md px-2 text-[11px] text-slate-500 data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm sm:px-2.5"
+                >
+                  {f.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
         </div>
 
         <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
           <div role="table" aria-label="Event attendees and check-in status" className="min-w-[1180px]">
-            <div role="row" className="grid grid-cols-[minmax(280px,1.7fr)_minmax(170px,1fr)_110px_120px_110px_130px_minmax(150px,auto)] items-center gap-x-5 bg-slate-50 px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+            <div role="row" className="grid grid-cols-[minmax(280px,1.7fr)_minmax(170px,1fr)_90px_120px_110px_130px_150px] items-center gap-x-5 bg-slate-50 px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
               <span role="columnheader">Attendee</span>
               <span role="columnheader">Ticket ID</span>
-              <span role="columnheader">Status</span>
-              <span role="columnheader">Ticket type</span>
+              <span role="columnheader" className="text-center">Status</span>
+              <span role="columnheader" className="text-center">Ticket type</span>
               <span role="columnheader">Price</span>
-              <span role="columnheader">Registered</span>
+              <span role="columnheader" className="text-center">Registered</span>
               <span role="columnheader" className="text-right">Checked in</span>
             </div>
             {loading ? (

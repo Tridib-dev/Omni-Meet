@@ -7,6 +7,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
+import StatCard from "@/components/event-dashboard/shared/StatCard";
 import { fetchAttendees } from "./gate-client";
 
 export interface GateStatsProps {
@@ -58,29 +59,55 @@ export default function GateStats({ eventSlug, refreshKey, variant = "gate" }: G
   }, [eventSlug, refreshKey]);
 
   const isDashboard = variant === "dashboard";
-  const cardClass = isDashboard
-    ? "rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
-    : "flex flex-col items-center gap-0.5 px-2 py-3";
-  const labelClass = isDashboard
-    ? "mt-1 block text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500"
-    : "text-[10px] uppercase tracking-wider text-[var(--gv-ink-dim)]";
+
+  if (isDashboard) {
+    return (
+      <div className="grid grid-cols-3 gap-3">
+        <StatCard
+          label="Checked in"
+          value={stats.checkedIn}
+          sub="Successfully"
+          accent="#16a34a"
+          index={0}
+        />
+        <StatCard
+          label="Remaining"
+          value={stats.remaining}
+          sub="Awaiting check-in"
+          accent="#f59e0b"
+          index={1}
+        />
+        <StatCard
+          label="Total"
+          value={stats.total}
+          sub="All registrations"
+          accent="#4f46e5"
+          index={2}
+        />
+        {loading && <div className="col-span-3 h-0.5 animate-pulse bg-indigo-600/40" aria-hidden />}
+      </div>
+    );
+  }
+
+  const cardClass = "flex flex-col items-center gap-0.5 px-2 py-3";
+  const labelClass = "text-[10px] uppercase tracking-wider text-[var(--gv-ink-dim)]";
 
   return (
-    <div className={isDashboard ? "grid grid-cols-1 gap-3 sm:grid-cols-3" : "grid grid-cols-3 divide-x divide-[var(--gv-line)] overflow-hidden rounded-xl border border-[var(--gv-line)] bg-[var(--gv-panel)]"}>
+    <div className="grid grid-cols-3 divide-x divide-[var(--gv-line)] overflow-hidden rounded-xl border border-[var(--gv-line)] bg-[var(--gv-panel)]">
       <div className={cardClass}>
-        <CountUp value={stats.checkedIn} className={isDashboard ? "text-3xl font-bold text-green-600" : "text-2xl font-bold text-[var(--gv-go)]"} />
+        <CountUp value={stats.checkedIn} className="text-2xl font-bold text-[var(--gv-go)]" />
         <span className={labelClass}>Checked in</span>
       </div>
       <div className={cardClass}>
-        <CountUp value={stats.remaining} className={isDashboard ? "text-3xl font-bold text-amber-500" : "text-2xl font-bold text-[var(--gv-wait)]"} />
+        <CountUp value={stats.remaining} className="text-2xl font-bold text-[var(--gv-wait)]" />
         <span className={labelClass}>Remaining</span>
       </div>
       <div className={cardClass}>
-        <CountUp value={stats.total} className={isDashboard ? "text-3xl font-bold text-indigo-600" : "text-2xl font-bold text-[var(--gv-ink)]"} />
+        <CountUp value={stats.total} className="text-2xl font-bold text-[var(--gv-ink)]" />
         <span className={labelClass}>Total</span>
       </div>
       {loading && (
-        <div className={`${isDashboard ? "sm:col-span-3" : "col-span-3"} h-0.5 animate-pulse bg-[var(--gv-scan)]/40`} aria-hidden />
+        <div className="col-span-3 h-0.5 animate-pulse bg-[var(--gv-scan)]/40" aria-hidden />
       )}
     </div>
   );

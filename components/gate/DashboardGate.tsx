@@ -6,6 +6,8 @@ import GateStats from "./GateStats";
 import ScannerPanel from "./ScannerPanel";
 import AttendeeList from "./AttendeeList";
 import { Button } from "@/components/ui/button";
+import TicketsIllustration from "@/components/create-event/illustrations/TicketsIllustration";
+import OrganizerIllustration from "@/components/create-event/illustrations/OrganizerIllustration";
 
 export default function DashboardGate({ eventId, eventSlug }: { eventId: string; eventSlug: string }) {
   const [scannerOpen, setScannerOpen] = useState(false);
@@ -31,19 +33,26 @@ export default function DashboardGate({ eventId, eventSlug }: { eventId: string;
         } as React.CSSProperties
       }
     >
-      <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
-        <div>
-          <p className="text-sm font-semibold text-slate-900">Ready to check people in?</p>
-          <p className="mt-1 text-xs text-slate-500">Open the scanner when your team is ready to process tickets.</p>
-        </div>
-        <Button type="button" onClick={() => setScannerOpen(true)} className="w-full sm:w-auto">
-          <ScanLine />
-          Open scanner
-        </Button>
+      <div>
+        <GateStats eventSlug={eventSlug} refreshKey={refreshKey} variant="dashboard" />
       </div>
 
-      <div className="mt-5">
-        <GateStats eventSlug={eventSlug} refreshKey={refreshKey} variant="dashboard" />
+      <div className="relative mt-5 min-h-[218px] overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-8 shadow-sm sm:px-8 sm:py-10">
+        <div className="pointer-events-none absolute -left-2 top-1/2 hidden h-36 w-36 -translate-y-1/2 rotate-[-8deg] opacity-70 md:block lg:left-8" aria-hidden="true">
+          <TicketsIllustration />
+        </div>
+        <div className="pointer-events-none absolute -right-2 top-1/2 hidden h-36 w-36 -translate-y-1/2 rotate-[8deg] opacity-70 md:block lg:right-8" aria-hidden="true">
+          <OrganizerIllustration />
+        </div>
+
+        <div className="relative z-10 mx-auto flex max-w-xl flex-col items-center text-center">
+          <p className="text-base font-bold text-slate-900 sm:text-lg">Ready to check people in?</p>
+          <p className="mt-1 text-xs leading-relaxed text-slate-500 sm:text-sm">Open the scanner when your team is ready to process tickets.</p>
+          <Button type="button" onClick={() => setScannerOpen(true)} className="mt-10 min-h-12 w-full min-w-[220px] bg-slate-900 px-9 py-3.5 text-base hover:bg-slate-600 sm:w-auto">
+            <ScanLine />
+            Open scanner
+          </Button>
+        </div>
       </div>
 
       <section className="mt-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">

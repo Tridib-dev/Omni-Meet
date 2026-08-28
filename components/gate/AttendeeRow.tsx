@@ -7,7 +7,7 @@
 // standing in for.
 
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { DoorOpen, Loader2 } from "lucide-react";
 import { checkInTicketClient } from "./gate-client";
 import { maskEmail, formatShortTime, verifyReasonMessage } from "./gate-format";
 import type { GateAttendeeItem } from "@/lib/actions/gate.actions";
@@ -48,7 +48,7 @@ export default function AttendeeRow({ attendee, eventId, onCheckedIn, variant = 
 
   if (variant === "dashboard") {
     return (
-      <div role="row" className="grid min-w-[1180px] grid-cols-[minmax(280px,1.7fr)_minmax(170px,1fr)_110px_120px_110px_130px_minmax(150px,auto)] items-center gap-x-5 border-t border-slate-100 px-5 py-3 text-sm first:border-t-0">
+      <div role="row" className="grid min-w-[1180px] grid-cols-[minmax(280px,1.7fr)_minmax(170px,1fr)_90px_120px_110px_130px_150px] items-center gap-x-5 border-t border-slate-100 px-5 py-3 text-sm first:border-t-0">
         <div className="flex min-w-0 items-center gap-3">
           {attendee.photo ? (
             <img src={attendee.photo} alt="" className="h-9 w-9 shrink-0 rounded-full object-cover" />
@@ -63,28 +63,35 @@ export default function AttendeeRow({ attendee, eventId, onCheckedIn, variant = 
           </div>
         </div>
         <span className="truncate pr-3 font-mono text-xs text-slate-500" title={attendee.id}>{attendee.id}</span>
-        <span className={`w-fit justify-self-start rounded-full px-2 py-1 text-[10px] font-semibold ${
+        <span className={`w-fit justify-self-center rounded-full px-2 py-1 text-[10px] font-semibold ${
           checkedIn ? "bg-green-50 text-green-700" : "bg-slate-100 text-slate-600"
         }`}>
           {checkedIn ? "Checked in" : "Registered"}
         </span>
-        <span className="text-slate-600">{attendee.type === "order" ? "Paid" : "Free"}</span>
+        <span className="justify-self-center text-slate-600">{attendee.type === "order" ? "Paid" : "Free"}</span>
         <span className="text-slate-600">{attendee.pricePaise > 0 ? `₹${(attendee.pricePaise / 100).toLocaleString("en-IN")}` : "Free"}</span>
-        <span className="text-xs text-slate-500">{formatShortTime(attendee.bookedAt)}</span>
-        <div className="flex min-w-0 justify-end">
+        <span className="justify-self-center text-xs text-slate-500">{formatShortTime(attendee.bookedAt)}</span>
+        <div className="flex min-w-0 justify-end pr-0">
           {checkedIn ? (
-            <span className="min-w-[84px] text-right text-xs text-slate-500">{attendee.checkedInAt ? formatShortTime(attendee.checkedInAt) : "-"}</span>
+            <span className="min-w-[100px] text-right text-xs text-slate-500">{attendee.checkedInAt ? formatShortTime(attendee.checkedInAt) : "-"}</span>
           ) : (
             <button
               type="button"
               onClick={handleCheckIn}
               disabled={pending}
-              className={`min-w-[84px] rounded-lg px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-60 ${
+              className={`min-w-[100px] rounded-lg px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-60 ${
                 error ? "bg-red-50 text-red-700" : "bg-indigo-600 text-white hover:bg-indigo-700"
               }`}
               title={error ?? undefined}
             >
-              {pending ? <Loader2 size={13} className="animate-spin" /> : error ? "Retry" : "Check in"}
+              <span className="flex items-center justify-center gap-1.5">
+                {pending ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <DoorOpen size={16} strokeWidth={2.25} aria-hidden="true" />
+                )}
+                <span>{error ? "Retry" : "Check in"}</span>
+              </span>
             </button>
           )}
         </div>
