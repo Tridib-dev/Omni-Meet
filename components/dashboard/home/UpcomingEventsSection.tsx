@@ -14,9 +14,9 @@ type Props = {
 
 function EmptyState({ title, description }: { title: string; description: string }) {
     return (
-        <div className="rounded-[22px] border border-dashed border-white/10 bg-white/[0.03] px-5 py-10 text-center">
-            <p className="text-[14px] font-medium text-white/65">{title}</p>
-            <p className="mt-1 text-[12px] text-white/35">{description}</p>
+        <div className="rounded-[18px] border border-dashed border-slate-300 bg-slate-50 px-5 py-10 text-center">
+            <p className="text-[14px] font-medium text-slate-700">{title}</p>
+            <p className="mt-1 text-[12px] text-slate-500">{description}</p>
         </div>
     );
 }
@@ -34,7 +34,7 @@ export function UpcomingEventsSection({ attendedEvents, organizedEvents, compact
         <section className={compact ? "space-y-3" : "space-y-4"}>
             <div className="flex items-end justify-between gap-4">
                 <div className="min-w-0">
-                    <h2 className={compact ? "mt-1 text-[16px] font-semibold text-white/90 sm:text-[20px]" : "mt-1 text-[18px] font-semibold text-white/90 sm:text-[22px]"}>
+                    <h2 className={compact ? "mt-1 text-[16px] font-semibold text-slate-900 sm:text-[20px]" : "mt-1 text-[18px] font-semibold text-slate-900 sm:text-[22px]"}>
                         Upcoming events
                     </h2>
                 </div>
@@ -43,8 +43,8 @@ export function UpcomingEventsSection({ attendedEvents, organizedEvents, compact
             <NativeTabs
                 defaultValue="attended"
                 className="w-full"
-                listClassName="rounded-full border border-white/8 bg-white/[0.04] p-1"
-                triggerClassName={compact ? "rounded-full px-3.5 py-1.5 text-[12px]" : "rounded-full px-4 py-2 text-[13px]"}
+                listClassName="rounded-lg border border-slate-200 bg-slate-50/80 p-1 shadow-sm"
+                triggerClassName={compact ? "rounded-md px-3.5 py-1.5 text-[12px] text-slate-500 data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm" : "rounded-md px-4 py-2 text-[13px] text-slate-500 data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm"}
                 contentClassName={compact ? "mt-4" : "mt-5"}
                 items={[
                     {
@@ -52,7 +52,7 @@ export function UpcomingEventsSection({ attendedEvents, organizedEvents, compact
                         label: (
                             <span className="inline-flex items-center gap-1.5">
                                 Attended
-                                <span className="rounded-full bg-white/8 px-1.5 py-0.5 text-[10px] font-mono text-white/35">
+                                <span className="rounded-full bg-slate-200 px-1.5 py-0.5 text-[10px] font-mono text-slate-500">
                                     {attendedEvents.length}
                                 </span>
                             </span>
@@ -82,7 +82,7 @@ export function UpcomingEventsSection({ attendedEvents, organizedEvents, compact
                         label: (
                             <span className="inline-flex items-center gap-1.5">
                                 Organized
-                                <span className="rounded-full bg-white/8 px-1.5 py-0.5 text-[10px] font-mono text-white/35">
+                                <span className="rounded-full bg-slate-200 px-1.5 py-0.5 text-[10px] font-mono text-slate-500">
                                     {organizedEvents.length}
                                 </span>
                             </span>

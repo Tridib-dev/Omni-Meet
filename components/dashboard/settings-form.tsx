@@ -57,18 +57,17 @@ const Section = ({
     children: ReactNode;
 }) => (
     <section
-        className="overflow-hidden rounded-xl border border-white/8 bg-white/[0.03]"
-        style={{ boxShadow: "0 18px 60px rgba(0,0,0,0.24)" }}
+        className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
     >
-        <div className="flex items-start gap-3 border-b border-white/6 px-5 py-4 sm:px-6">
+        <div className="flex items-start gap-3 border-b border-slate-100 px-5 py-4 sm:px-6">
             {icon ? (
-                <div className="mt-0.5 rounded-xl border border-white/8 bg-white/[0.04] p-2 text-white/55">
+                <div className="mt-0.5 rounded-xl border border-indigo-100 bg-indigo-50 p-2 text-indigo-600">
                     {icon}
                 </div>
             ) : null}
             <div className="min-w-0">
-                <h3 className="text-[14px] font-semibold text-white/92">{title}</h3>
-                {description ? <p className="mt-1 text-[12px] leading-5 text-white/35">{description}</p> : null}
+                <h3 className="text-[14px] font-semibold text-slate-900">{title}</h3>
+                {description ? <p className="mt-1 text-[12px] leading-5 text-slate-500">{description}</p> : null}
             </div>
         </div>
         <div className="space-y-5 px-5 py-5 sm:px-6">{children}</div>
@@ -85,17 +84,17 @@ const Field = ({
     children: ReactNode;
 }) => (
     <div>
-        <label className="mb-1.5 block text-[12px] font-medium text-white/55">{label}</label>
+        <label className="mb-1.5 block text-[12px] font-medium text-slate-600">{label}</label>
         {children}
-        {helper ? <p className="mt-1 text-[11px] leading-5 text-white/25">{helper}</p> : null}
+        {helper ? <p className="mt-1 text-[11px] leading-5 text-slate-400">{helper}</p> : null}
     </div>
 );
 
 const inputClass =
-    "w-full rounded-xl px-3 py-2.5 text-[13px] text-white/85 outline-none transition-colors placeholder:text-white/20 focus:border-cyan-500/45 focus:ring-2 focus:ring-cyan-500/12";
+    "w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-[13px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/15";
 const inputStyle = {
-    background: "rgba(255,255,255,0.04)",
-    border: "1px solid rgba(255,255,255,0.09)",
+    background: "#ffffff",
+    border: "1px solid #e2e8f0",
 };
 
 function mergeNotifications(initial?: Partial<NotificationSettings>): NotificationSettings {
@@ -170,7 +169,7 @@ export default function SettingsForm({ initialData }: Props) {
                     icon={<UserCircle2 className="h-4 w-4" />}
                 >
                     <div className="flex items-center gap-4">
-                        <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-cyan-500 to-violet-600">
+                        <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-br from-indigo-500 to-violet-600">
                             {initialData.imageUrl ? (
                                 <Image
                                     src={initialData.imageUrl}
@@ -182,12 +181,12 @@ export default function SettingsForm({ initialData }: Props) {
                             ) : null}
                         </div>
                         <div className="min-w-0">
-                            <p className="text-[13px] font-medium text-white/82">
+                            <p className="text-[13px] font-medium text-slate-800">
                                 {initialData.firstName || initialData.lastName
                                     ? [initialData.firstName, initialData.lastName].filter(Boolean).join(" ")
                                     : "Your profile photo"}
                             </p>
-                            <p className="mt-0.5 text-[11px] leading-5 text-white/25">
+                            <p className="mt-0.5 text-[11px] leading-5 text-slate-500">
                                 Avatar, email, password, sessions, and connected accounts live in Clerk.
                             </p>
                         </div>
@@ -236,12 +235,7 @@ export default function SettingsForm({ initialData }: Props) {
                             type="button"
                             onClick={handleSaveProfile}
                             disabled={savingProfile}
-                            className="rounded-xl px-4 py-2 text-[13px] font-medium text-white transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
-                            style={{
-                                background: "rgba(6,182,212,0.15)",
-                                border: "1px solid rgba(6,182,212,0.25)",
-                                color: "#67e8f9",
-                            }}
+                            className="rounded-xl border border-indigo-600 bg-indigo-600 px-4 py-2 text-[13px] font-medium text-white transition-all hover:bg-indigo-700 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                             {savingProfile ? "Saving…" : "Save profile"}
                         </button>
@@ -249,7 +243,7 @@ export default function SettingsForm({ initialData }: Props) {
                         <button
                             type="button"
                             onClick={() => clerk.openUserProfile()}
-                            className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-[13px] font-medium text-white/65 transition-colors hover:bg-white/8 hover:text-white/85"
+                            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-[13px] font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
                         >
                             Open Clerk account center
                         </button>
@@ -265,38 +259,38 @@ export default function SettingsForm({ initialData }: Props) {
                         <button
                             type="button"
                             onClick={() => clerk.openUserProfile()}
-                            className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] px-4 py-4 text-left transition-colors hover:bg-white/[0.05]"
+                            className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 text-left transition-colors hover:bg-slate-100"
                         >
                             <div>
-                                <p className="text-[13px] font-medium text-white/85">Manage security</p>
-                                <p className="mt-1 text-[11px] leading-5 text-white/25">Password, MFA, active sessions.</p>
+                                <p className="text-[13px] font-medium text-slate-800">Manage security</p>
+                                <p className="mt-1 text-[11px] leading-5 text-slate-500">Password, MFA, active sessions.</p>
                             </div>
-                            <Shield className="h-4 w-4 text-cyan-300/80" />
+                            <Shield className="h-4 w-4 text-indigo-600" />
                         </button>
 
                         <button
                             type="button"
                             onClick={() => clerk.openUserProfile()}
-                            className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] px-4 py-4 text-left transition-colors hover:bg-white/[0.05]"
+                            className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 text-left transition-colors hover:bg-slate-100"
                         >
                             <div>
-                                <p className="text-[13px] font-medium text-white/85">Manage account</p>
-                                <p className="mt-1 text-[11px] leading-5 text-white/25">Email, avatar, connected accounts.</p>
+                                <p className="text-[13px] font-medium text-slate-800">Manage account</p>
+                                <p className="mt-1 text-[11px] leading-5 text-slate-500">Email, avatar, connected accounts.</p>
                             </div>
-                            <Sparkles className="h-4 w-4 text-fuchsia-300/80" />
+                            <Sparkles className="h-4 w-4 text-violet-600" />
                         </button>
                     </div>
 
-                    <div className="flex items-center justify-between rounded-xl border border-white/8 bg-white/[0.02] px-4 py-4">
+                    <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-4">
                         <div>
-                            <p className="text-[13px] font-medium text-white/82">Sign out</p>
-                            <p className="mt-1 text-[11px] leading-5 text-white/25">Leave this device and clear the current session.</p>
+                            <p className="text-[13px] font-medium text-slate-800">Sign out</p>
+                            <p className="mt-1 text-[11px] leading-5 text-slate-500">Leave this device and clear the current session.</p>
                         </div>
                         <button
                             type="button"
                             onClick={handleSignOut}
                             disabled={signingOut}
-                            className="rounded-xl border border-white/10 bg-white/5 px-3.5 py-2 text-[12px] font-medium text-white/65 transition-colors hover:bg-white/8 hover:text-white/85 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-[12px] font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                             {signingOut ? "Signing out…" : "Sign out"}
                         </button>
@@ -379,10 +373,10 @@ function PreferenceRow({
     onToggle: () => void;
 }) {
     return (
-        <div className="flex flex-col gap-3 rounded-xl border border-white/8 bg-white/[0.02] px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
-                <p className="text-[13px] font-medium text-white/82">{title}</p>
-                <p className="mt-1 text-[11px] leading-5 text-white/25">{description}</p>
+                <p className="text-[13px] font-medium text-slate-800">{title}</p>
+                <p className="mt-1 text-[11px] leading-5 text-slate-500">{description}</p>
             </div>
 
             <Switch
@@ -402,9 +396,9 @@ function FutureSettingCard({
     description: string;
 }) {
     return (
-        <div className="rounded-xl border border-dashed border-white/8 bg-white/[0.02] px-4 py-4">
-            <p className="text-[13px] font-medium text-white/70">{title}</p>
-            <p className="mt-1 text-[11px] leading-5 text-white/25">{description}</p>
+        <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4">
+            <p className="text-[13px] font-medium text-slate-700">{title}</p>
+            <p className="mt-1 text-[11px] leading-5 text-slate-500">{description}</p>
         </div>
     );
 }

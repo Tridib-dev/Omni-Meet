@@ -123,7 +123,7 @@ export function RecommendedEventCard({ event, index, compact = false }: Props) {
         >
             <Link
                 href={`/events/${event.slug}`}
-                className="relative flex h-full w-full overflow-hidden rounded-[30px] border border-white/8 bg-white/[0.03] transition-transform duration-300 hover:-translate-y-1 hover:border-[#332be0]/30"
+                className="relative flex h-full w-full overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-sm transition-transform duration-300 hover:-translate-y-1 hover:border-indigo-300 hover:shadow-md"
                 style={{ minHeight: compact ? "clamp(248px, 32vw, 390px)" : "clamp(300px, 42vw, 500px)" }}
             >
                 <div className="absolute inset-0">
@@ -142,8 +142,8 @@ export function RecommendedEventCard({ event, index, compact = false }: Props) {
                         <span
                             className={
                                 compact
-                                    ? "inline-flex shrink-0 items-center rounded-full border border-[#332be0]/30 bg-[#332be0]/12 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-[#b7b3ff] backdrop-blur-md"
-                                    : "inline-flex shrink-0 items-center rounded-full border border-[#332be0]/30 bg-[#332be0]/12 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#b7b3ff] backdrop-blur-md"
+                                    ? "inline-flex shrink-0 items-center rounded-full border border-white/30 bg-slate-950/45 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-white backdrop-blur-md"
+                                    : "inline-flex shrink-0 items-center rounded-full border border-white/30 bg-slate-950/45 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-white backdrop-blur-md"
                             }
                         >
                             {event.category}
@@ -166,20 +166,20 @@ export function RecommendedEventCard({ event, index, compact = false }: Props) {
                 <div className="sm:hidden">
                     <div className="min-w-0 space-y-2 text-[11px] sm:text-[12px]">
                         <div className="flex items-start justify-between gap-3">
-                            <h3 className="min-w-0 text-[20px] font-semibold leading-[1.06] tracking-[-0.04em] text-white">
+                            <h3 className="min-w-0 text-[20px] font-semibold leading-[1.06] tracking-[-0.04em] text-slate-900">
                                 {event.title}
                             </h3>
 
-                            <span className="inline-flex shrink-0 items-center rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/58">
+                            <span className="inline-flex shrink-0 items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
                                 {modeLabel}
                             </span>
                         </div>
 
-                        <p className="max-w-[48ch] text-[12px] leading-snug text-white/78 line-clamp-3">
+                        <p className="max-w-[48ch] text-[12px] leading-snug text-slate-600 line-clamp-3">
                             {description}
                         </p>
 
-                        <div className="flex items-center gap-2.5 whitespace-nowrap text-white/72">
+                        <div className="flex items-center gap-2.5 whitespace-nowrap text-slate-500">
                             <span className="inline-flex items-center gap-1.5">
                                 <Calendar size={13} />
                                 <span>{formatDate(event.date)}</span>
@@ -191,7 +191,7 @@ export function RecommendedEventCard({ event, index, compact = false }: Props) {
                             </span>
                         </div>
 
-                        <span className="inline-flex min-w-0 items-center gap-1.5 text-[11px] text-white/72">
+                        <span className="inline-flex min-w-0 items-center gap-1.5 text-[11px] text-slate-500">
                             <MapPin size={13} />
                             <span className="truncate">{event.location}</span>
                         </span>
@@ -200,15 +200,15 @@ export function RecommendedEventCard({ event, index, compact = false }: Props) {
 
                 <div className="hidden sm:grid sm:grid-cols-[minmax(0,1fr)_auto] sm:gap-x-5 sm:gap-y-2.5 sm:text-[12px]">
                     <div className="min-w-0 space-y-2">
-                        <h3 className={compact ? "min-w-0 text-[20px] font-semibold leading-[1.06] tracking-[-0.04em] text-white sm:text-[26px] lg:text-[32px]" : "min-w-0 text-[24px] font-semibold leading-[1.06] tracking-[-0.04em] text-white sm:text-[31px] lg:text-[38px]"}>
+                        <h3 className={compact ? "min-w-0 text-[20px] font-semibold leading-[1.06] tracking-[-0.04em] text-slate-900 sm:text-[26px] lg:text-[32px]" : "min-w-0 text-[24px] font-semibold leading-[1.06] tracking-[-0.04em] text-slate-900 sm:text-[31px] lg:text-[38px]"}>
                             {event.title}
                         </h3>
 
-                        <p className={compact ? "max-w-[48ch] text-[12px] leading-snug text-white/78 line-clamp-2" : "max-w-[50ch] text-[13px] leading-snug text-white/78 line-clamp-2"}>
+                        <p className={compact ? "max-w-[48ch] text-[12px] leading-snug text-slate-600 line-clamp-2" : "max-w-[50ch] text-[13px] leading-snug text-slate-600 line-clamp-2"}>
                             {description}
                         </p>
 
-                        <div className="flex items-center gap-2.5 whitespace-nowrap text-white/72">
+                        <div className="flex items-center gap-2.5 whitespace-nowrap text-slate-500">
                             <span className="inline-flex items-center gap-1.5">
                                 <Calendar size={13} />
                                 <span>{formatDate(event.date)}</span>
@@ -222,11 +222,11 @@ export function RecommendedEventCard({ event, index, compact = false }: Props) {
                     </div>
 
                     <div className="flex flex-col items-end gap-3 pt-1 text-right">
-                        <span className={compact ? "inline-flex shrink-0 items-center rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-white/58" : "inline-flex shrink-0 items-center rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/58"}>
+                        <span className={compact ? "inline-flex shrink-0 items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-500" : "inline-flex shrink-0 items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500"}>
                             {modeLabel}
                         </span>
 
-                        <span className={compact ? "inline-flex min-w-0 items-center justify-end gap-1.5 text-[11px] text-white/72 sm:text-[12px]" : "inline-flex min-w-0 items-center justify-end gap-1.5 text-[12px] text-white/72 sm:text-[13px]"}>
+                        <span className={compact ? "inline-flex min-w-0 items-center justify-end gap-1.5 text-[11px] text-slate-500 sm:text-[12px]" : "inline-flex min-w-0 items-center justify-end gap-1.5 text-[12px] text-slate-500 sm:text-[13px]"}>
                             <MapPin size={13} />
                             <span className="truncate">{event.location}</span>
                         </span>

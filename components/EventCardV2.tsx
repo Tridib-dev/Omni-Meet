@@ -1,9 +1,7 @@
 "use client";
 
 // components/EventCardH.tsx
-// Horizontal card layout — image left, content right.
-// Matches the hand-drawn sketch: category · title · description · tags · location+date
-// with Free/Paid pill and bookmark button on the right side.
+// Horizontal saved-event card for the light dashboard surface.
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -81,61 +79,57 @@ export default function EventCardH({
     return (
         <Link
             href={`/events/${slug}`}
-            className="group relative flex gap-4 p-3 rounded-2xl transition-all duration-200"
-            style={{
-                background: "rgba(255,255,255,0.03)",
-                border: "1px solid rgba(255,255,255,0.07)",
-            }}
+            className="group relative flex gap-3.5 rounded-[18px] border border-slate-200 bg-white p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-md sm:gap-4"
         >
             {/* Left — Event image */}
-            <div className="relative w-[120px] flex-shrink-0 rounded-xl overflow-hidden bg-white/5 self-stretch min-h-[96px]">
+            <div className="relative min-h-[108px] w-[112px] shrink-0 self-stretch overflow-hidden rounded-[13px] bg-slate-100 sm:w-[136px]">
                 <SafeImage
                     src={image}
                     alt={title}
                     fill
-                    fallback="https://placehold.co/120x96/0b0f13/333?text=Event"
+                    fallback="https://placehold.co/136x108/f1f5f9/475569?text=Event"
                     className="object-cover group-hover:scale-105 transition-transform duration-500"
                 />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/30 via-transparent to-transparent" />
             </div>
 
             {/* Right — Content */}
-            <div className="flex flex-1 min-w-0 pr-14">
-                <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+            <div className="flex min-w-0 flex-1 pr-12 sm:pr-14">
+                <div className="flex min-w-0 flex-1 flex-col justify-between py-0.5">
                     <div>
                         {category && (
-                            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-cyan-500/80 mb-0.5">
+                            <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-indigo-600">
                                 {category}
                             </p>
                         )}
 
-                        <h3 className="text-[14px] font-semibold text-white/90 group-hover:text-cyan-400 transition-colors leading-snug line-clamp-1 mb-1">
+                        <h3 className="mb-1 line-clamp-1 text-[14px] font-semibold leading-snug text-slate-900 transition-colors group-hover:text-indigo-700 sm:text-[15px]">
                             {title}
                         </h3>
 
                         {shortDesc && (
-                            <p className="text-[12px] text-white/40 leading-relaxed line-clamp-1 mb-2">
+                            <p className="mb-2 line-clamp-1 text-[12px] leading-relaxed text-slate-500">
                                 {shortDesc}
                             </p>
                         )}
 
                         {tags.length > 0 && (
-                            <div className="flex items-center gap-1.5 mb-2 flex-wrap">
+                            <div className="mb-2 flex flex-wrap items-center gap-1.5">
                                 {visibleTags.map((tag) => (
                                     <span
                                         key={tag}
-                                        className="text-[10px] px-2 py-0.5 rounded-full text-white/40"
-                                        style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}
+                                        className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] text-slate-500"
                                     >
                                         #{tag}
                                     </span>
                                 ))}
                                 {extraTags > 0 && (
-                                    <span className="text-[10px] text-white/25">+{extraTags}</span>
+                                    <span className="text-[10px] text-slate-400">+{extraTags}</span>
                                 )}
                             </div>
                         )}
 
-                        <div className="flex items-center gap-3 text-[11px] text-white/30">
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] text-slate-500">
                             <span className="flex items-center gap-1 truncate">
                                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                     <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
@@ -156,14 +150,10 @@ export default function EventCardH({
             </div>
 
             <span
-                className="absolute right-3 top-3 text-[11px] font-semibold px-2.5 py-0.5 rounded-full"
-                style={{
-                    background: isPaid
-                        ? "rgba(245,158,11,0.1)"
-                        : "rgba(34,197,94,0.1)",
-                    border: `1px solid ${isPaid ? "rgba(245,158,11,0.25)" : "rgba(34,197,94,0.2)"}`,
-                    color: isPaid ? "#f59e0b" : "#22c55e",
-                }}
+                className={isPaid
+                    ? "absolute right-3 top-3 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold text-amber-700"
+                    : "absolute right-3 top-3 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700"
+                }
             >
                 {isPaid ? `₹${price.toLocaleString("en-IN")}` : "Free"}
             </span>
@@ -173,7 +163,7 @@ export default function EventCardH({
                 loading={saving}
                 onToggle={handleBookmarkToggle}
                 ariaLabel={saved ? "Remove from saved" : "Save event"}
-                className="absolute bottom-3 right-3 w-10 h-10 justify-center rounded-full px-0 py-0 shadow-none border border-white/10 bg-white/95 text-zinc-900"
+                className="absolute bottom-3 right-3 h-10 w-10 justify-center rounded-full border border-slate-200 bg-white px-0 py-0 text-slate-700 shadow-sm transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
             />
         </Link>
     );

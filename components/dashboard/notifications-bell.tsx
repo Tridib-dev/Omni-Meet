@@ -61,13 +61,13 @@ function Avatar({ notification }: { notification: NotificationItem }) {
                 alt={notification.actorName}
                 width={36}
                 height={36}
-                className="h-9 w-9 rounded-full object-cover border border-white/10"
+                className="h-9 w-9 rounded-full border border-slate-200 object-cover"
             />
         );
     }
 
     return (
-        <div className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[11px] font-semibold text-white/70">
+        <div className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-[11px] font-semibold text-slate-600">
             {initials || "@"}
         </div>
     );
@@ -75,19 +75,19 @@ function Avatar({ notification }: { notification: NotificationItem }) {
 
 function NotificationSkeleton() {
   return (
-    <div className="flex gap-3 rounded-2xl border border-white/8 bg-white/3 px-4 py-3 animate-pulse">
-      <div className="h-9 w-9 rounded-full bg-white/10" />
+    <div className="flex animate-pulse gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+      <div className="h-9 w-9 rounded-full bg-slate-200" />
 
       <div className="min-w-0 flex-1 space-y-2">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1 space-y-1.5">
-            <div className="h-4 w-4/5 rounded bg-white/10" />
-            <div className="h-3.5 w-full rounded bg-white/10" />
-            <div className="h-3.5 w-3/4 rounded bg-white/10" />
+            <div className="h-4 w-4/5 rounded bg-slate-200" />
+            <div className="h-3.5 w-full rounded bg-slate-200" />
+            <div className="h-3.5 w-3/4 rounded bg-slate-200" />
           </div>
-          <div className="mt-1 h-2.5 w-2.5 rounded-full bg-white/10" />
+          <div className="mt-1 h-2.5 w-2.5 rounded-full bg-slate-200" />
         </div>
-        <div className="h-3 w-16 rounded bg-white/10" />
+        <div className="h-3 w-16 rounded bg-slate-200" />
       </div>
     </div>
   );
@@ -98,7 +98,7 @@ function RequestStatusPill({ status }: { status: "accepted" | "denied" }) {
     const styles =
         status === "accepted"
             ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
-            : "border-white/15 bg-white/5 text-white/45";
+            : "border-slate-200 bg-slate-100 text-slate-500";
 
     return (
         <span className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${styles}`}>
@@ -121,10 +121,10 @@ function NotificationContent({
             <div className="min-w-0 flex-1">
                 <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                        <p className="truncate text-[13px] font-medium text-white/90">
+                        <p className="truncate text-[13px] font-medium text-slate-900">
                             {notification.title}
                         </p>
-                        <p className="mt-0.5 text-[12px] leading-5 text-white/55">
+                        <p className="mt-0.5 text-[12px] leading-5 text-slate-500">
                             {notification.body}
                         </p>
                     </div>
@@ -135,7 +135,7 @@ function NotificationContent({
                 </div>
 
                 <div className="mt-2 flex items-center gap-2">
-                    <p className="text-[11px] text-white/30">
+                    <p className="text-[11px] text-slate-400">
                         {timeAgo(notification.createdAt)}
                     </p>
                     {notification.requestStatus === "accepted" && (
@@ -339,29 +339,29 @@ export function NotificationsBellTrigger({ variant = "light" }: { variant?: "lig
                 )}
             </button>
 
-            <DrawerContent className="w-full overflow-hidden border border-white/10 bg-[#11161d] shadow-[0_24px_80px_rgba(0,0,0,0.6)] p-0 flex flex-col sm:max-w-md sm:mx-auto data-[vaul-drawer-direction=bottom]:rounded-t-3xl! data-[vaul-drawer-direction=bottom]:mt-0! data-[vaul-drawer-direction=bottom]:h-[75vh]! data-[vaul-drawer-direction=bottom]:max-h-[75vh]!">
-                <DrawerHeader className="border-b border-white/10 bg-linear-to-r from-cyan-500/10 via-transparent to-fuchsia-500/10 px-4 py-3">
+            <DrawerContent className="flex w-full flex-col overflow-hidden border border-slate-200 bg-white p-0 shadow-[0_24px_80px_rgba(15,23,42,0.18)] sm:mx-auto sm:max-w-md data-[vaul-drawer-direction=bottom]:mt-0! data-[vaul-drawer-direction=bottom]:h-[75vh]! data-[vaul-drawer-direction=bottom]:max-h-[75vh]! data-[vaul-drawer-direction=bottom]:rounded-t-3xl!">
+                <DrawerHeader className="border-b border-slate-200 bg-linear-to-r from-indigo-50 via-white to-cyan-50 px-4 py-3">
                     <div className="flex items-start justify-between gap-3">
                         <div>
-                            <DrawerTitle className="text-[13px] font-semibold text-white/90">
+                            <DrawerTitle className="text-[13px] font-semibold text-slate-900">
                                 Notifications
                             </DrawerTitle>
-                            <p className="mt-0.5 text-[11px] text-white/35">
+                            <p className="mt-0.5 text-[11px] text-slate-500">
                                 {unreadCount > 0 ? `${unreadCount} unread` : "All caught up"}
                             </p>
                         </div>
 
                         <button
                             onClick={() => setOpen(false)}
-                            className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-white/55 transition-colors hover:bg-white/10 hover:text-white/90"
+                            className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-900"
                         >
                             Close
                         </button>
                     </div>
                 </DrawerHeader>
 
-                <div className="border-b border-white/10 px-4 py-2">
-                    <div className="flex gap-1 rounded-xl border border-white/10 bg-white/3 p-1">
+                <div className="border-b border-slate-200 px-4 py-2">
+                    <div className="flex gap-1 rounded-xl border border-slate-200 bg-slate-50 p-1">
                         {tabs.map((tab) => (
                             <button
                                 key={tab.key}
@@ -370,8 +370,8 @@ export function NotificationsBellTrigger({ variant = "light" }: { variant?: "lig
                                 className={[
                                     "flex-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors",
                                     activeTab === tab.key
-                                        ? "bg-white/10 text-white/90"
-                                        : "text-white/45 hover:text-white/70",
+                                        ? "bg-indigo-50 text-indigo-700"
+                                        : "text-slate-500 hover:text-slate-900",
                                 ].join(" ")}
                             >
                                 {tab.label}
@@ -382,13 +382,13 @@ export function NotificationsBellTrigger({ variant = "light" }: { variant?: "lig
 
                 <div className="flex-1 overflow-y-auto p-2">
                     <div className="mb-2 flex items-center justify-between gap-3 px-2 pt-1">
-                        <p className="text-[11px] text-white/30">
+                        <p className="text-[11px] text-slate-400">
                             Activity and requests from your network
                         </p>
                         <button
                             onClick={handleMarkAll}
                             disabled={unreadCount === 0}
-                            className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-medium text-white/65 transition-colors hover:bg-white/10 hover:text-white/90 disabled:cursor-not-allowed disabled:opacity-40"
+                            className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-40"
                         >
                             Mark all read
                         </button>

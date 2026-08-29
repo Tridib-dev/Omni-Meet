@@ -40,9 +40,9 @@ export function DashboardHome({
     const pageGap = compact ? "space-y-6 lg:space-y-7" : "space-y-10";
     return (
         <div className={`${shellWidth} ${pageGap}`}>
-            <section className="space-y-2 sm:space-y-">
+            <section className="space-y-3 sm:space-y-4">
                 <div className="flex items-center gap-3 sm:gap-4">
-                    <div className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-white/[0.06] sm:size-12">
+                    <div className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-50 sm:size-12">
                         {userImage ? (
                             <Image
                                 src={userImage}
@@ -52,21 +52,21 @@ export function DashboardHome({
                                 className="h-full w-full object-cover"
                             />
                         ) : (
-                            <span className="text-[12px] font-semibold tracking-[0.08em] text-white/80">
+                            <span className="text-[12px] font-semibold tracking-[0.08em] text-slate-600">
                                 {userName.slice(0, 2).toUpperCase()}
                             </span>
                         )}
                     </div>
 
                     <div className="min-w-0">
-                        <p className="text-[11px] font-medium text-white/45 sm:text-[12px]">Welcome back</p>
-                        <h1 className="truncate text-[22px] font-semibold tracking-[-0.03em] text-white sm:text-[28px] lg:text-[34px]">
+                        <p className="text-[11px] font-medium text-slate-500 sm:text-[12px]">Welcome back</p>
+                        <h1 className="truncate text-[22px] font-semibold tracking-[-0.03em] text-slate-900 sm:text-[28px] lg:text-[34px]">
                             {userName}
                         </h1>
                     </div>
                 </div>
 
-                <div className="overflow-hidden rounded-[15px] border-0 bg-[radial-gradient(circle_at_top_left,rgba(51,43,224,0.18),transparent_36%),radial-gradient(circle_at_bottom_right,rgba(129,140,248,0.12),transparent_28%),rgba(255,255,255,0.025)] p-2.5 sm:p-3 lg:p-4">
+                <div className="overflow-hidden rounded-[18px] border border-slate-200 bg-[radial-gradient(circle_at_top_left,rgba(51,43,224,0.10),transparent_36%),radial-gradient(circle_at_bottom_right,rgba(129,140,248,0.08),transparent_28%),#ffffff] p-2.5 shadow-sm sm:p-3 lg:p-4">
                     <RecommendedEventsCarousel events={recommendedEvents} compact={compact} />
                 </div>
             </section>
@@ -90,7 +90,7 @@ export function DashboardHome({
             <section className={compact ? "space-y-3" : "space-y-4"}>
                 <div className="flex items-end justify-between gap-4">
                     <div className="min-w-0">
-                        <h2 className="mt-1 text-[15px] font-semibold text-white/90 sm:text-[18px]">
+                            <h2 className="mt-1 text-[15px] font-semibold text-slate-900 sm:text-[18px]">
                             Monthly Overview
                         </h2>
                     </div>
@@ -99,8 +99,8 @@ export function DashboardHome({
                 <NativeTabs
                     defaultValue="attended"
                     className="w-full"
-                    listClassName="rounded-full border border-white/8 bg-white/[0.04] p-1"
-                    triggerClassName="rounded-full px-3.5 py-1.5 text-[12px] sm:px-4 sm:py-2 sm:text-[13px]"
+                    listClassName="rounded-lg border border-slate-200 bg-slate-50/80 p-1 shadow-sm"
+                    triggerClassName="rounded-md px-3.5 py-1.5 text-[12px] text-slate-500 data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm sm:px-4 sm:py-2 sm:text-[13px]"
                     contentClassName="mt-4 sm:mt-5"
                     items={[
                         {

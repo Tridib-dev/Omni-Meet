@@ -28,12 +28,9 @@ export default async function OwnerProfilePage() {
         return (
             <div>
                 <PageHeader kicker="Your identity" title="Profile" />
-                <div
-                    className="rounded-2xl px-6 py-8 text-center"
-                    style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
-                >
-                    <p className="text-[14px] text-white/50 mb-2">Setting up your profile…</p>
-                    <p className="text-[12px] text-white/25">This usually takes a few seconds after signing up.</p>
+                <div className="rounded-2xl border border-slate-200 bg-white px-6 py-8 text-center shadow-sm">
+                    <p className="mb-2 text-[14px] text-slate-600">Setting up your profile…</p>
+                    <p className="text-[12px] text-slate-500">This usually takes a few seconds after signing up.</p>
                 </div>
             </div>
         );
@@ -47,7 +44,7 @@ export default async function OwnerProfilePage() {
                 right={
                     <Link
                         href={`/profile/${profile.username}`}
-                        className="text-[12px] text-white/40 hover:text-white/70 transition-colors flex items-center gap-1.5"
+                        className="flex items-center gap-1.5 text-[12px] text-slate-500 transition-colors hover:text-slate-900"
                     >
                         View public profile
                         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -73,14 +70,14 @@ export default async function OwnerProfilePage() {
                 isOwner={true}
             />
 
-            <div className="my-8" style={{ height: 1, background: "rgba(255,255,255,0.07)" }} />
+            <div className="my-8 h-px bg-slate-200" />
 
             <SocialGrid
                 accounts={profile.socialAccounts}
                 isOwner={true}
             />
 
-            <div className="my-8" style={{ height: 1, background: "rgba(255,255,255,0.07)" }} />
+            <div className="my-8 h-px bg-slate-200" />
 
             <EventsSection
                 attendedEvents={profile.attendedEvents}
@@ -88,7 +85,7 @@ export default async function OwnerProfilePage() {
                 coOrganizedEvents={profile.coOrganizedEvents}
             />
 
-            <div className="my-8" style={{ height: 1, background: "rgba(255,255,255,0.07)" }} />
+            <div className="my-8 h-px bg-slate-200" />
 
             <BadgesSection badges={profile.badges} />
         </div>

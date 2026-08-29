@@ -16,10 +16,10 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // ─── Shared tooltip style ─────────────────────────────────────────────────────
 const tooltipStyle = {
-    backgroundColor: "#0d1117",
-    border: "1px solid rgba(255,255,255,0.1)",
+    backgroundColor: "#ffffff",
+    border: "1px solid #e2e8f0",
     borderRadius: 10,
-    color: "rgba(255,255,255,0.8)",
+    color: "#0f172a",
     fontSize: 12,
     padding: "6px 10px",
 };
@@ -52,10 +52,10 @@ export function CategoryRadar({
     return (
         <ResponsiveContainer width="100%" height={220}>
             <RadarChart data={radarData} margin={{ top: 10, right: 20, bottom: 10, left: 20 }}>
-                <PolarGrid stroke="rgba(255,255,255,0.07)" />
+                <PolarGrid stroke="#e2e8f0" />
                 <PolarAngleAxis
                     dataKey="subject"
-                    tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 11 }}
+                    tick={{ fill: "#64748b", fontSize: 11 }}
                 />
                 <Radar
                     name="Events"
@@ -78,7 +78,7 @@ export function TrendChart({
     color = "#332be0",
     label = "Events",
     title = "Trend",
-    light = false,
+    light = true,
 }: {
     data: TrendPoint[];
     dailyData?: TrendPoint[];
@@ -184,22 +184,22 @@ export function RevenueBarChart({
     return (
         <ResponsiveContainer width="100%" height={200}>
             <BarChart data={trimmed} margin={{ top: 10, right: 4, bottom: 0, left: -20 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
                 <XAxis
                     dataKey="name"
-                    tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 10 }}
+                    tick={{ fill: "#64748b", fontSize: 10 }}
                     axisLine={false}
                     tickLine={false}
                 />
                 <YAxis
-                    tick={{ fill: "rgba(255,255,255,0.25)", fontSize: 10 }}
+                    tick={{ fill: "#94a3b8", fontSize: 10 }}
                     axisLine={false}
                     tickLine={false}
                     tickFormatter={(v) => `₹${v}`}
                 />
                 <Tooltip
                     contentStyle={tooltipStyle}
-                    cursor={{ fill: "rgba(255,255,255,0.04)" }}
+                    cursor={{ fill: "rgba(51,43,224,0.06)" }}
                     formatter={(v: number) => [`₹${v.toLocaleString("en-IN")}`, "Revenue"]}
                 />
                 <Bar dataKey="revenue" fill="#332be0" radius={[6, 6, 0, 0]} maxBarSize={36} />
@@ -213,35 +213,37 @@ export function MonthlyBarChart({
     data,
     label = "Events",
     color = "#332be0",
+    fillHeight = false,
 }: {
     data: TrendPoint[];
     label?: string;
     color?: string;
+    fillHeight?: boolean;
 }) {
     if (!data.some((d) => Number(d.count ?? 0) > 0)) {
         return <EmptyChart label="No monthly data yet" />;
     }
 
     return (
-        <ResponsiveContainer width="100%" height={280}>
+        <ResponsiveContainer width="100%" height={fillHeight ? "100%" : 280}>
             <BarChart data={data} margin={{ top: 10, right: 8, bottom: 0, left: -20 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
                 <XAxis
                     dataKey="month"
-                    tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 10 }}
+                    tick={{ fill: "#64748b", fontSize: 10 }}
                     axisLine={false}
                     tickLine={false}
                     interval="preserveStartEnd"
                 />
                 <YAxis
-                    tick={{ fill: "rgba(255,255,255,0.25)", fontSize: 10 }}
+                    tick={{ fill: "#94a3b8", fontSize: 10 }}
                     axisLine={false}
                     tickLine={false}
                     allowDecimals={false}
                 />
                 <Tooltip
                     contentStyle={tooltipStyle}
-                    cursor={{ fill: "rgba(255,255,255,0.04)" }}
+                    cursor={{ fill: "rgba(51,43,224,0.06)" }}
                     formatter={(v: number) => [v.toLocaleString("en-IN"), label]}
                 />
                 <Bar dataKey="count" name={label} fill={color} radius={[8, 8, 0, 0]} maxBarSize={28} />
@@ -279,7 +281,7 @@ export function ModeDonutChart({
                             innerRadius={64}
                             outerRadius={92}
                             paddingAngle={4}
-                            stroke="rgba(13,17,23,0.9)"
+                        stroke="#ffffff"
                         >
                             {sorted.map((entry, index) => (
                                 <Cell key={entry.mode} fill={INDIGO_SCALE[index % INDIGO_SCALE.length]} />
@@ -290,8 +292,8 @@ export function ModeDonutChart({
 
                 <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-center">
                     <div>
-                        <p className="text-[28px] font-semibold tracking-[-0.04em] text-white/95">{total}</p>
-                        <p className="text-[11px] uppercase tracking-[0.18em] text-white/30">Total</p>
+                        <p className="text-[28px] font-semibold tracking-[-0.04em] text-slate-900">{total}</p>
+                        <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Total</p>
                     </div>
                 </div>
             </div>
@@ -299,14 +301,14 @@ export function ModeDonutChart({
             <div className="space-y-2">
                 {sorted.map((item, index) => (
                     <div key={item.mode} className="flex items-center justify-between gap-3 text-[12px]">
-                        <span className="inline-flex items-center gap-2 text-white/65">
+                        <span className="inline-flex items-center gap-2 text-slate-600">
                             <span
                                 className="h-2.5 w-2.5 rounded-full"
                                 style={{ backgroundColor: INDIGO_SCALE[index % INDIGO_SCALE.length] }}
                             />
                             {item.mode}
                         </span>
-                        <span className="font-medium text-white/85">{item.count}</span>
+                        <span className="font-medium text-slate-900">{item.count}</span>
                     </div>
                 ))}
             </div>
@@ -330,13 +332,13 @@ export function FunnelBar({
                     transition={{ delay: i * 0.1, duration: 0.35 }}
                 >
                     <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-[12px] text-white/55">{item.label}</span>
-                        <span className="text-[12px] font-semibold text-white/80 font-mono">
+                        <span className="text-[12px] text-slate-600">{item.label}</span>
+                        <span className="font-mono text-[12px] font-semibold text-slate-900">
                             {item.value.toLocaleString("en-IN")}
-                            <span className="text-white/25 font-normal ml-1.5">({item.pct}%)</span>
+                            <span className="ml-1.5 font-normal text-slate-400">({item.pct}%)</span>
                         </span>
                     </div>
-                    <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+                    <div className="h-2 overflow-hidden rounded-full bg-slate-100">
                         <motion.div
                             className="h-full rounded-full"
                             style={{
@@ -359,7 +361,7 @@ export function FunnelBar({
 // Simple bar-based heatmap showing 12 months of activity
 export function ActivityHeatmap({
     data,
-    light = false,
+    light = true,
 }: {
     data: { month: string; count: number }[];
     light?: boolean;
@@ -379,12 +381,12 @@ export function ActivityHeatmap({
                             transition={{ delay: i * 0.04, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                             style={{
                                 background: d.count === 0
-                                    ? light ? "#e2e8f0" : "rgba(255,255,255,0.05)"
+                                    ? "#e2e8f0"
                                     : `rgba(51,43,224,${0.2 + intensity * 0.8})`,
                             }}
                         />
                         {data.length <= 7 || i % 3 === 0 ? (
-                            <span className={light ? "text-[9px] text-slate-500" : "text-[8px] text-white/20"}>{d.month.split(" ")[0]}</span>
+                            <span className="text-[9px] text-slate-500">{d.month.split(" ")[0]}</span>
                         ) : null}
                     </div>
                 );
@@ -394,7 +396,7 @@ export function ActivityHeatmap({
 }
 
 // ─── Empty state ──────────────────────────────────────────────────────────────
-function EmptyChart({ label, light = false }: { label: string; light?: boolean }) {
+function EmptyChart({ label, light = true }: { label: string; light?: boolean }) {
     return (
         <div className="h-[160px] flex items-center justify-center">
             <p className={light ? "text-[12px] text-slate-500" : "text-[12px] text-white/25"}>{label}</p>

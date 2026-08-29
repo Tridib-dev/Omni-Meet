@@ -30,9 +30,9 @@ export function RecommendedEventsCarousel({ events, compact = false }: Props) {
 
     if (!visibleEvents.length) {
         return (
-            <div className="rounded-[30px] border border-dashed border-white/10 bg-white/[0.03] px-5 py-12 text-center">
-                <p className="text-[14px] font-medium text-white/65">No recommended events yet.</p>
-                <p className="mt-1 text-[12px] text-white/35">
+            <div className="rounded-[18px] border border-dashed border-slate-300 bg-slate-50 px-5 py-12 text-center">
+                <p className="text-[14px] font-medium text-slate-700">No recommended events yet.</p>
+                <p className="mt-1 text-[12px] text-slate-500">
                     We’ll surface event suggestions here once they’re available.
                 </p>
             </div>
@@ -91,7 +91,7 @@ export function RecommendedEventsCarousel({ events, compact = false }: Props) {
                 <button
                     type="button"
                     onClick={goPrev}
-                    className="inline-flex size-8 items-center justify-center rounded-full border border-white/8 bg-white/[0.04] text-white/75 transition-colors hover:border-[#332be0]/25 hover:bg-[rgba(51,43,224,0.12)] sm:size-9"
+                    className="inline-flex size-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 sm:size-9"
                     aria-label="Previous recommended event"
                 >
                     <ChevronLeft size={compact ? 13 : 14} />
@@ -107,7 +107,7 @@ export function RecommendedEventsCarousel({ events, compact = false }: Props) {
                                 "h-2 rounded-full transition-all duration-200",
                                 index === activeIndex
                                     ? "w-[22px] bg-[#332be0] shadow-[0_0_0_3px_rgba(51,43,224,0.10)]"
-                                    : "w-2 bg-white/20 hover:bg-white/30"
+                                    : "w-2 bg-slate-200 hover:bg-slate-300"
                             )}
                             aria-label={`Go to recommended event ${index + 1}`}
                         />
@@ -117,7 +117,7 @@ export function RecommendedEventsCarousel({ events, compact = false }: Props) {
                 <button
                     type="button"
                     onClick={goNext}
-                    className="inline-flex size-8 items-center justify-center rounded-full border border-white/8 bg-white/[0.04] text-white/75 transition-colors hover:border-[#332be0]/25 hover:bg-[rgba(51,43,224,0.12)] sm:size-9"
+                    className="inline-flex size-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 sm:size-9"
                     aria-label="Next recommended event"
                 >
                     <ChevronRight size={compact ? 13 : 14} />

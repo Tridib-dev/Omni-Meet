@@ -33,7 +33,7 @@ export default async function SavedPage() {
                 description="Events you've bookmarked to attend later."
                 right={
                     saved.length > 0 ? (
-                        <span className="text-[12px] text-white/35 font-mono">{saved.length} saved</span>
+                        <span className="font-mono text-[12px] text-slate-500">{saved.length} saved</span>
                     ) : undefined
                 }
             />
@@ -41,12 +41,11 @@ export default async function SavedPage() {
             {saved.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 text-center">
                     <span className="text-4xl mb-3">🔖</span>
-                    <p className="text-[14px] font-medium text-white/50">Nothing saved yet</p>
-                    <p className="text-[12px] text-white/25 mt-1">Hit the bookmark icon on any event to save it here.</p>
+                    <p className="text-[14px] font-medium text-slate-700">Nothing saved yet</p>
+                    <p className="mt-1 text-[12px] text-slate-500">Hit the bookmark icon on any event to save it here.</p>
                     <Link
                         href="/events/discover"
-                        className="mt-4 px-4 py-2 rounded-lg text-[12px] font-medium text-white/70 hover:text-white transition-colors"
-                        style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}
+                        className="mt-4 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-[12px] font-medium text-indigo-700 transition-colors hover:bg-indigo-100"
                     >
                         Browse events →
                     </Link>

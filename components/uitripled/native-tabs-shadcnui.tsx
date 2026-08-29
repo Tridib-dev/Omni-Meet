@@ -37,7 +37,7 @@ export function NativeTabs({
       <div className="-mx-1 overflow-x-auto px-1 pb-1">
         <TabsList
           className={cn(
-            "inline-flex h-auto min-w-max items-center gap-1 rounded-lg border border-white/10 bg-white/5 p-1",
+            "inline-flex h-auto min-w-max items-center gap-1 rounded-lg border border-slate-200 bg-slate-50/80 p-1 shadow-sm",
             listClassName
           )}
         >
@@ -47,7 +47,7 @@ export function NativeTabs({
                 key={tab.id}
                 value={tab.id}
                 className={cn(
-                  "shrink-0 rounded-md px-3 py-2 text-[13px] font-medium text-white/40 transition-colors data-[state=active]:bg-white/8 data-[state=active]:text-white/90 data-[state=inactive]:hover:text-white/65",
+                  "shrink-0 rounded-md px-3 py-2 text-[13px] font-medium text-slate-500 transition-colors data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm data-[state=inactive]:hover:text-slate-900",
                   triggerClassName
                 )}
               >

@@ -76,18 +76,18 @@ function DashboardActionCard({
         >
             <Link
                 href={item.href}
-                className="flex h-full min-h-[136px] min-w-[220px] flex-col justify-between rounded-xl border border-white/8 bg-white/[0.03] p-4 transition-colors hover:border-[#332be0]/30 hover:bg-[rgba(51,43,224,0.08)]"
+                className="flex h-full min-h-[136px] min-w-[220px] flex-col justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-colors hover:border-indigo-300 hover:bg-indigo-50/60 hover:shadow-md"
             >
                 <div className="space-y-3">
                     <div
-                        className="flex size-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04]"
+                        className="flex size-10 items-center justify-center rounded-xl border border-indigo-100 bg-indigo-50"
                         style={{ color: INDIGO }}
                     >
                         {item.icon}
                     </div>
                     <div className="space-y-1">
-                        <p className="line-clamp-1 text-[14px] font-semibold text-white/90">{item.label}</p>
-                        <p className="line-clamp-2 text-[12px] leading-relaxed text-white/40">{item.description}</p>
+                        <p className="line-clamp-1 text-[14px] font-semibold text-slate-900">{item.label}</p>
+                        <p className="line-clamp-2 text-[12px] leading-relaxed text-slate-500">{item.description}</p>
                     </div>
                 </div>
                 <div className="mt-4 flex items-center gap-1 text-[12px] font-medium" style={{ color: INDIGO }}>
@@ -113,8 +113,8 @@ export default function DashboardActionCardRail({
     return (
         <section className="space-y-4 pt-6">
             <div className="space-y-1">
-                <h2 className="text-[18px] font-semibold text-white/90">{title}</h2>
-                <p className="text-[13px] text-white/40">{description}</p>
+                <h2 className="text-[18px] font-semibold text-slate-900">{title}</h2>
+                <p className="text-[13px] text-slate-500">{description}</p>
             </div>
             <HorizontalScrollProgress className="pt-1" contentClassName="pb-1">
                 <div className="grid auto-cols-[240px] grid-flow-col items-stretch gap-3">

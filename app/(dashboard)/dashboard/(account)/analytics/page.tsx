@@ -24,7 +24,7 @@ export default async function AnalyticsPage() {
                 description="Visual dashboards for how you attend and how you host."
                 right={
                     <div
-                        className="rounded-full border border-[#332be0]/25 bg-[#332be0]/10 px-3 py-1.5 text-[12px] text-[#a5a0ff]"
+                        className="rounded-lg border border-[#332be0]/20 bg-[#332be0]/10 px-3 py-1.5 text-[12px] text-[#332be0]"
                     >
                         Live motion, not static numbers
                     </div>
@@ -38,7 +38,7 @@ export default async function AnalyticsPage() {
                 revenue={organized.totalRevenue}
             />
 
-            <div className="rounded-xl border border-white/8 bg-[radial-gradient(circle_at_top_left,rgba(51,43,224,0.10),transparent_35%),radial-gradient(circle_at_top_right,rgba(129,140,248,0.10),transparent_32%),rgba(255,255,255,0.02)] p-4 sm:p-5">
+            <div className="rounded-xl border border-slate-200 bg-[radial-gradient(circle_at_top_left,rgba(51,43,224,0.10),transparent_35%),radial-gradient(circle_at_top_right,rgba(129,140,248,0.08),transparent_32%),#ffffff] p-4 shadow-sm sm:p-5">
                 <NativeTabs
                     defaultValue="attended"
                     items={[
@@ -53,8 +53,8 @@ export default async function AnalyticsPage() {
                             content: <OrganizedAnalytics data={organized} />,
                         },
                     ]}
-                    listClassName="rounded-full border border-white/8 bg-white/[0.04] p-1"
-                    triggerClassName="rounded-full px-4 py-2 text-[13px]"
+                    listClassName="rounded-lg border border-slate-200 bg-slate-50/80 p-1 shadow-sm"
+                    triggerClassName="rounded-md px-4 py-2 text-[13px] text-slate-500 data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm"
                     contentClassName="mt-5"
                 />
             </div>

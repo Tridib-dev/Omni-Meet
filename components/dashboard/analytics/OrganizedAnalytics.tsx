@@ -10,15 +10,15 @@ import type { OrganizedAnalyticsData } from "@/lib/actions/overall-analytics";
 function StatRow({
     label,
     value,
-    accent = "rgba(255,255,255,0.9)",
+    accent = "#0f172a",
 }: {
     label: string;
     value: string;
     accent?: string;
 }) {
     return (
-        <div className="flex items-center justify-between gap-3 rounded-xl border border-white/8 bg-white/[0.03] px-4 py-3">
-            <span className="text-[12px] text-white/40">{label}</span>
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+            <span className="text-[12px] text-slate-500">{label}</span>
             <span className="text-[13px] font-semibold" style={{ color: accent }}>
                 {value}
             </span>
@@ -31,7 +31,7 @@ export default function OrganizedAnalytics({ data }: { data: OrganizedAnalyticsD
 
     return (
         <div className="space-y-5">
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
                 <MetricCard
                     label="Events organized"
                     value={data.totalEvents}
@@ -77,23 +77,23 @@ export default function OrganizedAnalytics({ data }: { data: OrganizedAnalyticsD
                 <motion.section
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="rounded-xl border border-white/8 bg-white/[0.03] p-4 sm:p-5"
+                    className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
                 >
                     <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <div>
-                            <p className="text-[11px] uppercase tracking-[0.16em] text-white/25">Growth</p>
-                            <h2 className="mt-1 text-[16px] font-semibold text-white/90">Attendee growth over time</h2>
+                            <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400">Growth</p>
+                            <h2 className="mt-1 text-[16px] font-semibold text-slate-900">Attendee growth over time</h2>
                         </div>
-                        <span className="text-[11px] text-white/30">{data.repeatAttendeeRate}% repeat rate</span>
+                        <span className="text-[11px] text-slate-400">{data.repeatAttendeeRate}% repeat rate</span>
                     </div>
 
                     <div className="grid gap-4 lg:grid-cols-[1fr_.82fr]">
-                        <div className="rounded-xl border border-white/8 bg-black/20 p-4">
+                        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                             <TrendChart data={data.attendeeGrowth} dataKey="attendees" color="#332be0" label="Attendees" />
                         </div>
                         <div className="space-y-3">
-                            <div className="rounded-xl border border-white/8 bg-black/20 p-4">
-                                <p className="text-[12px] text-white/35 mb-3">Monthly pulse</p>
+                            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                                <p className="mb-3 text-[12px] text-slate-500">Monthly pulse</p>
                                 <ActivityHeatmap
                                     data={data.attendeeGrowth.map((month) => ({
                                         month: month.month,
@@ -102,7 +102,7 @@ export default function OrganizedAnalytics({ data }: { data: OrganizedAnalyticsD
                                 />
                             </div>
 
-                            <div className="space-y-3 rounded-xl border border-white/8 bg-white/[0.03] p-4">
+                            <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-4">
                                 <StatRow label="Avg attendees / event" value={data.avgAttendeesPerEvent.toString()} accent="#332be0" />
                                 <StatRow label="Avg revenue / attendee" value={`₹${data.avgRevenuePerAttendee.toLocaleString("en-IN")}`} accent="#4c46ff" />
                                 <StatRow label="Repeat attendee rate" value={`${data.repeatAttendeeRate}%`} accent="#818cf8" />
@@ -114,24 +114,24 @@ export default function OrganizedAnalytics({ data }: { data: OrganizedAnalyticsD
                 <motion.section
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="rounded-xl border border-white/8 bg-[radial-gradient(circle_at_top_left,rgba(51,43,224,0.12),transparent_45%),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] p-4 sm:p-5"
+                    className="rounded-xl border border-slate-200 bg-[radial-gradient(circle_at_top_left,rgba(51,43,224,0.10),transparent_45%),#ffffff] p-4 shadow-sm sm:p-5"
                 >
                     <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <div>
-                            <p className="text-[11px] uppercase tracking-[0.16em] text-white/25">Funnel</p>
-                            <h2 className="mt-1 text-[16px] font-semibold text-white/90">From RSVP to check-in</h2>
+                            <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400">Funnel</p>
+                            <h2 className="mt-1 text-[16px] font-semibold text-slate-900">From RSVP to check-in</h2>
                         </div>
-                        <span className="text-[11px] text-white/30">Planning signal</span>
+                        <span className="text-[11px] text-slate-400">Planning signal</span>
                     </div>
 
                     <FunnelBar data={data.funnel} />
 
-                    <div className="mt-5 rounded-xl border border-white/8 bg-black/20 p-4">
-                        <p className="text-[12px] text-white/35 mb-3">Host summary</p>
+                    <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                        <p className="mb-3 text-[12px] text-slate-500">Host summary</p>
                         <div className="space-y-3">
                             <StatRow label="Sold-out events" value="0 tracked" accent="#f59e0b" />
                             <StatRow label="Live revenue" value={`₹${data.totalRevenue.toLocaleString("en-IN")}`} accent="#4c46ff" />
-                            <StatRow label="Top event" value={topRevenueEvent ? topRevenueEvent.title : "No revenue yet"} accent="#ffffff" />
+                            <StatRow label="Top event" value={topRevenueEvent ? topRevenueEvent.title : "No revenue yet"} />
                         </div>
                     </div>
                 </motion.section>
@@ -141,14 +141,14 @@ export default function OrganizedAnalytics({ data }: { data: OrganizedAnalyticsD
                 <motion.section
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="rounded-xl border border-white/8 bg-white/[0.03] p-4 sm:p-5"
+                    className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
                 >
                     <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <div>
-                            <p className="text-[11px] uppercase tracking-[0.16em] text-white/25">Revenue</p>
-                            <h2 className="mt-1 text-[16px] font-semibold text-white/90">What each event contributed</h2>
+                            <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400">Revenue</p>
+                            <h2 className="mt-1 text-[16px] font-semibold text-slate-900">What each event contributed</h2>
                         </div>
-                        <span className="text-[11px] text-white/30">{data.revenueByEvent.length} events</span>
+                        <span className="text-[11px] text-slate-400">{data.revenueByEvent.length} events</span>
                     </div>
 
                     <RevenueBarChart data={data.revenueByEvent} />
@@ -157,12 +157,12 @@ export default function OrganizedAnalytics({ data }: { data: OrganizedAnalyticsD
                 <motion.section
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="rounded-xl border border-white/8 bg-[linear-gradient(180deg,rgba(34,197,94,0.08),rgba(255,255,255,0.03))] p-4 sm:p-5"
+                    className="rounded-xl border border-slate-200 bg-[linear-gradient(180deg,rgba(34,197,94,0.08),#ffffff)] p-4 shadow-sm sm:p-5"
                 >
                     <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <div>
-                            <p className="text-[11px] uppercase tracking-[0.16em] text-white/25">Quality</p>
-                            <h2 className="mt-1 text-[16px] font-semibold text-white/90">Organizer health signals</h2>
+                            <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400">Quality</p>
+                            <h2 className="mt-1 text-[16px] font-semibold text-slate-900">Organizer health signals</h2>
                         </div>
                         <span className="text-[11px] text-[#a5a0ff]">Healthy</span>
                     </div>
@@ -173,8 +173,8 @@ export default function OrganizedAnalytics({ data }: { data: OrganizedAnalyticsD
                         <StatRow label="Revenue / event" value={`₹${Math.round(data.totalRevenue / Math.max(1, data.totalEvents)).toLocaleString("en-IN")}`} accent="#818cf8" />
                     </div>
 
-                    <div className="mt-5 rounded-xl border border-white/8 bg-black/20 p-4">
-                        <p className="text-[12px] text-white/35 mb-3">Momentum heat</p>
+                    <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                        <p className="mb-3 text-[12px] text-slate-500">Momentum heat</p>
                         <ActivityHeatmap
                             data={data.attendeeGrowth.map((month) => ({
                                 month: month.month,

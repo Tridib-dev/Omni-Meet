@@ -24,14 +24,14 @@ function SummaryCard({
     compact?: boolean;
 }) {
     return (
-        <div className={compact ? "rounded-[16px] border border-white/8 bg-white/[0.03] px-3.5 py-3.5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)_inset] transition-transform duration-200 hover:-translate-y-0.5" : "rounded-[18px] border border-white/8 bg-white/[0.03] px-4 py-4 shadow-[0_0_0_1px_rgba(255,255,255,0.02)_inset] transition-transform duration-200 hover:-translate-y-0.5"}>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/32">
+        <div className={compact ? "rounded-[16px] border border-slate-200 bg-white px-3 py-3 shadow-sm transition-shadow hover:shadow-md sm:px-3.5 sm:py-3.5" : "rounded-[18px] border border-slate-200 bg-white px-4 py-4 shadow-sm transition-shadow hover:shadow-md"}>
+            <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-500 sm:text-[10px]">
                 {label}
             </p>
-            <p className={compact ? "mt-2 text-[24px] font-semibold tracking-[-0.04em] sm:text-[26px]" : "mt-2 text-[28px] font-semibold tracking-[-0.04em] sm:text-[30px]"} style={{ color }}>
+            <p className={compact ? "mt-2 truncate text-[19px] font-semibold tracking-[-0.04em] sm:text-[26px]" : "mt-2 truncate text-[28px] font-semibold tracking-[-0.04em] sm:text-[30px]"} style={{ color }}>
                 {value}
             </p>
-            <p className={compact ? "mt-1 text-[10px] leading-snug text-white/38" : "mt-1 text-[11px] leading-snug text-white/38"}>
+            <p className={compact ? "mt-1 hidden text-[10px] leading-snug text-slate-500 sm:block" : "mt-1 text-[11px] leading-snug text-slate-500"}>
                 {sub}
             </p>
         </div>
@@ -57,13 +57,13 @@ export function PersonalAnalyticsSummary({
         >
             <div className="flex items-end justify-between gap-4">
                 <div className="min-w-0">
-                    <h2 className={compact ? "mt-1 text-[15px] font-semibold text-white/90 sm:text-[17px]" : "mt-1 text-[16px] font-semibold text-white/90 sm:text-[18px]"}>
+                    <h2 className={compact ? "mt-1 text-[15px] font-semibold text-slate-900 sm:text-[17px]" : "mt-1 text-[16px] font-semibold text-slate-900 sm:text-[18px]"}>
                         Personal Analytics
                     </h2>
                 </div>
             </div>
 
-            <div className={compact ? "grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4" : "grid gap-3 sm:grid-cols-2 xl:grid-cols-4"}>
+            <div className={compact ? "grid grid-cols-2 gap-2.5 lg:grid-cols-4" : "grid grid-cols-2 gap-3 xl:grid-cols-4"}>
                 <SummaryCard
                     compact={compact}
                     label="Attended"

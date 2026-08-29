@@ -20,8 +20,7 @@ export default async function AttendedPage() {
                 title="My Tickets"
                 description="All your event tickets — upcoming, attended, and expired."
                 right={
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] text-white/50"
-                        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                    <div className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-[12px] text-slate-500">
                         <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
                         {tickets.length} ticket{tickets.length !== 1 ? "s" : ""}
                     </div>
@@ -39,8 +38,7 @@ function TicketSkeleton() {
     return (
         <div className="space-y-3">
             {[1, 2, 3].map((i) => (
-                <div key={i} className="h-28 rounded-xl animate-pulse"
-                    style={{ background: "rgba(255,255,255,0.04)" }} />
+                <div key={i} className="h-28 animate-pulse rounded-xl bg-slate-100" />
             ))}
         </div>
     );

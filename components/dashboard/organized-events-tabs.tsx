@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { NativeTabs } from "@/components/uitripled/native-tabs-shadcnui";
+import { useState } from "react";
+import { Search } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SafeImage from "@/components/dashboard/savedPage";
 import type { OrganizedEventItem } from "@/lib/actions/dashboard.actions";
 
@@ -15,7 +17,7 @@ function OrganizedStats({ events }: { events: OrganizedEventItem[] }) {
     const totalRevenue = events.reduce((s, e) => s + e.revenue, 0);
 
     return (
-        <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="mb-6 grid grid-cols-3 gap-3">
             {[
                 { label: "Live events", value: live, color: "#22c55e" },
                 { label: "Total attendees", value: totalAttendees, color: "#06b6d4" },
@@ -23,11 +25,10 @@ function OrganizedStats({ events }: { events: OrganizedEventItem[] }) {
             ].map((stat) => (
                 <div
                     key={stat.label}
-                    className="rounded-xl px-4 py-3"
-                    style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
+                    className="rounded-xl border border-slate-200 bg-white px-3 py-3 shadow-sm sm:px-4"
                 >
-                    <p className="text-[11px] text-white/35 mb-1">{stat.label}</p>
-                        <p className="truncate text-[21px] font-semibold" style={{ color: stat.color }}>
+                    <p className="mb-1 truncate text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-500 sm:text-[11px]">{stat.label}</p>
+                        <p className="truncate text-[17px] font-semibold sm:text-[21px]" style={{ color: stat.color }}>
                         {stat.value}
                     </p>
                 </div>
@@ -51,8 +52,8 @@ function OrganizedEventGrid({
         return (
             <div className="flex flex-col items-center justify-center py-20 text-center">
                 <span className="text-4xl mb-3">📅</span>
-                <p className="text-[14px] font-medium text-white/50">{emptyTitle}</p>
-                <p className="text-[12px] text-white/25 mt-1">{emptyDescription}</p>
+                <p className="text-[14px] font-medium text-slate-700">{emptyTitle}</p>
+                <p className="mt-1 text-[12px] text-slate-500">{emptyDescription}</p>
                 {showCreateLink && (
                     <Link
                         href="/create_event"
@@ -70,8 +71,7 @@ function OrganizedEventGrid({
             {events.map((ev) => (
                 <div
                     key={ev.id}
-                    className="group flex w-full max-w-[340px] min-w-0 flex-col overflow-hidden rounded-xl"
-                    style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
+                    className="group flex w-full max-w-[340px] min-w-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
                 >
                     <div className="relative h-32 flex-shrink-0 overflow-hidden sm:h-36">
                         <SafeImage
@@ -103,20 +103,20 @@ function OrganizedEventGrid({
                     </div>
 
                     <div className="p-4 flex-1 flex flex-col">
-                        <h3 className="text-[14px] font-medium text-white/90 line-clamp-1 mb-1">
+                        <h3 className="mb-1 line-clamp-1 text-[14px] font-medium text-slate-900">
                             {ev.title}
                         </h3>
-                        <p className="mb-4 line-clamp-2 text-[12px] text-white/35">
+                        <p className="mb-4 line-clamp-2 text-[12px] text-slate-500">
                             {formatDate(ev.date)} · {ev.location}
                         </p>
 
                         <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px]">
-                            <span className="text-white/50">
-                                <span className="text-white/90 font-medium">{ev.attendeeCount}</span> attendees
+                            <span className="text-slate-500">
+                                <span className="font-medium text-slate-900">{ev.attendeeCount}</span> attendees
                             </span>
                             {ev.price > 0 && (
-                                <span className="text-white/50">
-                                    <span className="text-amber-400 font-medium">₹{ev.revenue.toLocaleString("en-IN")}</span> revenue
+                                <span className="text-slate-500">
+                                    <span className="font-medium text-amber-600">₹{ev.revenue.toLocaleString("en-IN")}</span> revenue
                                 </span>
                             )}
                         </div>
@@ -130,8 +130,7 @@ function OrganizedEventGrid({
                             </Link>
                             <Link
                                 href={`/events/${ev.slug}`}
-                                className="p-2 rounded-lg text-white/35 hover:text-white/60 transition-colors"
-                                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}
+                                className="rounded-lg border border-slate-200 bg-slate-50 p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
                                 title="View event"
                             >
                                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -155,59 +154,67 @@ export default function OrganizedEventsTabs({
     organizedEvents: OrganizedEventItem[];
     coOrganizedEvents: OrganizedEventItem[];
 }) {
+    const [query, setQuery] = useState("");
+    const [activeTab, setActiveTab] = useState<"organized" | "coOrganized">("organized");
+    const normalizedQuery = query.trim().toLowerCase();
+    const filterEvents = (events: OrganizedEventItem[]) => normalizedQuery
+        ? events.filter((event) =>
+            [event.title, event.location, event.organizer]
+                .filter(Boolean)
+                .some((value) => value.toLowerCase().includes(normalizedQuery))
+        )
+        : events;
+    const filteredOrganizedEvents = filterEvents(organizedEvents);
+    const filteredCoOrganizedEvents = filterEvents(coOrganizedEvents);
+
     return (
-        <NativeTabs
-            defaultValue="organized"
-            className="w-full"
-            listClassName="max-w-full mb-2"
-            triggerClassName="min-w-[120px]"
-            contentClassName="mt-2"
-            items={[
-                {
-                    id: "organized",
-                    label: (
-                        <span className="inline-flex items-center gap-1.5">
-                            Organized
-                            {organizedEvents.length > 0 && (
-                                <span className="rounded-full bg-white/8 px-1.5 py-0.5 text-[10px] font-mono text-white/35">
-                                    {organizedEvents.length}
-                                </span>
-                            )}
-                        </span>
-                    ),
-                    content: (
-                        <>
-                            {organizedEvents.length > 0 && <OrganizedStats events={organizedEvents} />}
-                            <OrganizedEventGrid
-                                events={organizedEvents}
-                                emptyTitle="No events yet"
-                                emptyDescription="Create your first event and start managing attendees."
-                                showCreateLink
-                            />
-                        </>
-                    ),
-                },
-                {
-                    id: "coOrganized",
-                    label: (
-                        <span className="inline-flex items-center gap-1.5">
-                            Co-Organized
-                            {coOrganizedEvents.length > 0 && (
-                                <span className="rounded-full bg-white/8 px-1.5 py-0.5 text-[10px] font-mono text-white/35">
-                                    {coOrganizedEvents.length}
-                                </span>
-                            )}
-                        </span>
-                    ),
-                    content: (
-                        <OrganizedEventGrid
-                            events={coOrganizedEvents}
-                            emptyTitle="No co-organized events yet"
-                            emptyDescription="Events you co-organize will appear here after you accept an invite."
-                        />
-                    ),
-                },
-            ]}
-        />
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "organized" | "coOrganized")} className="w-full">
+            <div className="flex items-center justify-between gap-2 sm:gap-3">
+                <div className="relative min-w-0 flex-1 sm:max-w-sm">
+                    <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                        value={query}
+                        onChange={(event) => setQuery(event.target.value)}
+                        placeholder="Search events"
+                        aria-label="Search events"
+                        className="h-8 w-full rounded-lg border border-slate-200 bg-white py-1.5 pl-8 pr-2 text-[12px] text-slate-700 outline-none placeholder:text-slate-400 focus:border-indigo-400"
+                    />
+                </div>
+                <TabsList className="inline-flex h-8 w-fit shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50/80 p-1 shadow-sm">
+                    <TabsTrigger value="organized" className="h-6 flex-none justify-center rounded-md px-2 text-[11px] text-slate-500 data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm sm:px-2.5">
+                        Organized
+                    </TabsTrigger>
+                    <TabsTrigger value="coOrganized" className="h-6 flex-none justify-center rounded-md px-2 text-[11px] text-slate-500 data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm sm:px-2.5">
+                        Co-Organized
+                    </TabsTrigger>
+                </TabsList>
+            </div>
+
+            <TabsContent value="organized" className="mt-4">
+                {organizedEvents.length > 0 && <OrganizedStats events={organizedEvents} />}
+                {filteredOrganizedEvents.length === 0 && normalizedQuery ? (
+                    <div className="py-16 text-center text-[13px] text-slate-500">No events match your search.</div>
+                ) : (
+                    <OrganizedEventGrid
+                        events={filteredOrganizedEvents}
+                        emptyTitle="No events yet"
+                        emptyDescription="Create your first event and start managing attendees."
+                        showCreateLink
+                    />
+                )}
+            </TabsContent>
+
+            <TabsContent value="coOrganized" className="mt-4">
+                {filteredCoOrganizedEvents.length === 0 && normalizedQuery ? (
+                    <div className="py-16 text-center text-[13px] text-slate-500">No events match your search.</div>
+                ) : (
+                    <OrganizedEventGrid
+                        events={filteredCoOrganizedEvents}
+                        emptyTitle="No co-organized events yet"
+                        emptyDescription="Events you co-organize will appear here after you accept an invite."
+                    />
+                )}
+            </TabsContent>
+        </Tabs>
     );
 }

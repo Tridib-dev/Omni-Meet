@@ -50,8 +50,8 @@ export function DashboardEventCard({ event, badgeLabel, ctaLabel, compact = fals
             <Link
                 href={event.href}
                 className={compact
-                    ? "flex h-full min-h-[242px] w-[min(74vw,248px)] flex-col overflow-hidden rounded-[22px] border border-white/8 bg-white/[0.03] transition-transform duration-300 hover:-translate-y-1 hover:border-[#332be0]/30 sm:w-[236px] lg:w-[232px]"
-                    : "flex h-full min-h-[272px] w-[min(84vw,286px)] flex-col overflow-hidden rounded-[22px] border border-white/8 bg-white/[0.03] transition-transform duration-300 hover:-translate-y-1 hover:border-[#332be0]/30 sm:w-[268px]"
+                    ? "flex h-full min-h-[242px] w-[min(74vw,248px)] flex-col overflow-hidden rounded-[18px] border border-slate-200 bg-white shadow-sm transition-transform duration-300 hover:-translate-y-1 hover:border-indigo-300 hover:shadow-md sm:w-[236px] lg:w-[232px]"
+                    : "flex h-full min-h-[272px] w-[min(84vw,286px)] flex-col overflow-hidden rounded-[18px] border border-slate-200 bg-white shadow-sm transition-transform duration-300 hover:-translate-y-1 hover:border-indigo-300 hover:shadow-md sm:w-[268px]"
                 }
             >
                 <div className="relative aspect-[16/10] overflow-hidden">
@@ -71,16 +71,16 @@ export function DashboardEventCard({ event, badgeLabel, ctaLabel, compact = fals
 
                 <div className={compact ? "flex flex-1 flex-col p-3.5" : "flex flex-1 flex-col p-4"}>
                     <div className="flex items-start justify-between gap-3">
-                        <h3 className={compact ? "min-w-0 text-[15px] font-semibold tracking-[-0.03em] text-white/95" : "min-w-0 text-[17px] font-semibold tracking-[-0.03em] text-white/95"}>
+                        <h3 className={compact ? "min-w-0 text-[15px] font-semibold tracking-[-0.03em] text-slate-900" : "min-w-0 text-[17px] font-semibold tracking-[-0.03em] text-slate-900"}>
                             {event.title}
                         </h3>
 
-                        <span className={compact ? "inline-flex shrink-0 items-center rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-white/58" : "inline-flex shrink-0 items-center rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/58"}>
+                        <span className={compact ? "inline-flex shrink-0 items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-500" : "inline-flex shrink-0 items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500"}>
                             {modeLabel}
                         </span>
                     </div>
 
-                    <div className={compact ? "mt-2.5 space-y-1.5 text-[11px] text-white/58" : "mt-3 space-y-2 text-[12px] text-white/58"}>
+                    <div className={compact ? "mt-2.5 space-y-1.5 text-[11px] text-slate-500" : "mt-3 space-y-2 text-[12px] text-slate-500"}>
                         <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
                             <div className="space-y-2.5">
                                 <p className="flex items-center gap-1.5">
@@ -89,7 +89,7 @@ export function DashboardEventCard({ event, badgeLabel, ctaLabel, compact = fals
                                 </p>
 
                                 <p className="flex items-center gap-2">
-                                    <span className={compact ? "inline-flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-white/[0.06] text-white/70" : "inline-flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-white/[0.06] text-white/70"}>
+                                    <span className={compact ? "inline-flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-50 text-slate-500" : "inline-flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-50 text-slate-500"}>
                                         {event.organizerImage ? (
                                             <Image
                                                 src={event.organizerImage}

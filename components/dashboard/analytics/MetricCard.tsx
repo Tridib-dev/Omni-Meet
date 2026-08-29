@@ -71,15 +71,13 @@ export default function MetricCard({
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.07, duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
             whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
-            className="flex cursor-default flex-col justify-between rounded-xl px-4 py-4 sm:px-5"
+            className="flex cursor-default flex-col justify-between rounded-xl border border-slate-200 bg-white px-4 py-4 shadow-sm sm:px-5"
             style={{
-                background: "rgba(255,255,255,0.03)",
-                border: "1px solid rgba(255,255,255,0.07)",
                 minHeight: 110,
             }}
         >
             <div className="flex items-start justify-between">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/30">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
                     {label}
                 </p>
                 {sparkData && <Sparkline data={sparkData} color={color} />}
@@ -97,7 +95,7 @@ export default function MetricCard({
                     />
                 </div>
                 {sub && (
-                    <p className="text-[11px] text-white/30 mt-1 leading-snug">{sub}</p>
+                    <p className="mt-1 text-[11px] leading-snug text-slate-500">{sub}</p>
                 )}
             </div>
         </motion.div>

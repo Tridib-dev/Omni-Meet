@@ -143,6 +143,7 @@ const NAV_ITEMS: NavItem[] = [
 
 const isActiveHref = (pathname: string | null, href: string) => {
     if (!pathname) return false;
+    if (href === "/dashboard") return pathname === href;
     return pathname === href || pathname.startsWith(`${href}/`);
 };
 
@@ -154,9 +155,14 @@ function BrandMark() {
     );
 }
 
-function NavIcon({ icon }: { icon: ReactNode }) {
+function NavIcon({ icon, active }: { icon: ReactNode; active: boolean }) {
     return (
-        <span className="grid size-[24px] shrink-0 place-items-center rounded-xl bg-white text-slate-500 ring-1 ring-slate-200/80 transition-colors group-hover:bg-slate-50">
+        <span className={cn(
+            "grid size-[26px] shrink-0 place-items-center rounded-xl ring-1 transition-colors",
+            active
+                ? "bg-[#332be0]/10 text-[#332be0] ring-[#332be0]/20"
+                : "bg-white text-slate-500 ring-slate-200/80 group-hover:bg-slate-50 group-hover:text-slate-900"
+        )}>
             {icon}
         </span>
     );
@@ -181,18 +187,18 @@ function SidebarNavItem({
                 title={collapsed ? item.label : undefined}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                    "group flex items-center gap-1.5 rounded-2xl border px-2 py-[6px] transition-all duration-200",
+                    "group relative flex min-w-0 items-center gap-2 rounded-[12px] border px-2 py-2 transition-colors",
                     collapsed ? "justify-center px-0" : "justify-start",
                     active
-                        ? "border- bg-[rgba(59,130,246,0.10)] text-slate-950 shadow-[0_10px_24px_rgba(59,130,246,0.10)]"
+                        ? "border-[#332be0]/20 bg-[#332be0]/10 text-slate-950 shadow-[0_10px_24px_rgba(51,43,224,0.08)]"
                         : "border-transparent bg-transparent text-slate-500 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-950"
                 )}
             >
-                <NavIcon icon={item.icon} />
+                <NavIcon icon={item.icon} active={active} />
                 <motion.span
                     animate={{ opacity: collapsed ? 0 : 1, width: collapsed ? 0 : "auto" }}
                     transition={{ duration: 0.16 }}
-                    className="min-w-0 overflow-hidden whitespace-nowrap text-[10px] font-medium"
+                    className="min-w-0 overflow-hidden whitespace-nowrap text-[12px] font-medium"
                 >
                     {item.label}
                 </motion.span>
