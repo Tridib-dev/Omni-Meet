@@ -15,8 +15,7 @@ export default async function OrganizedPage() {
     return (
         <div>
             <PageHeader
-                kicker="Your events"
-                title="My Events"
+                title="Your Events"
                 description="Events you've created and are managing."
                 right={
                     <Link

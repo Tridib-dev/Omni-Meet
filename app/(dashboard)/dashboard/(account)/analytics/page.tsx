@@ -19,7 +19,6 @@ export default async function AnalyticsPage() {
     return (
         <div className="space-y-6">
             <PageHeader
-                kicker="Insights"
                 title="Analytics"
                 description="Visual dashboards for how you attend and how you host."
                 right={

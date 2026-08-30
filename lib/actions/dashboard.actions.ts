@@ -224,7 +224,8 @@ async function buildOrganizedEventItems(events: any[]): Promise<OrganizedEventIt
             price: ev.price ?? 0,
             status: organizedEventStatus(ev.date),
             attendeeCount: freeCount + paidData.count,
-            revenue: paidData.revenue,
+            // Order.amount is stored as integer paise; dashboard event values are displayed in rupees.
+            revenue: paiseToRupees(paidData.revenue),
         };
     });
 }

@@ -28,8 +28,7 @@ export default async function SavedPage() {
     return (
         <div>
             <PageHeader
-                kicker="Your collection"
-                title="Saved Events"
+                title="Your collection"
                 description="Events you've bookmarked to attend later."
                 right={
                     saved.length > 0 ? (

@@ -57,14 +57,14 @@ export function TicketEventCardV2({ ticket, index, onView }: Props) {
                 </div>
 
                 <div className="flex flex-1 flex-col p-3.5">
-                    <div className="flex items-start justify-between gap-3">
+                    <div>
                         <Link
                             href={`/events/${ticket.eventSlug}`}
-                            className="min-w-0 truncate text-[15px] font-semibold tracking-[-0.03em] text-slate-900 transition-colors hover:text-indigo-700"
+                            className="line-clamp-2 text-[15px] font-semibold leading-snug tracking-[-0.03em] text-slate-900 transition-colors hover:text-indigo-700"
                         >
                             {ticket.eventTitle}
                         </Link>
-                        <span className="inline-flex shrink-0 items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                        <span className="mt-1.5 inline-flex max-w-full items-center truncate rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-500">
                             {ticket.eventMode || "Event"}
                         </span>
                     </div>

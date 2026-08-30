@@ -16,8 +16,7 @@ export default async function AttendedPage() {
     return (
         <div>
             <PageHeader
-                kicker="Your wallet"
-                title="My Tickets"
+                title="Your Tickets"
                 description="All your event tickets — upcoming, attended, and expired."
                 right={
                     <div className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-[12px] text-slate-500">
