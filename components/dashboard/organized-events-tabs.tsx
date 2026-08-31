@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 import { Search } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -109,6 +110,17 @@ function OrganizedEventGrid({
                         <p className="mb-4 line-clamp-2 text-[12px] text-slate-500">
                             {formatDate(ev.date)} · {ev.location}
                         </p>
+
+                        <div className="mb-4 flex min-w-0 items-center gap-2 text-[12px] text-slate-500">
+                            <span className="inline-flex size-5 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-50 text-slate-500">
+                                {ev.organizerImage ? (
+                                    <Image src={ev.organizerImage} alt="" width={20} height={20} className="h-full w-full object-cover" />
+                                ) : (
+                                    <span className="text-[9px]">◎</span>
+                                )}
+                            </span>
+                            <span className="truncate">{ev.organizer || "Organizer"}</span>
+                        </div>
 
                         <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px]">
                             <span className="text-slate-500">

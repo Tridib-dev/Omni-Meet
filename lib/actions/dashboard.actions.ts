@@ -28,6 +28,7 @@ export interface TicketItem {
     eventLocation: string;
     eventMode: string;
     eventOrganizer: string;
+    eventOrganizerImage?: string;
     price: number;
     bookedAt: string;
     checkedIn: boolean;
@@ -50,6 +51,7 @@ export interface OrganizedEventItem {
     time: string;
     location: string;
     organizer: string;
+    organizerImage?: string;
     mode: string;
     price: number;
     status: "upcoming" | "past";
@@ -58,6 +60,34 @@ export interface OrganizedEventItem {
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+
+type OrganizerProfile = {
+    name: string;
+    image: string;
+};
+
+async function getOrganizerProfiles(events: any[]): Promise<Map<string, OrganizerProfile>> {
+    const creatorIds = [...new Set(events.map((event) => String(event.creatorClerkId ?? "")).filter(Boolean))];
+    if (!creatorIds.length) return new Map();
+
+    const users = await User.find({ clerkId: { $in: creatorIds } })
+        .select("clerkId firstName lastName username photo")
+        .lean();
+
+    return new Map(users.map((user: any) => {
+        const name = [user.firstName, user.lastName].filter(Boolean).join(" ").trim() || user.username || "Organizer";
+        return [String(user.clerkId), { name, image: user.photo ?? "" }];
+    }));
+}
+
+function organizerForEvent(event: any, profiles: Map<string, OrganizerProfile>): OrganizerProfile {
+    return profiles.get(String(event.creatorClerkId ?? "")) ?? {
+        // Do not expose the legacy free-text organizer field here: older records
+        // may contain the event description instead of the creator identity.
+        name: "Organizer",
+        image: "",
+    };
+}
 
 function categorize(dateStr: string): "upcoming" | "past" | "expired" {
     const eventDate = new Date(dateStr);
@@ -86,6 +116,11 @@ export const getUserTickets = cache(async (): Promise<TicketItem[]> => {
             User.findOne({ clerkId: userId }).select("username").lean(),
         ]);
         const username = (user as any)?.username ?? "";
+        const ticketEvents = [
+            ...(bookings as any[]).map((booking) => booking.eventId),
+            ...(orders as any[]).map((order) => order.eventId),
+        ].filter(Boolean);
+        const organizerProfiles = await getOrganizerProfiles(ticketEvents);
 
         const tickets: TicketItem[] = [];
 
@@ -93,6 +128,7 @@ export const getUserTickets = cache(async (): Promise<TicketItem[]> => {
         for (const b of bookings) {
             const ev = b.eventId as any;
             if (!ev) continue;
+            const organizer = organizerForEvent(ev, organizerProfiles);
             tickets.push({
                 id: b._id.toString(),
                 type: "free",
@@ -106,7 +142,8 @@ export const getUserTickets = cache(async (): Promise<TicketItem[]> => {
                 eventTime: ev.time,
                 eventLocation: ev.location,
                 eventMode: ev.mode,
-                eventOrganizer: ev.organizer ?? "",
+                eventOrganizer: organizer.name,
+                eventOrganizerImage: organizer.image,
                 price: 0,
                 bookedAt: (b as any).createdAt,
                 checkedIn: (b as any).checkedIn ?? false,
@@ -118,6 +155,7 @@ export const getUserTickets = cache(async (): Promise<TicketItem[]> => {
         for (const o of orders) {
             const ev = o.eventId as any;
             if (!ev) continue;
+            const organizer = organizerForEvent(ev, organizerProfiles);
             tickets.push({
                 id: o._id.toString(),
                 type: "paid",
@@ -131,7 +169,8 @@ export const getUserTickets = cache(async (): Promise<TicketItem[]> => {
                 eventTime: ev.time,
                 eventLocation: ev.location,
                 eventMode: ev.mode,
-                eventOrganizer: ev.organizer ?? "",
+                eventOrganizer: organizer.name,
+                eventOrganizerImage: organizer.image,
                 price: paiseToRupees(o.amount),
                 bookedAt: (o as any).createdAt,
                 checkedIn: false,
@@ -186,6 +225,8 @@ function organizedEventStatus(dateStr: string): "upcoming" | "past" {
 async function buildOrganizedEventItems(events: any[]): Promise<OrganizedEventItem[]> {
     if (!events.length) return [];
 
+    const organizerProfiles = await getOrganizerProfiles(events);
+
     const eventIds = events.map((e) => e._id);
 
     const [bookingCounts, orderAggs] = await Promise.all([
@@ -210,6 +251,7 @@ async function buildOrganizedEventItems(events: any[]): Promise<OrganizedEventIt
         const id = ev._id.toString();
         const freeCount = bookingMap[id] ?? 0;
         const paidData = orderMap[id] ?? { revenue: 0, count: 0 };
+        const organizer = organizerForEvent(ev, organizerProfiles);
 
         return {
             id,
@@ -219,7 +261,8 @@ async function buildOrganizedEventItems(events: any[]): Promise<OrganizedEventIt
             date: ev.date,
             time: ev.time,
             location: ev.location,
-            organizer: ev.organizer ?? "",
+            organizer: organizer.name,
+            organizerImage: organizer.image,
             mode: ev.mode,
             price: ev.price ?? 0,
             status: organizedEventStatus(ev.date),

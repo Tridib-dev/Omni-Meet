@@ -148,14 +148,8 @@ export default function AttendedAnalytics({ data }: { data: AttendedAnalyticsDat
                         <TrendCard data={data.monthlyActivity} />
                         <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                             <p className="mb-3 text-[12px] text-slate-500">Attendance heat</p>
-                            <ActivityHeatmap data={data.monthlyActivity} />
-                            <div className="mt-4 space-y-2">
-                                {data.favoriteOrganizers.slice(0, 3).map((organizer) => (
-                                    <div key={organizer.name} className="flex items-center justify-between gap-3">
-                                        <span className="truncate text-[12px] text-slate-600">{organizer.name}</span>
-                                        <span className="text-[12px] font-semibold text-slate-900">{organizer.count}</span>
-                                    </div>
-                                ))}
+                            <div className="h-[180px] min-h-0">
+                                <ActivityHeatmap data={data.monthlyActivity} />
                             </div>
                         </div>
                     </div>

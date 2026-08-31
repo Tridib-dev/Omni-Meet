@@ -38,6 +38,7 @@ export default async function DashboardPage() {
             date: event.eventDate,
             time: event.eventTime,
             organizer: event.eventOrganizer || "Organizer",
+            organizerImage: event.eventOrganizerImage,
             mode: event.eventMode,
             scope: "attended",
         }));

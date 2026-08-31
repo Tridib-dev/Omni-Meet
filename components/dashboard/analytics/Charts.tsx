@@ -79,6 +79,7 @@ export function TrendChart({
     label = "Events",
     title = "Trend",
     light = true,
+    fillHeight = false,
 }: {
     data: TrendPoint[];
     dailyData?: TrendPoint[];
@@ -87,6 +88,7 @@ export function TrendChart({
     label?: string;
     title?: string;
     light?: boolean;
+    fillHeight?: boolean;
 }) {
     const [range, setRange] = useState<"day" | "month">("month");
     const chartData = useMemo(
@@ -97,7 +99,7 @@ export function TrendChart({
     const hasData = chartData.some((d) => Number(d[dataKey] ?? 0) > 0);
 
     return (
-        <div className={dailyData ? "flex h-full min-h-[220px] flex-col gap-4" : "h-[180px]"}>
+        <div className={dailyData || fillHeight ? "flex h-full min-h-0 flex-col gap-4" : "h-[180px]"}>
             {dailyData && (
                 <div className="flex items-center justify-between gap-3">
                     <p className={light ? "text-base font-semibold leading-none tracking-tight text-slate-900" : "text-base font-semibold leading-none tracking-tight text-white/90"}>
@@ -121,7 +123,7 @@ export function TrendChart({
                     </Tabs>
                 </div>
             )}
-            <div className={dailyData ? "min-h-0 flex-1" : "h-full"}>
+            <div className={dailyData || fillHeight ? "min-h-0 flex-1" : "h-full"}>
             {hasData ? <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={chartData} margin={{ top: 10, right: 4, bottom: 0, left: -20 }}>
                 <defs>
@@ -169,8 +171,10 @@ export function TrendChart({
 // ─── RevenueBarChart ──────────────────────────────────────────────────────────
 export function RevenueBarChart({
     data,
+    fillHeight = false,
 }: {
     data: { title: string; revenue: number; attendees: number }[];
+    fillHeight?: boolean;
 }) {
     if (!data.some((d) => d.revenue > 0)) {
         return <EmptyChart label="No revenue data yet" />;
@@ -182,7 +186,7 @@ export function RevenueBarChart({
     }));
 
     return (
-        <ResponsiveContainer width="100%" height={200}>
+        <ResponsiveContainer width="100%" height={fillHeight ? "100%" : 200}>
             <BarChart data={trimmed} margin={{ top: 10, right: 4, bottom: 0, left: -20 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
                 <XAxis
@@ -369,15 +373,15 @@ export function ActivityHeatmap({
     const max = Math.max(...data.map((d) => d.count), 1);
 
     return (
-        <div className="flex h-full min-h-[220px] items-end gap-1.5">
+        <div className="flex h-full min-h-0 w-full items-end gap-1.5 overflow-hidden">
             {data.map((d, i) => {
                 const intensity = d.count / max;
                 return (
-                    <div key={i} className="flex flex-col items-center gap-1 flex-1" title={`${d.month}: ${d.count}`}>
+                    <div key={i} className="flex h-full min-h-0 flex-1 flex-col items-center justify-end gap-1" title={`${d.month}: ${d.count}`}>
                         <motion.div
                             className="w-full rounded-sm"
                             initial={{ height: 0 }}
-                            animate={{ height: Math.max(6, intensity * 120) }}
+                            animate={{ height: Math.max(6, intensity * 150) }}
                             transition={{ delay: i * 0.04, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                             style={{
                                 background: d.count === 0

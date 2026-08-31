@@ -9,6 +9,7 @@ import { Order } from "@/database/Order.model";
 import { paiseToRupees } from "@/lib/payments/money";
 import { Event } from "@/database/event.model";
 import { CoOrganizer } from "@/database/coOrganizer.model";
+import { User } from "@/database/User.model";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -22,7 +23,7 @@ export interface AttendedAnalyticsData {
     totalSpent: number;
     avgTicketPrice: number;
     categoryBreakdown: { category: string; count: number }[];
-    favoriteOrganizers: { name: string; count: number }[];
+    favoriteOrganizers: { name: string; count: number; image?: string }[];
     monthlyActivity: { month: string; count: number }[];
     modeBreakdown: { mode: string; count: number }[];
     streak: number;
@@ -151,6 +152,17 @@ export const getAttendedAnalytics = cache(async (): Promise<AttendedAnalyticsDat
             ...(orders as any[]).map((o) => ({ event: o.eventId, paidAmount: o.amount ?? 0, bookedAt: o.createdAt })),
         ].filter((e) => e.event);
 
+        const creatorIds = [...new Set(allEvents.map((entry) => String(entry.event.creatorClerkId ?? "")).filter(Boolean))];
+        const organizerUsers = await User.find({ clerkId: { $in: creatorIds } })
+            .select("clerkId firstName lastName username photo")
+            .lean();
+        const organizerMap = new Map(organizerUsers.map((user: any) => [
+            String(user.clerkId), {
+                name: [user.firstName, user.lastName].filter(Boolean).join(" ").trim() || user.username || "Organizer",
+                image: user.photo ?? "",
+            },
+        ]));
+
         // Counts
         const lifetime = allEvents.length;
         const thisYear = allEvents.filter((e) => new Date(e.bookedAt) >= yearStart).length;
@@ -182,11 +194,15 @@ export const getAttendedAnalytics = cache(async (): Promise<AttendedAnalyticsDat
         // Favorite organizers
         const orgMap: Record<string, number> = {};
         allEvents.forEach((e) => {
-            const org = e.event.organizer ?? "Unknown";
+            const profile = organizerMap.get(String(e.event.creatorClerkId ?? ""));
+            const org = profile?.name || "Unknown organizer";
             orgMap[org] = (orgMap[org] ?? 0) + 1;
         });
         const favoriteOrganizers = Object.entries(orgMap)
-            .map(([name, count]) => ({ name, count }))
+            .map(([name, count]) => ({ name, count, image: organizerUsers.find((user: any) => {
+                const profileName = [user.firstName, user.lastName].filter(Boolean).join(" ").trim() || user.username || "Organizer";
+                return profileName === name;
+            })?.photo ?? "" }))
             .sort((a, b) => b.count - a.count)
             .slice(0, 5);
 

@@ -70,8 +70,8 @@ export function DashboardEventCard({ event, badgeLabel, ctaLabel, compact = fals
                 </div>
 
                 <div className={compact ? "flex flex-1 flex-col p-3.5" : "flex flex-1 flex-col p-4"}>
-                    <div className="flex items-start justify-between gap-3">
-                        <h3 className={compact ? "min-w-0 text-[15px] font-semibold tracking-[-0.03em] text-slate-900" : "min-w-0 text-[17px] font-semibold tracking-[-0.03em] text-slate-900"}>
+                    <div className={compact ? "flex min-h-[2.5rem] items-start justify-between gap-3" : "flex min-h-[3rem] items-start justify-between gap-3"}>
+                        <h3 className={compact ? "line-clamp-2 min-w-0 text-[15px] font-semibold leading-5 tracking-[-0.03em] text-slate-900" : "line-clamp-2 min-w-0 text-[17px] font-semibold leading-6 tracking-[-0.03em] text-slate-900"}>
                             {event.title}
                         </h3>
 

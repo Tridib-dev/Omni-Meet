@@ -77,7 +77,7 @@ export default function OrganizedAnalytics({ data }: { data: OrganizedAnalyticsD
                 <motion.section
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
+                    className="flex min-h-[380px] flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
                 >
                     <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <div>
@@ -87,19 +87,23 @@ export default function OrganizedAnalytics({ data }: { data: OrganizedAnalyticsD
                         <span className="text-[11px] text-slate-400">{data.repeatAttendeeRate}% repeat rate</span>
                     </div>
 
-                    <div className="grid gap-4 lg:grid-cols-[1fr_.82fr]">
-                        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                            <TrendChart data={data.attendeeGrowth} dataKey="attendees" color="#332be0" label="Attendees" />
+                    <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[1fr_.82fr]">
+                        <div className="flex min-h-[260px] flex-col rounded-xl border border-slate-200 bg-slate-50 p-4">
+                            <div className="min-h-0 flex-1">
+                                <TrendChart data={data.attendeeGrowth} dataKey="attendees" color="#332be0" label="Attendees" fillHeight />
+                            </div>
                         </div>
                         <div className="space-y-3">
                             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                                 <p className="mb-3 text-[12px] text-slate-500">Monthly pulse</p>
-                                <ActivityHeatmap
-                                    data={data.attendeeGrowth.map((month) => ({
-                                        month: month.month,
-                                        count: month.attendees,
-                                    }))}
-                                />
+                                    <div className="h-[180px] min-h-0">
+                                        <ActivityHeatmap
+                                            data={data.attendeeGrowth.map((month) => ({
+                                                month: month.month,
+                                                count: month.attendees,
+                                            }))}
+                                        />
+                                    </div>
                             </div>
 
                             <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-4">
@@ -141,7 +145,7 @@ export default function OrganizedAnalytics({ data }: { data: OrganizedAnalyticsD
                 <motion.section
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
+                    className="flex min-h-[420px] flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
                 >
                     <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <div>
@@ -151,7 +155,9 @@ export default function OrganizedAnalytics({ data }: { data: OrganizedAnalyticsD
                         <span className="text-[11px] text-slate-400">{data.revenueByEvent.length} events</span>
                     </div>
 
-                    <RevenueBarChart data={data.revenueByEvent} />
+                    <div className="min-h-[280px] flex-1">
+                        <RevenueBarChart data={data.revenueByEvent} fillHeight />
+                    </div>
                 </motion.section>
 
                 <motion.section
@@ -173,14 +179,16 @@ export default function OrganizedAnalytics({ data }: { data: OrganizedAnalyticsD
                         <StatRow label="Revenue / event" value={`₹${Math.round(data.totalRevenue / Math.max(1, data.totalEvents)).toLocaleString("en-IN")}`} accent="#818cf8" />
                     </div>
 
-                    <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                    <div className="mt-5 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-4">
                         <p className="mb-3 text-[12px] text-slate-500">Momentum heat</p>
-                        <ActivityHeatmap
-                            data={data.attendeeGrowth.map((month) => ({
-                                month: month.month,
-                                count: month.attendees,
-                            }))}
-                        />
+                        <div className="h-[180px] min-h-0">
+                            <ActivityHeatmap
+                                data={data.attendeeGrowth.map((month) => ({
+                                    month: month.month,
+                                    count: month.attendees,
+                                }))}
+                            />
+                        </div>
                     </div>
                 </motion.section>
             </div>

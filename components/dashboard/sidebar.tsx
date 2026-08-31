@@ -7,8 +7,8 @@ import { useClerk, useUser } from "@clerk/nextjs";
 import type { ReactNode } from "react";
 import { motion } from "framer-motion";
 import {
-    ChevronLeft,
     ChevronRight,
+    PanelLeft,
     LogOut,
     Settings2,
     UserRound,
@@ -256,7 +256,7 @@ function SidebarPromo({ collapsed, onNavigate }: { collapsed: boolean; onNavigat
     );
 }
 
-function ProfileMenu({ onNavigate }: { onNavigate?: () => void }) {
+function ProfileMenu({ onNavigate, collapsed = false }: { onNavigate?: () => void; collapsed?: boolean }) {
     const router = useRouter();
     const clerk = useClerk();
     const { user, isSignedIn } = useUser();
@@ -279,7 +279,10 @@ function ProfileMenu({ onNavigate }: { onNavigate?: () => void }) {
             <DropdownMenuTrigger asChild>
                 <button
                     type="button"
-                    className="mx-[6px] mb-[6px] mt-1 flex w-[calc(100%-12px)] items-center gap-2 rounded-[18px] border border-slate-200 bg-white px-2 py-[7px] text-left shadow-[0_12px_28px_rgba(15,23,42,0.05)] transition-colors hover:bg-slate-50"
+                    className={cn(
+                        "mx-[6px] mb-[6px] mt-1 flex w-[calc(100%-12px)] items-center gap-2 rounded-[18px] border border-slate-200 bg-white px-2 py-[7px] text-left shadow-[0_12px_28px_rgba(15,23,42,0.05)] transition-colors hover:bg-slate-50",
+                        collapsed && "justify-center"
+                    )}
                     title={name}
                 >
                     <div className="relative shrink-0">
@@ -298,14 +301,18 @@ function ProfileMenu({ onNavigate }: { onNavigate?: () => void }) {
                         </div>
                     </div>
 
-                    <motion.div animate={{ opacity: 1, width: "auto" }} className="min-w-0 flex-1">
-                        <p className="truncate text-[11px] font-semibold text-slate-900">{name}</p>
-                        <p className="truncate text-[9px] text-slate-500">{isSignedIn ? email : "Profile menu"}</p>
-                    </motion.div>
+                    {!collapsed && (
+                        <motion.div animate={{ opacity: 1, width: "auto" }} className="min-w-0 flex-1">
+                            <p className="truncate text-[11px] font-semibold text-slate-900">{name}</p>
+                            <p className="truncate text-[9px] text-slate-500">{isSignedIn ? email : "Profile menu"}</p>
+                        </motion.div>
+                    )}
 
-                    <span className="grid size-[26px] shrink-0 place-items-center rounded-full bg-slate-100 text-slate-500">
-                        <ChevronRight size={12} />
-                    </span>
+                    {!collapsed && (
+                        <span className="grid size-[26px] shrink-0 place-items-center rounded-full bg-slate-100 text-slate-500">
+                            <ChevronRight size={12} />
+                        </span>
+                    )}
                 </button>
             </DropdownMenuTrigger>
 
@@ -410,9 +417,9 @@ export default function DashboardSidebar({
                             type="button"
                             aria-label={effectiveCollapsed ? "Expand sidebar" : "Collapse sidebar"}
                             onClick={() => onCollapsedChange?.(!effectiveCollapsed)}
-                            className="absolute right-[-10px] top-[96px] z-30 grid size-[22px] place-items-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-[0_10px_24px_rgba(15,23,42,0.12)] transition-colors hover:bg-slate-50 hover:text-slate-900"
+                            className="absolute right-[-10px] top-[38px] z-30 grid size-[22px] place-items-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-[0_10px_24px_rgba(15,23,42,0.12)] transition-colors hover:bg-slate-50 hover:text-slate-900"
                         >
-                            {effectiveCollapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
+                            {effectiveCollapsed ? <PanelLeft size={15} /> : <PanelLeft size={15} />}
                         </button>
                     )}
 
@@ -424,7 +431,7 @@ export default function DashboardSidebar({
                 </div>
             </nav>
 
-            <ProfileMenu onNavigate={onNavigate} />
+            <ProfileMenu onNavigate={onNavigate} collapsed={effectiveCollapsed} />
         </motion.aside>
     );
 }

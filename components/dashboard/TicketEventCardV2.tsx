@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowUpRight, Calendar, Clock, MapPin, User } from "lucide-react";
 import { motion } from "framer-motion";
 import type { TicketItem } from "@/lib/actions/dashboard.actions";
+import { normalizeEventMode } from "@/lib/constants/event-mode";
 
 const STATUS_COLORS = {
     upcoming: { dot: "#22c55e", label: "Upcoming", bg: "rgba(34,197,94,0.10)", border: "rgba(34,197,94,0.20)" },
@@ -28,6 +29,8 @@ type Props = {
 
 export function TicketEventCardV2({ ticket, index, onView }: Props) {
     const status = STATUS_COLORS[ticket.status];
+    const mode = normalizeEventMode(ticket.eventMode);
+    const modeLabel = mode === "online" ? "Online" : mode === "hybrid" ? "Hybrid" : "Offline";
 
     return (
         <motion.article
@@ -57,15 +60,15 @@ export function TicketEventCardV2({ ticket, index, onView }: Props) {
                 </div>
 
                 <div className="flex flex-1 flex-col p-3.5">
-                    <div>
+                    <div className="flex min-h-[2.5rem] items-start justify-between gap-3">
                         <Link
                             href={`/events/${ticket.eventSlug}`}
-                            className="line-clamp-2 text-[15px] font-semibold leading-snug tracking-[-0.03em] text-slate-900 transition-colors hover:text-indigo-700"
+                            className="line-clamp-2 min-w-0 flex-1 text-[15px] font-semibold leading-5 tracking-[-0.03em] text-slate-900 transition-colors hover:text-indigo-700"
                         >
                             {ticket.eventTitle}
                         </Link>
-                        <span className="mt-1.5 inline-flex max-w-full items-center truncate rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                            {ticket.eventMode || "Event"}
+                        <span className="inline-flex shrink-0 items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                            {modeLabel}
                         </span>
                     </div>
 
@@ -76,8 +79,18 @@ export function TicketEventCardV2({ ticket, index, onView }: Props) {
                                 <span className="truncate">{ticket.eventLocation}</span>
                             </p>
                             <p className="flex items-center gap-1.5">
-                                <span className="inline-flex size-5 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-500">
-                                    <User size={9} />
+                                <span className="inline-flex size-5 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-50 text-slate-500">
+                                    {ticket.eventOrganizerImage ? (
+                                        <Image
+                                            src={ticket.eventOrganizerImage}
+                                            alt={ticket.eventOrganizer || "Organizer"}
+                                            width={20}
+                                            height={20}
+                                            className="h-full w-full object-cover"
+                                        />
+                                    ) : (
+                                        <User size={9} />
+                                    )}
                                 </span>
                                 <span className="truncate">{ticket.eventOrganizer || "Organizer"}</span>
                             </p>
