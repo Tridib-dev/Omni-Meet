@@ -77,10 +77,8 @@ export default function EventCardH({
     };
 
     return (
-        <Link
-            href={`/events/${slug}`}
-            className="group relative flex gap-3.5 rounded-[18px] border border-slate-200 bg-white p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-md sm:gap-4"
-        >
+        <article className="group relative flex min-w-0 gap-3.5 rounded-[18px] border border-slate-200 bg-white p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-md sm:gap-4">
+            <Link href={`/events/${slug}`} className="contents">
             {/* Left — Event image */}
             <div className="relative min-h-[108px] w-[112px] shrink-0 self-stretch overflow-hidden rounded-[13px] bg-slate-100 sm:w-[136px]">
                 <SafeImage
@@ -149,6 +147,8 @@ export default function EventCardH({
                 </div>
             </div>
 
+            </Link>
+
             <span
                 className={isPaid
                     ? "absolute right-3 top-3 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold text-amber-700"
@@ -165,6 +165,6 @@ export default function EventCardH({
                 ariaLabel={saved ? "Remove from saved" : "Save event"}
                 className="absolute bottom-3 right-3 h-10 w-10 justify-center rounded-full border border-slate-200 bg-white px-0 py-0 text-slate-700 shadow-sm transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
             />
-        </Link>
+        </article>
     );
 }

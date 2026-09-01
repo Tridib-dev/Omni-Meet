@@ -55,7 +55,7 @@ export default function DiscoverProfileCard({ profile }: DiscoverProfileCardProp
             onFollow={handleFollow}
             followDisabled={profile.isOwner || isPending}
             size="compact"
-            className="h-full border-dark-300 bg-dark-200 text-light-100 shadow-none"
+            className="discover-profile-card h-auto border-slate-200 bg-white text-slate-900 shadow-sm"
         />
     );
 }

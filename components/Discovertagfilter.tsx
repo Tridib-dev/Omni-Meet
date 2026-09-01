@@ -6,7 +6,7 @@ import { ALL_TAGS } from "@/lib/constants/event-taxonomy";
 
 const slugify = (value: string): string => value.toLowerCase().replace(/\s+/g, "-");
 
-const DiscoverTagFilter = () => {
+const DiscoverTagFilter = ({ searchQuery = "" }: { searchQuery?: string }) => {
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -21,8 +21,10 @@ const DiscoverTagFilter = () => {
             if (!map.has(category)) map.set(category, []);
             map.get(category)!.push(tag);
         });
-        return Array.from(map.entries());
-    }, []);
+        return Array.from(map.entries())
+            .map(([category, tags]) => [category, tags.filter((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase().trim()))] as const)
+            .filter(([, tags]) => tags.length > 0);
+    }, [searchQuery]);
 
     const toggleTag = (tagSlug: string) => {
         const next = selectedTags.includes(tagSlug)
@@ -30,7 +32,8 @@ const DiscoverTagFilter = () => {
             : [...selectedTags, tagSlug];
 
         const params = new URLSearchParams(searchParams.toString());
-        next.length > 0 ? params.set("tags", next.join(",")) : params.delete("tags");
+        if (next.length > 0) params.set("tags", next.join(","));
+        else params.delete("tags");
         params.delete("page");
 
         router.push(`/events/discover?${params.toString()}`);
@@ -59,6 +62,7 @@ const DiscoverTagFilter = () => {
                     </div>
                 </div>
             ))}
+            {!groupedTags.length && <p className="discover-filter-no-match">No tags found.</p>}
         </div>
     );
 };

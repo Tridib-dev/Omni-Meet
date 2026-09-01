@@ -65,6 +65,7 @@ export function ProfileCard({
   const shouldReduceMotion = useReducedMotion()
   const shouldAnimate = enableAnimations && !shouldReduceMotion
   const fullName = `${firstName} ${lastName}`.trim()
+  const displayName = fullName || username || "Community member"
   const imageSrc = photo || "https://placehold.co/160x160/png?text=DE"
   const isCompact = size === "compact"
   const visibleInterests = isCompact ? interests.slice(0, 2) : interests.slice(0, 3)
@@ -126,22 +127,30 @@ export function ProfileCard({
       )}
     >
       {/* Compact banner — just enough to anchor the avatar */}
-      <div className="w-full bg-linear-to-br from-muted to-muted/40 h-[clamp(28px,15cqw,44px)]" />
+      <div className={cn(
+        "w-full h-[clamp(44px,20cqw,72px)]",
+        isCompact
+          ? "bg-[radial-gradient(circle_at_15%_20%,rgba(99,102,241,0.32),transparent_42%),linear-gradient(135deg,#172554,#4338ca,#818cf8)]"
+          : "bg-linear-to-br from-muted to-muted/40"
+      )} />
 
       <motion.div
         variants={contentVariants}
         initial="hidden"
         animate="visible"
-        className="flex flex-col items-center px-[clamp(12px,6cqw,22px)] pb-[clamp(12px,6cqw,22px)] -mt-[clamp(20px,11cqw,32px)]"
+        className={cn(
+          "flex flex-col px-[clamp(12px,6cqw,22px)] pb-[clamp(12px,6cqw,22px)] -mt-[clamp(20px,11cqw,32px)]",
+          isCompact ? "items-start" : "items-center"
+        )}
       >
         {/* Avatar — the visual anchor */}
         <motion.div
           variants={itemVariants}
-          className="relative shrink-0 overflow-hidden rounded-full ring-[3px] ring-card shadow-md h-[clamp(40px,22cqw,64px)] w-[clamp(40px,22cqw,64px)]"
+          className="profile-card-avatar relative shrink-0 overflow-hidden rounded-full ring-[3px] ring-card shadow-md h-[clamp(40px,22cqw,64px)] w-[clamp(40px,22cqw,64px)]"
         >
           <Image
             src={imageSrc}
-            alt={fullName}
+            alt={displayName}
             fill
             sizes="(min-width: 640px) 64px, 40px"
             className="object-cover"
@@ -157,15 +166,21 @@ export function ProfileCard({
         {/* Name */}
         <motion.h2
           variants={itemVariants}
-          className="mt-[clamp(6px,3cqw,12px)] font-bold text-foreground leading-tight text-center w-full truncate px-2 text-[clamp(13px,6cqw,18px)]"
+          className={cn(
+            "profile-card-name mt-[clamp(6px,3cqw,12px)] w-full truncate px-2 font-bold leading-tight text-slate-900 text-[clamp(13px,6cqw,18px)]",
+            isCompact ? "text-left" : "text-center"
+          )}
         >
-          {fullName}
+          {displayName}
         </motion.h2>
 
         {/* Username — disambiguates people with the same display name */}
         <motion.p
           variants={itemVariants}
-          className="text-muted-foreground w-full truncate text-center px-2 text-[clamp(11px,5cqw,14px)]"
+          className={cn(
+            "profile-card-username w-full truncate px-2 text-[clamp(11px,5cqw,14px)] text-muted-foreground",
+            isCompact ? "text-left" : "text-center"
+          )}
         >
           @{username}
         </motion.p>
@@ -173,7 +188,10 @@ export function ProfileCard({
         {/* Bio — always reserves 2 lines of height so every card matches, regardless of bio length */}
         <motion.p
           variants={itemVariants}
-          className="mt-[clamp(6px,3cqw,12px)] text-muted-foreground text-center leading-relaxed line-clamp-2 text-[clamp(11px,5cqw,14px)] min-h-[calc(clamp(11px,5cqw,14px)*1.5*2)]"
+          className={cn(
+            "profile-card-bio mt-[clamp(6px,3cqw,12px)] leading-relaxed line-clamp-2 text-[clamp(11px,5cqw,14px)] min-h-[calc(clamp(11px,5cqw,14px)*1.5*2)] text-muted-foreground",
+            isCompact ? "text-left" : "text-center"
+          )}
         >
           {bio}
         </motion.p>
@@ -181,23 +199,27 @@ export function ProfileCard({
         {/* Ticket-stub style divider — a small nod to an events platform */}
         <motion.div
           variants={itemVariants}
-          className="w-full border-t border-dashed border-border/50 mt-[clamp(10px,5cqw,16px)]"
+          className="profile-card-divider w-full border-t border-dashed border-border/50 mt-[clamp(10px,5cqw,16px)]"
         />
 
         {/* Events hosted — credibility signal */}
         <motion.div
           variants={itemVariants}
-          className="flex items-center gap-1.5 mt-[clamp(10px,5cqw,16px)] text-[clamp(11px,5cqw,14px)]"
+          className="profile-card-hosted flex items-center gap-1.5 mt-[clamp(10px,5cqw,16px)] text-[clamp(11px,5cqw,14px)]"
         >
           <CalendarCheck2 className="text-muted-foreground h-[clamp(12px,5.5cqw,16px)] w-[clamp(12px,5.5cqw,16px)]" />
-          <span className="font-semibold text-foreground">{eventsHostedCount}</span>
+          <span className="profile-card-hosted-count font-semibold text-slate-900">{eventsHostedCount ?? 0}</span>
           <span className="text-muted-foreground">events hosted</span>
         </motion.div>
 
         {/* Interests — top 2-3 as chips. Fixed min-height so cards align even with 0 interests */}
         <motion.div
           variants={itemVariants}
-          className="flex flex-wrap items-center justify-center gap-1.5 max-w-full mt-[clamp(8px,4cqw,14px)] min-h-[clamp(18px,8cqw,28px)]"
+          className={cn(
+            "profile-card-interests",
+            "flex flex-wrap gap-1.5 max-w-full mt-[clamp(8px,4cqw,14px)] min-h-[clamp(18px,8cqw,28px)]",
+            isCompact ? "items-start justify-start" : "items-center justify-center"
+          )}
         >
           {visibleInterests.map((interest) => (
             <span
@@ -220,6 +242,7 @@ export function ProfileCard({
           whileHover={{ scale: 1.02, transition: { type: "spring", stiffness: 400, damping: 25 } }}
           whileTap={{ scale: 0.98 }}
           className={cn(
+            "profile-card-follow",
             "w-full cursor-pointer font-semibold transition-colors duration-200",
             "border border-border/20 shadow-sm",
             "disabled:cursor-not-allowed disabled:opacity-60",

@@ -5,6 +5,8 @@ import { cacheLife, cacheTag } from "next/cache";
 import type { PipelineStage } from "mongoose";
 
 import { Event } from "@/database/event.model";
+import { CoOrganizer } from "@/database/coOrganizer.model";
+import { User } from "@/database/User.model";
 import connectToDatabase from "@/lib/mongodb";
 import { SEO_EVENTS_CACHE_TAG, slugifySegment } from "@/lib/seo-events";
 import { ALL_TAGS } from "@/lib/constants/event-taxonomy";
@@ -27,6 +29,8 @@ export interface DiscoverCard {
     category: string;
     price?: number;              // ← Added
     organizer?: string;          // ← Added
+    creatorClerkId?: string;
+    organizers?: { name: string; avatar?: string }[];
 }
 
 export interface DiscoverFilters {
@@ -59,6 +63,10 @@ type DiscoverCardDocument = {
     tags?: string[];
     mode?: string;
     category?: string;
+    creatorClerkId?: string;
+    organizer?: string;
+    price?: number;
+    organizers?: { name?: string; avatar?: string }[];
 };
 
 type DiscoverAggregateResult = {
@@ -81,6 +89,10 @@ const normalizeDiscoverCards = (events: any[]): DiscoverCard[] =>
         category: event.category ?? "",
         price: event.price ?? 0,
         organizer: event.organizer ?? "",
+        creatorClerkId: event.creatorClerkId ?? "",
+        organizers: Array.isArray(event.organizers)
+            ? event.organizers.map((organizer: { name?: string; avatar?: string }) => ({ name: organizer.name ?? "", avatar: organizer.avatar ?? "" }))
+            : [],
     }));
 
 const normalizeSearchValue = (value: string): string => value.trim().toLowerCase();
@@ -366,6 +378,25 @@ async function queryDiscoverEvents(
     });
 
     pipeline.push(
+        {
+            $lookup: {
+                from: CoOrganizer.collection.name,
+                localField: "_id",
+                foreignField: "eventId",
+                as: "coOrganizerRecords",
+            },
+        },
+        {
+            $lookup: {
+                from: User.collection.name,
+                let: { organizerIds: { $concatArrays: [["$creatorClerkId"], "$coOrganizerRecords.clerkId"] } },
+                pipeline: [
+                    { $match: { $expr: { $in: ["$clerkId", "$$organizerIds"] } } },
+                    { $project: { _id: 0, clerkId: 1, firstName: 1, lastName: 1, photo: 1 } },
+                ],
+                as: "organizerProfiles",
+            },
+        },
         { $sort: { relevanceScore: -1, date: 1 } },
         {
             $facet: {
@@ -383,7 +414,20 @@ async function queryDiscoverEvents(
                             image: 1,
                             tags: 1,
                             mode: 1,
-                            category: 1,
+                                category: 1,
+                                organizer: 1,
+                                price: 1,
+                                creatorClerkId: 1,
+                                organizers: {
+                                    $map: {
+                                        input: "$organizerProfiles",
+                                        as: "profile",
+                                        in: {
+                                            name: { $trim: { input: { $concat: ["$$profile.firstName", " ", { $ifNull: ["$$profile.lastName", ""] }] } } },
+                                            avatar: "$$profile.photo",
+                                        },
+                                    },
+                                },
                         },
                     },
                 ],

@@ -9,23 +9,27 @@ export default function HorizontalScrollProgress({
     contentClassName,
     viewportRef: externalViewportRef,
     orientation = "horizontal",
+    showOnlyWhileScrolling = false,
 }: {
     children: ReactNode;
     className?: string;
     contentClassName?: string;
     viewportRef?: RefObject<HTMLDivElement | null>;
     orientation?: "horizontal" | "vertical";
+    showOnlyWhileScrolling?: boolean;
 }) {
     const internalViewportRef = useRef<HTMLDivElement | null>(null);
     const [progress, setProgress] = useState(0);
     const [visibleFraction, setVisibleFraction] = useState(1);
     const [hasOverflow, setHasOverflow] = useState(false);
+    const [isScrolling, setIsScrolling] = useState(false);
 
     useEffect(() => {
         const viewport = externalViewportRef?.current ?? internalViewportRef.current;
         if (!viewport) return;
 
         let raf = 0;
+        let scrollEndTimer: number | undefined;
 
         const update = () => {
             const viewportSize = orientation === "vertical" ? viewport.clientHeight : viewport.clientWidth;
@@ -42,6 +46,9 @@ export default function HorizontalScrollProgress({
         };
 
         const onScroll = () => {
+            setIsScrolling(true);
+            if (scrollEndTimer) window.clearTimeout(scrollEndTimer);
+            scrollEndTimer = window.setTimeout(() => setIsScrolling(false), 700);
             cancelAnimationFrame(raf);
             raf = requestAnimationFrame(update);
         };
@@ -56,6 +63,7 @@ export default function HorizontalScrollProgress({
 
         return () => {
             cancelAnimationFrame(raf);
+            if (scrollEndTimer) window.clearTimeout(scrollEndTimer);
             viewport.removeEventListener("scroll", onScroll);
             observer.disconnect();
         };
@@ -81,7 +89,7 @@ export default function HorizontalScrollProgress({
                     orientation === "vertical"
                         ? "relative w-1.5 shrink-0 overflow-hidden rounded-full bg-slate-200 transition-opacity duration-150"
                         : "relative h-1.5 overflow-hidden rounded-full bg-slate-200 transition-opacity duration-150",
-                    !hasOverflow && "pointer-events-none opacity-0"
+                    (!hasOverflow || (showOnlyWhileScrolling && !isScrolling)) && "pointer-events-none opacity-0"
                 )}
             >
                 <div

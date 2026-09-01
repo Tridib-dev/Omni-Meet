@@ -44,7 +44,7 @@ export default function SaveButtonIcon({
   const saved = controlledSaved ?? internalSaved;
 
   useEffect(() => {
-    if (!wrapperRef.current || !fillRef.current) return;
+    if (loading || !wrapperRef.current || !fillRef.current) return;
 
     const wrapper = wrapperRef.current;
     const fill = fillRef.current;
@@ -65,7 +65,7 @@ export default function SaveButtonIcon({
       fill.classList.remove('opacity-100', 'scale-100');
       fill.classList.add('opacity-0', 'scale-75');
     }
-  }, [saved]);
+  }, [saved, loading]);
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     if (loading) return;
@@ -114,33 +114,33 @@ export default function SaveButtonIcon({
         aria-label={ariaLabel}
         aria-pressed={saved}
       >
-        {/* Icon */}
-        <div ref={wrapperRef} className="relative z-10 w-5 h-5 shrink-0 text-zinc-900">
-          <svg viewBox="0 0 24 24" fill="none" className="w-full h-full overflow-visible">
-            {/* Fill layer */}
-            <path
-              ref={fillRef}
-              className="icon-fill transition-all duration-300 ease-out opacity-0 scale-75"
-              d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"
-              fill="currentColor"
-              strokeWidth="0"
-            />
-            {/* Outline layer */}
-            <path
-              d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </div>
+        {/* Keep the bookmark hidden until the loading state is complete. */}
+        {!loading && (
+          <div ref={wrapperRef} className="relative z-10 h-5 w-5 shrink-0 text-zinc-900">
+            <svg viewBox="0 0 24 24" fill="none" className="h-full w-full overflow-visible">
+              <path
+                ref={fillRef}
+                className="icon-fill transition-all duration-300 ease-out opacity-0 scale-75"
+                d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"
+                fill="currentColor"
+                strokeWidth="0"
+              />
+              <path
+                d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+        )}
 
 
         {/* Spinner when loading */}
         {loading && (
-          <div className="ml-3 -mr-1">
+          <div className="-mr-1">
             <span className="w-4 h-4 inline-block animate-spin rounded-full border-2 border-transparent border-t-zinc-900" />
           </div>
         )}
