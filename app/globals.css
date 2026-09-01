@@ -1069,6 +1069,32 @@ main[data-discover-main] {
       min-width: 0;
   }
 
+  .discover-profile-skeleton-content {
+      position: relative;
+      display: flex;
+      min-height: 248px;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 0.25rem;
+  }
+
+  .discover-profile-skeleton-avatar {
+      margin-top: -2rem;
+  }
+
+  .discover-profile-skeleton-copy {
+      display: flex;
+      width: 100%;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 0.75rem;
+  }
+
+  .discover-profile-skeleton-footer {
+      margin-top: auto;
+      width: 100%;
+  }
+
   .discover-profile-grid [data-slot="profile-card"] {
       container-type: inline-size;
       --profile-card-max: min(100%, 26rem);
@@ -1163,6 +1189,48 @@ main[data-discover-main] {
           width: 100%;
           border-radius: 0.75rem;
           padding-block: 0.55rem;
+      }
+
+      #discover .discover-profile-skeleton {
+          display: flex;
+          min-height: 0;
+          flex-direction: row;
+          border-radius: 18px;
+      }
+
+      #discover .discover-profile-skeleton-banner {
+          display: none;
+      }
+
+      #discover .discover-profile-skeleton-content {
+          display: grid;
+          min-height: 0;
+          width: 100%;
+          grid-template-columns: auto minmax(0, 1fr);
+          column-gap: 0.875rem;
+          align-items: start;
+          padding: 1rem;
+      }
+
+      #discover .discover-profile-skeleton-avatar {
+          grid-row: span 2;
+          margin-top: 0;
+      }
+
+      #discover .discover-profile-skeleton-copy {
+          align-items: flex-start;
+          padding-top: 0;
+      }
+
+      #discover .discover-profile-skeleton-footer {
+          grid-column: 2;
+          margin-top: 0.5rem;
+          border-top: 0;
+          padding-top: 0;
+      }
+
+      #discover .discover-profile-skeleton-footer > :first-child {
+          display: none;
       }
   }
   
@@ -1293,7 +1361,7 @@ main[data-discover-main] {
           border-radius: 20px;
           padding: 1rem;
           background: rgba(255, 255, 255, 0.7);
-          box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+          box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
       }
 
       #discover .discover-sidebar-header {

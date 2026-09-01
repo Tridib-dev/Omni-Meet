@@ -8,6 +8,7 @@ import DiscoverTypeToggle from "@/components/DiscoverTypeToggle";
 import DiscoverProfileCard from "@/components/DiscoverProfileCard";
 import CategoryTabs from "@/components/CategoryTabs";
 import DiscoverFilterPanel from "@/components/DiscoverFilterPanel";
+import { DiscoverResultsSkeleton } from "@/components/DiscoverLoadingSkeletons";
 import { getDiscoverEvents, type DiscoverCard } from "@/lib/discover-events";
 import { getDiscoverProfiles } from "@/lib/discover-profiles";
 
@@ -29,6 +30,9 @@ type SearchParams = Promise<{
 }>;
 
 export default async function DiscoverPage({ searchParams }: { searchParams: SearchParams }) {
+    const params = await searchParams;
+    const activeType = params.type === "profiles" ? "profiles" : "events";
+
     return (
         <section id="discover" className="discover-page">
             <div className="discover-header">
@@ -50,7 +54,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams: Sea
             <div className="discover-body">
                 <Suspense><DiscoverFilterPanel /></Suspense>
                 <div className="discover-results">
-                    <Suspense fallback={<p className="discover-results-count">Loading events...</p>}>
+                    <Suspense fallback={<DiscoverResultsSkeleton type={activeType} />}>
                         <DiscoverResults searchParams={searchParams} />
                     </Suspense>
                 </div>

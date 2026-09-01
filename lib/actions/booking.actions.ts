@@ -1,8 +1,10 @@
 'use server';
 
+import { Types } from "mongoose";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import connectToDatabase from "../mongodb";
 import { Booking } from "@/database/booking.model";
+import { Order } from "@/database/Order.model";
 import { Event } from "@/database/event.model";
 import { sendBookingConfirmation } from "@/lib/email/services/booking.email";
 
@@ -83,7 +85,26 @@ export const CreateBooking = async ({
 export const getAttendeesCount = async (eventId: string): Promise<number> => {
     try {
         await connectToDatabase();
-        return await Booking.countDocuments({ eventId });
+        if (!Types.ObjectId.isValid(eventId)) return 0;
+
+        // Older records may store eventId as a string while newer records use
+        // an ObjectId. Raw collection queries preserve both representations.
+        const eventReferences = [eventId, new Types.ObjectId(eventId)];
+
+        // Free registrations are bookings and paid registrations are orders.
+        // Checked-in status must not reduce this registration total.
+        const [freeBookings, paidOrders] = await Promise.all([
+            Booking.collection.countDocuments({ eventId: { $in: eventReferences } }),
+            Order.collection.countDocuments({
+                eventId: { $in: eventReferences },
+                $or: [
+                    { status: "paid" },
+                    { razorpayPaymentId: { $exists: true, $nin: [null, ""] } },
+                ],
+            }),
+        ]);
+
+        return freeBookings + paidOrders;
     } catch (error) {
         console.error("Failed to get attendees count:", error);
         return 0;
