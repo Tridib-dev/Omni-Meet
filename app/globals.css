@@ -701,6 +701,22 @@ main[data-discover-main] {
       display: flex;
       flex-direction: column;
       align-items: center;
+      background: linear-gradient(180deg, rgba(255,255,255,0.1), rgba(255,255,255,0));
+  }
+
+  #discover .discover-hero::before {
+      content: "";
+      position: absolute;
+      inset: -12% -6% -10%;
+      background:
+          radial-gradient(56% 70% at 18% 32%, rgba(45, 212, 191, 0.32), transparent 52%),
+          radial-gradient(46% 62% at 82% 26%, rgba(129, 120, 238, 0.24), transparent 48%);
+      filter: blur(22px);
+      opacity: 0.95;
+      pointer-events: none;
+      z-index: 0;
+      mask-image: radial-gradient(ellipse at center, black 62%, transparent 92%);
+      -webkit-mask-image: radial-gradient(ellipse at center, black 62%, transparent 92%);
   }
 
   #discover .discover-hero-copy {
@@ -722,12 +738,12 @@ main[data-discover-main] {
   #discover .discover-confetti-cross { bottom: 17%; left: calc(50% - 390px); color: #332be0; font-size: clamp(20px, 2.7vw, 32px); transform: rotate(28deg); }
   #discover .discover-decor-lines { position: absolute; inset: 0; width: 100%; height: 100%; fill: none; stroke: #8f82e8; stroke-width: 1.7; stroke-dasharray: 2 10; opacity: .28; filter: blur(.15px); }
   #discover .discover-squiggle-right { position: absolute; right: max(3%, calc(50% - 570px)); top: 34%; color: #00a975; font-family: Arial, sans-serif; font-size: clamp(28px, 3.5vw, 48px); line-height: 1; transform: rotate(-10deg); filter: blur(.25px); opacity: .62; }
-  #discover .discover-custom-mascot { position: absolute; z-index: 2; right: max(4%, calc(50% - 570px)); bottom: -8%; width: clamp(78px, 12vw, 150px); height: auto; object-fit: contain; }
-  #discover .discover-custom-decorator { position: absolute; z-index: 2; left: max(5%, calc(50% - 560px)); bottom: 15%; width: clamp(52px, 6vw, 72px); height: auto; object-fit: contain; transform: rotate(-27deg); }
+  #discover .discover-custom-mascot { position: absolute; z-index: 2; right: max(4%, calc(50% - 570px)); bottom: 18%; width: clamp(78px, 12vw, 150px); height: auto; object-fit: contain; }
+  #discover .discover-custom-decorator { position: absolute; z-index: 2; left: max(5%, calc(50% - 560px)); bottom: 28%; width: clamp(52px, 6vw, 72px); height: auto; object-fit: contain; transform: rotate(-27deg); }
 
   @media (min-width: 1200px) {
-      #discover .discover-custom-mascot { width: clamp(140px, 13vw, 190px); right: max(5%, calc(50% - 600px)); }
-      #discover .discover-custom-decorator { width: clamp(58px, 6.2vw, 82px); left: max(6%, calc(50% - 590px)); }
+      #discover .discover-custom-mascot { width: clamp(140px, 13vw, 190px); right: max(6%, calc(50% - 610px)); bottom: 20%; }
+      #discover .discover-custom-decorator { width: clamp(58px, 6.2vw, 82px); left: max(7%, calc(50% - 620px)); bottom: 32%; }
   }
 
   #discover .discover-hero-copy h1 > span:not(.discover-heading-lead) { color: #332be0; }
@@ -740,10 +756,34 @@ main[data-discover-main] {
   #discover .discover-heading-star { position: absolute; top: -.42em; left: -.7em; color: #ffbf37; font-size: clamp(15px, 1.8vw, 25px); font-style: normal; line-height: 1; }
   #discover .discover-heading-dot { display: inline-block; width: clamp(7px, .8vw, 11px); height: clamp(7px, .8vw, 11px); margin-left: .28em; vertical-align: .16em; border-radius: 50%; background: #f15c47; }
   #discover .discover-hero > .discover-type-toggle { position: relative; margin-top: clamp(.75rem, 1.5vw, 1rem); z-index: 2; }
+  #discover .discover-hero-search {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      margin-top: clamp(.9rem, 1.8vw, 1.4rem);
+  }
+
+  @media (min-width: 1024px) {
+      #discover .discover-hero-search {
+          width: min(100%, 1100px);
+          max-width: 70%;
+          margin-inline: auto;
+      }
+  }
   @media (max-width: 640px) {
       #discover .discover-hero-decor::before { top: -10%; left: -22%; width: 72vw; height: 46vw; opacity: .62; }
       #discover .discover-hero-decor::after { top: 5%; left: -17%; width: 66vw; height: 40vw; opacity: .6; }
       #discover .discover-wave-burst-left { top: -10%; right: -27%; width: 78vw; height: 50vw; opacity: .68; }
+      #discover .discover-custom-mascot {
+          right: 2%;
+          bottom: 24%;
+          width: clamp(58px, 18vw, 96px);
+      }
+      #discover .discover-custom-decorator {
+          left: 4%;
+          bottom: 32%;
+          width: clamp(30px, 8vw, 42px);
+      }
       #discover .discover-hero-copy {
           max-width: 100%;
       }
@@ -783,12 +823,19 @@ main[data-discover-main] {
   
   /* --- Compact unified search pill --- */
   .discover-search-row {
-      @apply flex w-full items-stretch overflow-hidden rounded-full border border-slate-200 bg-white p-1 shadow-[0_8px_20px_rgba(15,23,42,0.08)];
+      display: flex;
+      width: 100%;
+      align-items: stretch;
+      overflow: hidden;
+      border: 1px solid rgba(148, 163, 184, 0.26);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+      padding: 0.2rem;
   }
 
   @media (min-width: 1024px) {
       .discover-search-row {
-          width: min(70%, 1100px);
           min-height: 4.1rem;
           margin-inline: auto;
       }
@@ -809,7 +856,21 @@ main[data-discover-main] {
   }
   
   .discover-search-button {
-      @apply flex-shrink-0 cursor-pointer rounded-full bg-[#332be0] px-5 py-2 text-xs font-bold text-white shadow-sm transition-colors hover:bg-indigo-700;
+      flex-shrink: 0;
+      cursor: pointer;
+      border-radius: 999px;
+      background: #332be0;
+      padding: 0.8rem 1.6rem;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: white;
+      box-shadow: 0 8px 20px rgba(51, 43, 224, 0.24);
+      transition: background-color 0.2s ease, transform 0.2s ease;
+  }
+
+  .discover-search-button:hover {
+      background: #2a1fd3;
+      transform: translateY(-1px);
   }
 
   .discover-type-toggle {

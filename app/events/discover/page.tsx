@@ -52,8 +52,10 @@ export default async function DiscoverPage({ searchParams }: { searchParams: Sea
                         <Image className="discover-custom-decorator" src={activeType === "profiles" ? "/illustrations/celebration.svg" : "/illustrations/ticket.svg"} alt="" width={42} height={42} />
                     </div>
                     <Suspense fallback={null}><DiscoverTypeToggle /></Suspense>
+                    <div className="discover-hero-search">
+                        <Suspense fallback={null}><DiscoverSearchBar /></Suspense>
+                    </div>
                 </div>
-                <Suspense fallback={null}><DiscoverSearchBar /></Suspense>
                 <Suspense fallback={null}><CategoryTabs searchParams={searchParams} /></Suspense>
             </div>
 
