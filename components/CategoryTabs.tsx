@@ -2,6 +2,25 @@
 
 import Link from "next/link";
 import { EVENT_CATEGORIES } from "@/lib/constants/event-categories";
+import { BriefcaseBusiness, CalendarDays, ChartNoAxesColumnIncreasing, Code2, Compass, GraduationCap, Handshake, Laptop, Mic2, Presentation, Trophy, UsersRound } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+
+const categoryIcons: Record<string, LucideIcon> = {
+    "Conference": Presentation,
+    "Meetup": UsersRound,
+    "Workshop": Laptop,
+    "Webinar": Mic2,
+    "Hackathon": Code2,
+    "Seminar": GraduationCap,
+    "Panel Discussion": BriefcaseBusiness,
+    "Networking Event": Handshake,
+    "Product Launch": Compass,
+    "Demo Day": ChartNoAxesColumnIncreasing,
+    "Fireside Chat": Mic2,
+    "Bootcamp": Code2,
+    "Competition": Trophy,
+    "Career Fair": BriefcaseBusiness,
+};
 
 const slugify = (value: string): string => 
     value.toLowerCase().replace(/\s+/g, "-");
@@ -52,7 +71,8 @@ const CategoryTabs = async ({ searchParams }: CategoryTabsProps) => {
                 href={buildHref(undefined)} 
                 className={`category-tab ${!activeCategory ? "active" : ""}`}
             >
-                All
+                <CalendarDays size={18} strokeWidth={2} />
+                <span>All</span>
             </Link>
             
             {EVENT_CATEGORIES.map((category) => {
@@ -63,7 +83,7 @@ const CategoryTabs = async ({ searchParams }: CategoryTabsProps) => {
                         href={buildHref(slug)}
                         className={`category-tab ${activeCategory === slug ? "active" : ""}`}
                     >
-                        {category}
+                        {(() => { const Icon = categoryIcons[category] ?? CalendarDays; return <><Icon size={18} strokeWidth={2} /><span>{category}</span></>; })()}
                     </Link>
                 );
             })}

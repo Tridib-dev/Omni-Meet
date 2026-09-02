@@ -2,7 +2,7 @@
 
 import type { CSSProperties } from "react"
 import { motion, useReducedMotion, type Variants } from "framer-motion"
-import { Check, CalendarCheck2 } from "lucide-react"
+import { CalendarCheck2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
@@ -13,7 +13,6 @@ interface ProfileCardProps {
   lastName?: string
   username?: string
   bio?: string
-  isVerified?: boolean
   eventsHostedCount?: number
   interests?: string[]
   enableAnimations?: boolean
@@ -49,7 +48,6 @@ export function ProfileCard({
   lastName = "Bennett",
   username = "sophiebennett",
   bio = "Product designer who loves hosting small, cozy meetups around design and coffee.",
-  isVerified = true,
   eventsHostedCount = 12,
   interests = ["Design", "Coffee", "Hiking"],
   enableAnimations = true,
@@ -121,6 +119,7 @@ export function ProfileCard({
       className={cn(
         "relative w-full min-w-0 mx-auto rounded-[clamp(14px,7cqw,26px)] border border-border/20 bg-card text-card-foreground overflow-hidden shadow-xl shadow-black/5",
         isCompact ? "max-w-[min(100%,17rem)]" : "max-w-[min(100%,26rem)]",
+        isCompact ? "profile-card-compact" : "profile-card-main",
         href && "cursor-pointer",
         "dark:shadow-black/20",
         className
@@ -128,7 +127,8 @@ export function ProfileCard({
     >
       {/* Compact banner — just enough to anchor the avatar */}
       <div className={cn(
-        "w-full h-[clamp(44px,20cqw,72px)]",
+        "w-full",
+        isCompact ? "h-[clamp(64px,31cqw,90px)]" : "h-[clamp(44px,20cqw,72px)]",
         isCompact
           ? "bg-[radial-gradient(circle_at_15%_20%,rgba(99,102,241,0.32),transparent_42%),linear-gradient(135deg,#172554,#4338ca,#818cf8)]"
           : "bg-linear-to-br from-muted to-muted/40"
@@ -139,8 +139,9 @@ export function ProfileCard({
         initial="hidden"
         animate="visible"
         className={cn(
-          "flex flex-col px-[clamp(12px,6cqw,22px)] pb-[clamp(12px,6cqw,22px)] -mt-[clamp(20px,11cqw,32px)]",
-          isCompact ? "items-start" : "items-center"
+          "flex flex-col px-[clamp(12px,6cqw,22px)]",
+          isCompact ? "pb-[clamp(9px,4.5cqw,17px)]" : "pb-[clamp(12px,6cqw,22px)]",
+          isCompact ? "profile-card-content items-start" : "profile-card-content items-center"
         )}
       >
         {/* Avatar — the visual anchor */}
@@ -156,19 +157,17 @@ export function ProfileCard({
             className="object-cover"
           />
 
-          {isVerified && (
-            <div className="absolute bottom-0 right-0 flex items-center justify-center rounded-full bg-green-500 text-white ring-2 ring-card h-[clamp(12px,7cqw,20px)] w-[clamp(12px,7cqw,20px)]">
-              <Check className="h-[55%] w-[55%]" />
-            </div>
-          )}
         </motion.div>
 
+        <div
+          className="profile-card-identity"
+        >
         {/* Name */}
         <motion.h2
           variants={itemVariants}
           className={cn(
-            "profile-card-name mt-[clamp(6px,3cqw,12px)] w-full truncate px-2 font-bold leading-tight text-slate-900 text-[clamp(13px,6cqw,18px)]",
-            isCompact ? "text-left" : "text-center"
+            "profile-card-name mt-[clamp(6px,3cqw,12px)] w-full truncate font-bold leading-tight text-slate-900 text-[clamp(13px,6cqw,18px)]",
+            isCompact ? "text-left" : "px-2 text-center"
           )}
         >
           {displayName}
@@ -178,12 +177,13 @@ export function ProfileCard({
         <motion.p
           variants={itemVariants}
           className={cn(
-            "profile-card-username w-full truncate px-2 text-[clamp(11px,5cqw,14px)] text-muted-foreground",
-            isCompact ? "text-left" : "text-center"
+            "profile-card-username w-full truncate text-[clamp(11px,5cqw,14px)] text-muted-foreground",
+            isCompact ? "text-left" : "px-2 text-center"
           )}
         >
           @{username}
         </motion.p>
+        </div>
 
         {/* Bio — always reserves 2 lines of height so every card matches, regardless of bio length */}
         <motion.p

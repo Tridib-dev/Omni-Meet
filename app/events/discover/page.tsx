@@ -37,15 +37,21 @@ export default async function DiscoverPage({ searchParams }: { searchParams: Sea
         <section id="discover" className="discover-page">
             <div className="discover-header">
                 <div className="discover-hero">
-                    <div className="discover-heading-row">
-                        <div className="discover-hero-copy">
-                            <p className="discover-eyebrow">Explore the community</p>
-                            <h1>Discover</h1>
-                            <p className="discover-intro">Find your next event, connect with people, and stay close to what is happening in the developer community.</p>
-                        </div>
-                        <Suspense fallback={null}><DiscoverTypeToggle /></Suspense>
+                    <div className="discover-hero-copy">
+                        <h1><span className="discover-heading-lead">Explore Amazing<i className="discover-heading-star" aria-hidden="true">✦</i></span> <span>{activeType === "profiles" ? "People" : "Events"}<i className="discover-heading-dot" aria-hidden="true" /></span></h1>
+                        <p className="discover-intro">{activeType === "profiles" ? "Meet the people shaping our community." : "Find your people, your place, and your next big moment."}</p>
                     </div>
-                    <div className="discover-hero-art" aria-hidden="true"><span className="discover-hero-orbit discover-hero-orbit-one" /><span className="discover-hero-orbit discover-hero-orbit-two" /><span className="discover-hero-dot discover-hero-dot-one" /><span className="discover-hero-dot discover-hero-dot-two" /><span className="discover-hero-art-label">Find your next thing</span></div>
+                    <div className="discover-hero-decor" aria-hidden="true">
+                        <span className="discover-wave-burst-left" />
+                        <svg className="discover-decor-lines" viewBox="0 0 1200 220" preserveAspectRatio="none">
+                            <path d="M0 144 C130 64 210 192 330 119 S540 66 650 132 S870 188 1200 68" />
+                        </svg>
+                        <span className="discover-squiggle-right">〰</span>
+                        <span className="discover-confetti discover-confetti-cross">＋</span>
+                        <Image className="discover-custom-mascot" src={activeType === "profiles" ? "/illustrations/participant_mascot-removebg-preview%201.svg" : "/illustrations/blue_mascot_looking_right-removebg-preview%201.svg"} alt="" width={150} height={130} priority />
+                        <Image className="discover-custom-decorator" src={activeType === "profiles" ? "/illustrations/celebration.svg" : "/illustrations/ticket.svg"} alt="" width={42} height={42} />
+                    </div>
+                    <Suspense fallback={null}><DiscoverTypeToggle /></Suspense>
                 </div>
                 <Suspense fallback={null}><DiscoverSearchBar /></Suspense>
                 <Suspense fallback={null}><CategoryTabs searchParams={searchParams} /></Suspense>

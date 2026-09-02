@@ -39,7 +39,7 @@ const DiscoverSearchBar = () => {
 
     return (
         <form onSubmit={handleSubmit} className="discover-search-row">
-            <div className="discover-search-box">
+            <div className="discover-search-box discover-search-query">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="discover-search-icon">
                     <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
                     <path d="M21 21L16.65 16.65" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -54,7 +54,7 @@ const DiscoverSearchBar = () => {
             </div>
 
             {activeType === "events" && (
-                <div className="discover-search-box">
+                <div className="discover-search-box discover-search-location">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="discover-search-icon">
                         <path
                             d="M12 21s-7-6.1-7-11a7 7 0 1 1 14 0c0 4.9-7 11-7 11Z"
@@ -74,9 +74,7 @@ const DiscoverSearchBar = () => {
                 </div>
             )}
 
-            <button type="submit" className="discover-search-button">
-                Search
-            </button>
+            <button type="submit" className="discover-search-button" aria-label="Search">Search</button>
         </form>
     );
 };

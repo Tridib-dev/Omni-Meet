@@ -8,7 +8,7 @@ type DiscoverType = "events" | "profiles";
 
 const options: { type: DiscoverType; label: string; icon: typeof CalendarDays }[] = [
     { type: "events", label: "Events", icon: CalendarDays },
-    { type: "profiles", label: "Profiles", icon: UsersRound },
+    { type: "profiles", label: "People", icon: UsersRound },
 ];
 
 export default function DiscoverTypeToggle() {
