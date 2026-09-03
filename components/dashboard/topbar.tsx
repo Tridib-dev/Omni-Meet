@@ -299,7 +299,7 @@ export default function DashboardTopbar({ onMenuClick, recentEvents = [] }: Prop
                         </button>
                     )}
 
-                    <div className="min-w-0 text-[11px] text-slate-500">
+                    <div className="min-w-0 text-[11px] text-slate-500 hidden md:block">
                         <div className="flex min-w-0 items-center gap-1.5 overflow-hidden whitespace-nowrap">
                             {crumbs.slice(0, 3).map((crumb, index) => (
                                 <span key={crumb.href} className="flex items-center gap-1.5">
