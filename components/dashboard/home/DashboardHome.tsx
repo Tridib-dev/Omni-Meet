@@ -66,7 +66,7 @@ export function DashboardHome({
                     </div>
                 </div>
 
-                <div className="overflow-hidden rounded-[18px] border border-slate-200 bg-[radial-gradient(circle_at_top_left,rgba(51,43,224,0.10),transparent_36%),radial-gradient(circle_at_bottom_right,rgba(129,140,248,0.08),transparent_28%),#ffffff] p-2.5 shadow-sm sm:p-3 lg:p-4">
+                <div className="p-0 overflow-hidden">
                     <RecommendedEventsCarousel events={recommendedEvents} compact={compact} />
                 </div>
             </section>

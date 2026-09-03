@@ -165,7 +165,7 @@ export function RecommendedEventsCarousel({ events, compact = false }: Props) {
                         animate="center"
                         exit="exit"
                         transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-                        className="relative h-44 w-full sm:h-60 lg:h-72"
+                        className="relative h-46 w-full sm:h-72 lg:h-76"
                     >
                         {/* Render different content based on item type */}
                         {activeItem.type === "event" && activeItem.data ? (
@@ -214,7 +214,13 @@ export function RecommendedEventsCarousel({ events, compact = false }: Props) {
                 </AnimatePresence>
 
                 {/* FIXED Controls - Outside the animated div, stay in place */}
-
+                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 z-20 flex justify-center">
+                    <CarouselProgressDots 
+                        total={carouselItems.length}
+                        activeIndex={activeIndex}
+                        onDotClick={setActiveIndex}
+                    />
+                </div>
                 {/* Save Button - Only show for events */}
                 {activeItem.type === "event" && (
                     <div className="absolute right-2 top-2 z-30 sm:right-3 sm:top-3 lg:right-4 lg:top-4">
@@ -223,7 +229,7 @@ export function RecommendedEventsCarousel({ events, compact = false }: Props) {
                             loading={loading}
                             onToggle={handleToggleSave}
                             ariaLabel={saved ? "Remove bookmark" : "Bookmark event"}
-                            className="border-white/10 bg-black/45 text-white shadow-lg backdrop-blur-md hover:bg-black/60"
+                            className="group inline-flex items-center rounded-xl border bg-white/90 text-zinc-900 shadow-lg backdrop-blur-md transform transition-all duration-200 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 saved:border-zinc-300 saved:bg-zinc-100/80 saved:text-zinc-900! hover:-translate-y-0.5 hover:shadow-md hover:bg-white/95"
                         />
                     </div>
                 )}
@@ -253,14 +259,6 @@ export function RecommendedEventsCarousel({ events, compact = false }: Props) {
                 </div>
             </div>
 
-            {/* Progress Dots - Always visible, stay fixed at bottom */}
-            <div className="flex justify-center mt-3 sm:mt-4 lg:mt-5">
-                <CarouselProgressDots
-                    total={carouselItems.length}
-                    activeIndex={activeIndex}
-                    onDotClick={setActiveIndex}
-                />
-            </div>
         </div>
     );
 }
