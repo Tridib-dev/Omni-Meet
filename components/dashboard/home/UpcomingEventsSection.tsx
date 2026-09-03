@@ -32,19 +32,16 @@ function Row({ children }: { children: ReactNode }) {
 export function UpcomingEventsSection({ attendedEvents, organizedEvents, compact = false }: Props) {
     return (
         <section className={compact ? "space-y-3" : "space-y-4"}>
-            <div className="flex items-end justify-between gap-4">
-                <div className="min-w-0">
-                    <h2 className={compact ? "mt-1 text-[16px] font-semibold text-slate-900 sm:text-[20px]" : "mt-1 text-[18px] font-semibold text-slate-900 sm:text-[22px]"}>
-                        Upcoming events
-                    </h2>
-                </div>
-            </div>
-
             <NativeTabs
                 defaultValue="attended"
                 className="w-full"
+                header={
+                    <h2 className={compact ? "text-[16px] font-semibold text-slate-900 sm:text-[20px]" : "text-[18px] font-semibold text-slate-900 sm:text-[22px]"}>
+                        Upcoming events
+                    </h2>
+                }
                 listClassName="rounded-lg border border-slate-200 bg-slate-50/80 p-1 shadow-sm"
-                triggerClassName={compact ? "rounded-md px-3.5 py-1.5 text-[12px] text-slate-500 data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm" : "rounded-md px-4 py-2 text-[13px] text-slate-500 data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm"}
+                triggerClassName={compact ? "rounded-md px-2.5 py-1.5 text-[11px] text-slate-500 data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm sm:px-3.5 sm:text-[12px]" : "rounded-md px-3 py-1.5 text-[12px] text-slate-500 data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm sm:px-4 sm:py-2 sm:text-[13px]"}
                 contentClassName={compact ? "mt-4" : "mt-5"}
                 items={[
                     {

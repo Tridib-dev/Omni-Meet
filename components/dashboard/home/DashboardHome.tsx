@@ -88,19 +88,16 @@ export function DashboardHome({
             />
 
             <section className={compact ? "space-y-3" : "space-y-4"}>
-                <div className="flex items-end justify-between gap-4">
-                    <div className="min-w-0">
-                            <h2 className="mt-1 text-[15px] font-semibold text-slate-900 sm:text-[18px]">
-                            Monthly Overview
-                        </h2>
-                    </div>
-                </div>
-
                 <NativeTabs
                     defaultValue="attended"
                     className="w-full"
+                    header={
+                        <h2 className="text-[15px] font-semibold text-slate-900 sm:text-[18px]">
+                            Monthly Overview
+                        </h2>
+                    }
                     listClassName="rounded-lg border border-slate-200 bg-slate-50/80 p-1 shadow-sm"
-                    triggerClassName="rounded-md px-3.5 py-1.5 text-[12px] text-slate-500 data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm sm:px-4 sm:py-2 sm:text-[13px]"
+                    triggerClassName="rounded-md px-2.5 py-1.5 text-[11px] text-slate-500 data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm sm:px-4 sm:py-2 sm:text-[13px]"
                     contentClassName="mt-4 sm:mt-5"
                     items={[
                         {
