@@ -239,7 +239,7 @@ export function RecommendedEventsCarousel({ events, compact = false }: Props) {
                     <button
                         type="button"
                         onClick={goPrev}
-                        className="pointer-events-auto rounded-full border border-white/30 bg-black/40 p-2 text-white transition-all duration-200 hover:border-white/60 hover:bg-black/60 active:scale-95 sm:p-2.5 lg:p-3 opacity-0 lg:hover:opacity-100"
+                        className="pointer-events-auto rounded-full border border-white/30 bg-black/40 p-2 text-white transition-all duration-200 hover:border-white/60 hover:bg-black/60 active:scale-95 sm:p-2.5 lg:p-3"
                         aria-label="Previous event"
                     >
                         <svg className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -249,7 +249,7 @@ export function RecommendedEventsCarousel({ events, compact = false }: Props) {
                     <button
                         type="button"
                         onClick={goNext}
-                        className="pointer-events-auto rounded-full border border-white/30 bg-black/40 p-2 text-white transition-all duration-200 hover:border-white/60 hover:bg-black/60 active:scale-95 sm:p-2.5 lg:p-3 opacity-0 lg:hover:opacity-100"
+                        className="pointer-events-auto rounded-full border border-white/30 bg-black/40 p-2 text-white transition-all duration-200 hover:border-white/60 hover:bg-black/60 active:scale-95 sm:p-2.5 lg:p-3"
                         aria-label="Next event"
                     >
                         <svg className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
