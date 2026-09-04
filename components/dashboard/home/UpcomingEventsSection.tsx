@@ -36,7 +36,7 @@ export function UpcomingEventsSection({ attendedEvents, organizedEvents, compact
                 defaultValue="attended"
                 className="w-full"
                 header={
-                    <h2 className={compact ? "text-[16px] font-semibold text-slate-900 sm:text-[20px]" : "text-[18px] font-semibold text-slate-900 sm:text-[22px]"}>
+                    <h2 className={compact ? "text-[18] font-semibold text-slate-900 sm:text-[22px]" : "text-[20px] font-semibold text-slate-900 sm:text-[24px]"}>
                         Upcoming events
                     </h2>
                 }

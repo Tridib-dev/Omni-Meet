@@ -280,7 +280,7 @@ function ProfileMenu({ onNavigate, collapsed = false }: { onNavigate?: () => voi
                 <button
                     type="button"
                     className={cn(
-                        "mx-[6px] mb-[6px] mt-1 flex w-[calc(100%-12px)] items-center gap-2 rounded-[18px] border border-slate-200 bg-white px-2 py-[7px] text-left shadow-[0_12px_28px_rgba(15,23,42,0.05)] transition-colors hover:bg-slate-50",
+                        "mx-[6px] mb-[6px] mt-1 flex w-[calc(100%-12px)] items-center gap-2 rounded-[15px] border border-slate-200 bg-white px-2 py-[7px] text-left shadow-[0_12px_28px_rgba(15,23,42,0.05)] transition-colors hover:bg-slate-50",
                         collapsed && "justify-center"
                     )}
                     title={name}
@@ -320,7 +320,7 @@ function ProfileMenu({ onNavigate, collapsed = false }: { onNavigate?: () => voi
                 align="end"
                 side="right"
                 sideOffset={10}
-                className="w-72 rounded-[24px] border border-slate-200 bg-white/96 p-2 shadow-[0_22px_60px_rgba(15,23,42,0.16)] backdrop-blur-xl"
+                className="w-72 rounded-[15px] border border-slate-200 bg-white/96 p-2 shadow-[0_22px_60px_rgba(15,23,42,0.16)] backdrop-blur-xl"
             >
                 <DropdownMenuLabel className="px-2 py-2">
                     <div className="space-y-1">
@@ -333,7 +333,7 @@ function ProfileMenu({ onNavigate, collapsed = false }: { onNavigate?: () => voi
 
                 <DropdownMenuItem
                     onSelect={() => handleGo("/dashboard/profile")}
-                    className="cursor-pointer rounded-2xl px-3 py-2 text-[13px] text-slate-700 focus:bg-slate-100 focus:text-slate-950"
+                    className="cursor-pointer rounded-xl px-3 py-2 text-[13px] text-slate-700 focus:bg-slate-100 focus:text-slate-950"
                 >
                     <UserRound size={14} />
                     Profile
@@ -341,7 +341,7 @@ function ProfileMenu({ onNavigate, collapsed = false }: { onNavigate?: () => voi
 
                 <DropdownMenuItem
                     onSelect={() => handleGo("/dashboard/settings")}
-                    className="cursor-pointer rounded-2xl px-3 py-2 text-[13px] text-slate-700 focus:bg-slate-100 focus:text-slate-950"
+                    className="cursor-pointer rounded-xl px-3 py-2 text-[13px] text-slate-700 focus:bg-slate-100 focus:text-slate-950"
                 >
                     <Settings2 size={14} />
                     Settings

@@ -40,7 +40,7 @@ export function DashboardHome({
     const pageGap = compact ? "space-y-6 lg:space-y-7" : "space-y-10";
     return (
         <div className={`${shellWidth} ${pageGap}`}>
-            <section className="space-y-3 sm:space-y-4">
+            <section className="space-y-5 sm:space-y-6">
                 <div className="flex items-center gap-3 sm:gap-4">
                     <div className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-50 sm:size-12">
                         {userImage ? (
@@ -92,7 +92,7 @@ export function DashboardHome({
                     defaultValue="attended"
                     className="w-full"
                     header={
-                        <h2 className="text-[15px] font-semibold text-slate-900 sm:text-[18px]">
+                        <h2 className="text-[20px] font-semibold text-slate-900 sm:text-[24px]">
                             Monthly Overview
                         </h2>
                     }

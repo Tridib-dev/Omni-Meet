@@ -61,8 +61,8 @@ export function EventBannerContent({ event, compact = false }: Props) {
                     )}>
                         {event.title}
                     </h3>
-                    <p className="text-xs sm:text-sm text-slate-200 mt-0.5 truncate">
-                        {event.description ? truncateText(event.description, 50) : "No description available."}
+                    <p className="text-xs sm:text-sm text-slate-200 mt-0.5 truncate max-w-[22ch] sm:max-w-[35ch] md:max-w-[50ch] lg:max-w-[60ch]">
+                      {event.description ? truncateText(event.description, 50) : "No description available."}
                     </p>
                 </div>
 
