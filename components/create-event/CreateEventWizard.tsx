@@ -48,8 +48,11 @@ const buildFormData = (draft: ReturnType<typeof useEventDraft>["draft"]): FormDa
   fd.append("coOrganizerClerkIds", JSON.stringify((draft.coOrganizers ?? []).map((u) => u.clerkId)));
 
   draft.tags.forEach((tag) => fd.append("tags", tag));
-  draft.audience.forEach((a) => fd.append("audience", a));
-  draft.organizerEmails.forEach((email) => fd.append("organizerEmails", email));
+draft.audience.forEach((a) => fd.append("audience", a));
+draft.organizerEmails.forEach((email) => fd.append("organizerEmails", email));
+
+  const detectedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  fd.append("timezone", detectedTimezone);
 
   if (draft.imageFile) {
     fd.append("image", draft.imageFile);

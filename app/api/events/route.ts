@@ -282,6 +282,7 @@ export async function POST(req: NextRequest) {
                 price: Number(eventFields.price ?? 0),
                 sponsors: JSON.parse(formData.get('sponsors') as string || '[]'),
                 organizer: String(eventFields.organizer ?? ""),
+                timezone: String(eventFields.timezone ?? "Asia/Kolkata"),
                 tags,
                 agenda,
                 organizerEmails,

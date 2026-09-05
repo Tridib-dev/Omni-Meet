@@ -342,19 +342,19 @@ export async function leaveRoom(eventId: string): Promise<{ success: boolean }> 
 
 // add to room.actions.ts
 
+import { getEventStartUTC } from "@/lib/time";
+
 const DEFAULT_ROOM_DURATION_MS = 2 * 60 * 60 * 1000; // 2h — no explicit end-time field on Event yet
 
 // event.date is stored as a full ISO string via normalizeDateToIso (e.g. "2027-04-10T00:00:00.000Z").
 // event.time is stored as 24h "HH:mm" via normalizeTime (e.g. "08:30"), confirmed.
 // The date's *time-of-day* portion is meaningless (always midnight) — we only want its
-// calendar date, then apply the real time from `time` on top of it.
-function parseEventStart(isoDate: string, time: string): Date | null {
-  const datePart = isoDate.split("T")[0]; // "2027-04-10"
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(datePart)) return null;
-  if (!/^\d{2}:\d{2}$/.test(time)) return null;
-
-  const combined = new Date(`${datePart}T${time}:00.000Z`);
-  return Number.isNaN(combined.getTime()) ? null : combined;
+// calendar date, then apply the real time from `time` on top of it, respecting the
+// event's home timezone. Uses shared getEventStartUTC so countdowns are correct
+// for all viewers regardless of their own timezone.
+function parseEventStart(isoDate: string, time: string, timezone?: string): Date | null {
+  const start = getEventStartUTC(isoDate, time, timezone);
+  return start ? new Date(start.getTime()) : null;
 }
 
 export async function ensureRoomForEvent(eventId: string): Promise<RoomPublicMeta | null> {
@@ -374,10 +374,10 @@ export async function ensureRoomForEvent(eventId: string): Promise<RoomPublicMet
     // No room yet — only an organizer/co-organizer visiting the page can trigger creation.
     if (!(await isGateAuthorized(eventId))) return null;
 
-    const event = await Event.findById(eventId).select("date time").lean();
+    const event = await Event.findById(eventId).select("date time timezone").lean();
     if (!event) return null;
 
-    const scheduledStart = parseEventStart(event.date, event.time);
+    const scheduledStart = parseEventStart(event.date, event.time, event.timezone);
     if (!scheduledStart) {
       console.error("[ensureRoomForEvent] could not parse event date/time", { eventId, date: event.date, time: event.time });
       return null;
