@@ -6,6 +6,7 @@ import { Event , IEvent} from "@/database/event.model";
 import connectToDatabase from "../mongodb"
 import { auth } from "@clerk/nextjs/server";
 import { User } from "@/database/User.model";
+import { getEventStartUTC } from "@/lib/time";
 import { notifyFollowersOfNewEvent } from "@/lib/notifications";
 import { revalidatePath } from "next/cache";
 
@@ -17,14 +18,27 @@ export const getSimilarEventsBySlug = async (slug: string, limit = 6) => {
         const event = await Event.findOne({ slug });
         if (!event) return [];
 
-        const eventDate = new Date(event.date);
         const now = new Date().toISOString();
 
         const events = await Event.aggregate([
             {
                 $match: {
-                    _id: { $ne: event._id },
-                    date: { $gte: now }, // only recommend upcoming events
+                    $expr: {
+                      $gte: [
+                        // Compute event start instant from date + time + timezone;
+                        // fall back to treating stored date as UTC if timezone absent
+                        {
+                          $dateFromString: {
+                            dateString: "$date",
+                            timezone: { $cond: [
+                              { $ne: ["$timezone", undefined] },
+                              "$timezone",
+                              undefined
+                            ]}
+                        }},
+                        new Date(now)
+                      ]
+                    }
                 },
             },
 
@@ -34,13 +48,24 @@ export const getSimilarEventsBySlug = async (slug: string, limit = 6) => {
                     sharedTagsCount: {
                         $size: { $setIntersection: ["$tags", event.tags] },
                     },
-                    daysApart: {
-                        $abs: {
-                            $divide: [
-                                { $subtract: [{ $toDate: "$date" }, eventDate] },
-                                1000 * 60 * 60 * 24,
-                            ],
-                        },
+                    daysApart: 0,
+                    coreScore: {
+                        $add: [
+                            { $multiply: ["$sharedTagsCount", 10] },
+                            { $cond: [{ $eq: ["$category", event.category] }, 25, 0] },
+                            { $cond: [{ $eq: ["$city", event.city] }, 20, 0] },
+                            {
+                                $cond: [
+                                    { $and: [{ $ne: ["$city", event.city] }, { $eq: ["$country", event.country] }] },
+                                    8,
+                                    0,
+                                ],
+                            },
+                            { $cond: [{ $eq: ["$mode", event.mode] }, 8, 0] },
+                        ],
+                    },
+                    dateBonus: {
+                        $max: [0, { $subtract: [15, { $divide: ["$daysApart", 7] }] }],
                     },
                 },
             },
