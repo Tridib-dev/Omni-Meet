@@ -11,9 +11,8 @@ import { validateEmails } from "@/lib/validateemail";
 import { slugifySegment } from "@/lib/seo-events";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { notifyFollowersOfNewEvent } from "@/lib/notifications";
-import { getEventStartUTC } from "@/lib/time";
 import { sendCoOrganizerInvites } from "@/lib/co-organizer-invites";
-
+import { getEventStartUTC } from "@/lib/time";
 
 type AgendaItem = {
     startTime: string;
@@ -263,15 +262,6 @@ export async function POST(req: NextRequest) {
                 slideshowImages.push(slideshowUploadResult.url);
             }
 
-            // Compute these ONCE, as plain strings — reused for both the
-            // stored date/time fields AND the startAtUTC derivation, so
-            // there's exactly one source of these values (avoids the
-            // duplicate-property mistake and the FormDataEntryValue type
-            // error at the same time).
-            const eventDateField = String(eventFields.date ?? "");
-            const eventTimeField = String(eventFields.time ?? "");
-            const eventTimezoneField = String(eventFields.timezone ?? "Asia/Kolkata");
-
             const create_event = await Event.create({
                 title: String(eventFields.title ?? ""),
                 slug,
@@ -286,15 +276,19 @@ export async function POST(req: NextRequest) {
                 state: String(eventFields.state ?? ""),
                 country: String(eventFields.country ?? ""),
                 category: String(eventFields.category ?? "") as EventCategory,
-                date: eventDateField,
-                time: eventTimeField,
+                date: String(eventFields.date ?? ""),
+                time: String(eventFields.time ?? ""),
                 mode: String(eventFields.mode ?? ""),
                 audience,
                 price: Number(eventFields.price ?? 0),
                 sponsors: JSON.parse(formData.get('sponsors') as string || '[]'),
                 organizer: String(eventFields.organizer ?? ""),
-                timezone: eventTimezoneField,
-                startAtUTC: getEventStartUTC(eventDateField, eventTimeField, eventTimezoneField),
+                timezone: String(eventFields.timezone ?? "Asia/Kolkata"),
+                startAtUTC: getEventStartUTC(
+                  eventFields.date ?? "",
+                  eventFields.time ?? "",
+                  eventFields.timezone ?? "Asia/Kolkata"
+                ),
                 tags,
                 agenda,
                 organizerEmails,
@@ -365,20 +359,8 @@ export async function POST(req: NextRequest) {
 export async function GET() {
     try {
         await connectToDatabase();
-
-        // .lean() returns plain JS objects instead of typed Mongoose
-        // Documents — this lets us add the computed `utc` field to a NEW
-        // object below without TypeScript rejecting an unknown property
-        // on a Document type.
-        const events = await Event.find().sort({ createdAt: -1 }).lean();
-
-        const response = events.map((event) => ({
-            ...event,
-            utc: event.startAtUTC ? new Date(event.startAtUTC).toISOString() : null,
-            timezone: event.timezone ?? null,
-        }));
-
-        return NextResponse.json({ message: 'Event Fetched Successfully', events: response }, { status: 200 });
+        const events = await Event.find().sort({ createdAt: -1 });
+        return NextResponse.json({ message: 'Event Fetched Successfully', events }, { status: 200 });
     } catch (err) {
         console.error('Event fetching failed:', err);
         return NextResponse.json({ message: 'Event Fetching Failed', error: err }, { status: 500 });

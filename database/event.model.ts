@@ -49,6 +49,7 @@ export interface IEvent {
   isFree?: boolean;
   sponsors: ISponsorItem[];
   timezone?: string;
+  startAtUTC?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -267,6 +268,7 @@ const eventSchema = new Schema<IEvent>(
     citySlug: { type: String, trim: true, lowercase: true },
     categorySlug: { type: String, trim: true, lowercase: true },
     timezone: { type: String, trim: true },
+    startAtUTC: { type: Date, index: true },
   },
   {
     timestamps: true,

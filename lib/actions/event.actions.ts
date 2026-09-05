@@ -6,7 +6,6 @@ import { Event , IEvent} from "@/database/event.model";
 import connectToDatabase from "../mongodb"
 import { auth } from "@clerk/nextjs/server";
 import { User } from "@/database/User.model";
-import { getEventStartUTC } from "@/lib/time";
 import { notifyFollowersOfNewEvent } from "@/lib/notifications";
 import { revalidatePath } from "next/cache";
 
@@ -18,27 +17,19 @@ export const getSimilarEventsBySlug = async (slug: string, limit = 6) => {
         const event = await Event.findOne({ slug });
         if (!event) return [];
 
-        const now = new Date().toISOString();
+        // Use the stored, pre-computed real start instant — no need to
+        // recompute timezone math here, and no need to attempt timezone
+        // conversion inside the Mongo aggregation pipeline itself.
+        // Falls back to the (UTC-midnight) `date` field for any legacy
+        // event created before startAtUTC existed.
+        const eventStart = event.startAtUTC ?? new Date(event.date);
+        const now = new Date();
 
         const events = await Event.aggregate([
             {
                 $match: {
-                    $expr: {
-                      $gte: [
-                        // Compute event start instant from date + time + timezone;
-                        // fall back to treating stored date as UTC if timezone absent
-                        {
-                          $dateFromString: {
-                            dateString: "$date",
-                            timezone: { $cond: [
-                              { $ne: ["$timezone", undefined] },
-                              "$timezone",
-                              undefined
-                            ]}
-                        }},
-                        new Date(now)
-                      ]
-                    }
+                    _id: { $ne: event._id },
+                    startAtUTC: { $gte: now }, // only recommend upcoming events
                 },
             },
 
@@ -48,24 +39,13 @@ export const getSimilarEventsBySlug = async (slug: string, limit = 6) => {
                     sharedTagsCount: {
                         $size: { $setIntersection: ["$tags", event.tags] },
                     },
-                    daysApart: 0,
-                    coreScore: {
-                        $add: [
-                            { $multiply: ["$sharedTagsCount", 10] },
-                            { $cond: [{ $eq: ["$category", event.category] }, 25, 0] },
-                            { $cond: [{ $eq: ["$city", event.city] }, 20, 0] },
-                            {
-                                $cond: [
-                                    { $and: [{ $ne: ["$city", event.city] }, { $eq: ["$country", event.country] }] },
-                                    8,
-                                    0,
-                                ],
-                            },
-                            { $cond: [{ $eq: ["$mode", event.mode] }, 8, 0] },
-                        ],
-                    },
-                    dateBonus: {
-                        $max: [0, { $subtract: [15, { $divide: ["$daysApart", 7] }] }],
+                    daysApart: {
+                        $abs: {
+                            $divide: [
+                                { $subtract: ["$startAtUTC", eventStart] },
+                                1000 * 60 * 60 * 24,
+                            ],
+                        },
                     },
                 },
             },
@@ -104,7 +84,7 @@ export const getSimilarEventsBySlug = async (slug: string, limit = 6) => {
             //  Filter on coreScore, not the blended score — date alone can't qualify an event
             { $match: { coreScore: { $gt: 0 } } },
 
-            { $sort: { score: -1, date: 1 } },
+            { $sort: { score: -1, startAtUTC: 1 } },
             { $limit: limit },
         ]);
 
@@ -123,7 +103,17 @@ export const getEventBySlug = async (slug: string) => {
         await connectToDatabase();
 
         const event = await Event.findOne({ slug: normalizedSlug }).lean();
-        return event ? JSON.parse(JSON.stringify(event)) : null;
+        if (!event) return null;
+
+        // Additive: expose utc/timezone alongside the existing date/time
+        // fields. Existing consumers reading date/time are unaffected.
+        const response = {
+            ...event,
+            utc: event.startAtUTC ? new Date(event.startAtUTC).toISOString() : null,
+            timezone: event.timezone ?? null,
+        };
+
+        return JSON.parse(JSON.stringify(response));
     } catch (e) {
         console.error("Failed to fetch event by slug:", e);
         throw e;
@@ -184,9 +174,17 @@ export const getEventsByCreator = async () => {
         await connectToDatabase();
 
         const events = await Event.find({ creatorClerkId: userId })
-            .sort({ createdAt: -1 });
+            .sort({ createdAt: -1 })
+            .lean();
 
-        return JSON.parse(JSON.stringify(events));
+        // Additive: expose utc/timezone alongside existing date/time fields.
+        const response = events.map((event) => ({
+            ...event,
+            utc: event.startAtUTC ? new Date(event.startAtUTC).toISOString() : null,
+            timezone: event.timezone ?? null,
+        }));
+
+        return JSON.parse(JSON.stringify(response));
     } catch (error) {
         console.error("[getEventsByCreator]", error);
         return [];
